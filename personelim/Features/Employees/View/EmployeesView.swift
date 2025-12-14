@@ -20,11 +20,6 @@ struct EmployeesView: View {
                 }
                 .padding(.horizontal)
                 .padding(.top, 12)
-                
-                
-               
-                
-                
             }
         }
     }
