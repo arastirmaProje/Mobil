@@ -8,51 +8,36 @@
 import SwiftUI
 
 struct OnboardingView: View {
-    
-    @StateObject private var vm = OnboardingViewModel()
-    
-    var body: some View {
-        VStack(spacing: 0) {
-            
-            welcomeText
-            
-            Spacer()
-            
-            actionButtons
-                .padding(.horizontal, Layout.horizontalPadding)
-                .padding(.bottom, Layout.bottomPadding)
-        }
-        .fullScreenCover(isPresented: $vm.showLogin) {
-            LoginView()
-        }
-        .fullScreenCover(isPresented: $vm.showRegister) {
-            SignupView()
-        }
-        .ignoresSafeArea(edges: .bottom)
-    }
-}
 
-// MARK: - Subviews
-private extension OnboardingView {
-    
-    var welcomeText: some View {
-        Text("Personelim")
-            .font(.title2.weight(.semibold))
-            .padding(.top, Layout.topPadding)
-    }
-    
-    var actionButtons: some View {
-        VStack(spacing: Layout.buttonSpacing) {
-            
-            Button("Giriş Yap") {
-                vm.loginTapped()
+    var body: some View {
+        NavigationStack {
+            VStack(spacing: 0) {
+
+                Text("Personelim")
+                    .font(.title2.weight(.semibold))
+                    .padding(.top, 32)
+
+                Spacer()
+
+                VStack(spacing: 12) {
+
+                    NavigationLink {
+                        LoginView()
+                    } label: {
+                        Text("Giriş Yap")
+                    }
+                    .buttonStyle(OnboardingButtonStyle())
+
+                    NavigationLink {
+                        SignupView()
+                    } label: {
+                        Text("Şirket oluştur")
+                    }
+                    .buttonStyle(OnboardingButtonStyle())
+                }
+                .padding(.horizontal, 20)
+                .padding(.bottom, 24)
             }
-            .buttonStyle(OnboardingButtonStyle())
-            
-            Button("Şirket oluştur") {
-                vm.createCompanyTapped()
-            }
-            .buttonStyle(OnboardingButtonStyle())
         }
     }
 }
@@ -66,27 +51,5 @@ struct OnboardingButtonStyle: ButtonStyle {
             .foregroundColor(.primary)
             .cornerRadius(12)
             .opacity(configuration.isPressed ? 0.7 : 1)
-    }
-}
-
-// MARK: - Layout Constants
-private struct Layout {
-    static let topPadding: CGFloat = 32
-    static let bottomPadding: CGFloat = 24
-    static let horizontalPadding: CGFloat = 20
-    static let buttonSpacing: CGFloat = 12
-}
-
-// MARK: - Preview
-struct OnboardingView_Previews: PreviewProvider {
-    static var previews: some View {
-        Group {
-            OnboardingView()
-                .previewDevice("iPhone 16 Pro")
-            
-            OnboardingView()
-                .previewLayout(.sizeThatFits)
-                .preferredColorScheme(.dark)
-        }
     }
 }

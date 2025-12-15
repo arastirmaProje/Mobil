@@ -19,29 +19,16 @@ struct EmailVerifyView: View {
 
             Text("Email Doğrulama")
                 .font(.title2.bold())
-                .padding(.top, 32)
 
-            Text("\(email) adresine gönderilen doğrulama kodunu giriniz.")
-                .font(.subheadline)
+            Text("\(email) adresine gönderilen kodu giriniz")
                 .foregroundColor(.gray)
-                .multilineTextAlignment(.center)
-                .padding(.horizontal, 16)
 
-            TextField("6 haneli kod", text: $code)
-                .keyboardType(.numberPad)
-                .multilineTextAlignment(.center)
-                .padding()
-                .background(Color(UIColor.systemGray6))
-                .cornerRadius(8)
-                .onChange(of: code) { newValue in
-                    if newValue.count == 6 {
-                        onCodeEntered(newValue)
-                    }
-                }
+            OTPInputView(code: $code) { otp in
+                onCodeEntered(otp)
+            }
 
             Spacer()
         }
-        .padding(.horizontal, 20)
+        .padding()
     }
 }
-

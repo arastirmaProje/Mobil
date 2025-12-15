@@ -10,6 +10,13 @@ import Foundation
 @MainActor
 final class CreateCompanyViewModel: ObservableObject {
 
+    // MARK: - VERIFY EMAIL (Signup'tan gelir)
+    @Published private(set) var verifyEmail: String = ""
+
+    func setVerifyEmail(_ email: String) {
+        self.verifyEmail = email
+    }
+
     // MARK: - Inputs
     @Published var companyName = ""
     @Published var selectedCity = ""
@@ -36,7 +43,7 @@ final class CreateCompanyViewModel: ObservableObject {
         self.verifyBusinessUseCase = verifyBusinessUseCase
     }
 
-    // MARK: - Mock Location Data (şimdilik)
+    // MARK: - Mock Location Data
     let cities = ["İstanbul", "Ankara", "İzmir"]
 
     let districts: [String: [String]] = [
@@ -103,14 +110,12 @@ final class CreateCompanyViewModel: ObservableObject {
         isLoading = false
     }
 
-    // MARK: - STEP 2: Verify Business
-    func verifyBusiness(code: String) async -> Bool {
-        do {
-            try await verifyBusinessUseCase.execute(code: code)
-            return true
-        } catch {
-            errorMessage = error.localizedDescription
-            return false
+    // MARK: - STEP 2: Verify Business (EMAIL CODE)
+    func verifyBusiness(code: String) async throws {
+        let success = try await verifyBusinessUseCase.execute(code: code)
+
+        if !success {
+            throw NSError(domain: "VERIFY_FAILED", code: -1)
         }
     }
 }

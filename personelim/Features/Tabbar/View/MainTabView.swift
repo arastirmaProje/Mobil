@@ -8,40 +8,41 @@
 import SwiftUI
 
 struct MainTabView: View {
-    
-   // let role: UserRole  // Auth ile gelen rol
-    
+
     @State private var selected = 0
-    
+
     var body: some View {
         TabView(selection: $selected) {
-            
-            HomeView()
-                .tabItem {
-                    Label("Ana Sayfa", systemImage: "house.circle.fill")
-                }
-                .tag(0)
-            
-            TasksView()
-                .tabItem {
-                    Label("Görevler", systemImage: "tray.circle.fill")
-                }
-                .tag(1)
-            
-            ProfileView()
-                .tabItem {
-                    Label("Profil", systemImage: "person.crop.circle.fill")
-                }
-                .tag(2)
-            
-           // if role == .manager {
-          //      PersonnelView()
-                    .tabItem {
-                        Label("Personel", systemImage: "person.3.fill")
-                    }
-                    .tag(3)
+
+            NavigationStack {
+                HomeView()
+                    .navigationTitle("Ana Sayfa")
             }
-       // }
-        .onAppear { selected = 0 }
+            .tabItem {
+                Label("Ana Sayfa", systemImage: "house.circle.fill")
+            }
+            .tag(0)
+
+            NavigationStack {
+                TasksView()
+                    .navigationTitle("Görevler")
+            }
+            .tabItem {
+                Label("Görevler", systemImage: "tray.circle.fill")
+            }
+            .tag(1)
+
+            NavigationStack {
+                ProfileView()
+                    .navigationTitle("Profil")
+            }
+            .tabItem {
+                Label("Profil", systemImage: "person.crop.circle.fill")
+            }
+            .tag(2)
+        }
+        .onAppear {
+            selected = 0
+        }
     }
 }

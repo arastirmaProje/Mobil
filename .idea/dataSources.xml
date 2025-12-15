@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project version="4">
+  <component name="DataSourceManagerImpl" format="xml" multifile-model="true">
+    <data-source source="LOCAL" name="personelim_db1@dpg-d4dk7d9r0fns73fb4od0-a.oregon-postgres.render.com" uuid="860b23d5-976f-4056-bbba-bb13c1b9b67b">
+      <driver-ref>postgresql</driver-ref>
+      <synchronize>true</synchronize>
+      <jdbc-driver>org.postgresql.Driver</jdbc-driver>
+      <jdbc-url>jdbc:postgresql://dpg-d4dk7d9r0fns73fb4od0-a.oregon-postgres.render.com:5432/personelim_db1</jdbc-url>
+      <working-dir>$ProjectFileDir$</working-dir>
+    </data-source>
+  </component>
+</project>

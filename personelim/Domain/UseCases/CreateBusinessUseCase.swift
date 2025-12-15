@@ -15,11 +15,7 @@ final class CreateBusinessUseCase: CreateBusinessUseCaseProtocol {
 
     private let repository: BusinessRepositoryProtocol
 
-    init(
-        repository: BusinessRepositoryProtocol = BusinessRepositoryImpl(
-            networkManager: NetworkManager()
-        )
-    ) {
+    init(repository: BusinessRepositoryProtocol = BusinessRepositoryImpl(networkManager: NetworkManager())) {
         self.repository = repository
     }
 

@@ -9,9 +9,13 @@ import SwiftUI
 
 @main
 struct personelimApp: App {
+
+    @StateObject private var appState = AppState()
+
     var body: some Scene {
         WindowGroup {
-            OnboardingView()
+            RootView()
+                .environmentObject(appState)
         }
     }
 }

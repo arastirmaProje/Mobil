@@ -29,14 +29,16 @@ final class BusinessRepositoryImpl: BusinessRepositoryProtocol {
     }
 
     // MARK: - Verify Business (Email / Code)
-    func verifyBusiness(code: String) async throws {
+    func verifyBusiness(code: String) async throws -> VerifyBusinessResponseDTO {
 
         let body = VerifyBusinessRequestDTO(code: code)
 
-        let _: EmptyResponse = try await networkManager.request(
+        let response: VerifyBusinessResponseDTO = try await networkManager.request(
             endpoint: .verifyBusiness,
             method: .post,
             body: body
         )
+
+        return response
     }
 }

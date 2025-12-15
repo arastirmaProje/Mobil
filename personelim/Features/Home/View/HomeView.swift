@@ -8,20 +8,12 @@
 import SwiftUI
 
 struct HomeView: View {
+
     var body: some View {
-        ScrollView {
-            VStack(alignment: .leading, spacing: 24) {
-                
-                VStack(alignment: .leading, spacing: 4) {
-                    Text("Merhaba, Yusuf Kaan USTA 👋")
-                        .font(.title2.bold())
-                    
-                }
-                .padding(.horizontal)
-                .padding(.top, 12)
-            }
+        VStack(spacing: 16) {
+
+            Spacer()
         }
+        .padding()
     }
 }
-
-

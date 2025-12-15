@@ -10,6 +10,9 @@ import SwiftUI
 struct CreateCompanyView: View {
 
     @StateObject private var vm = CreateCompanyViewModel()
+    
+    @Environment(\.dismiss) private var dismiss
+    let onVerified: () -> Void 
 
     var body: some View {
         VStack(spacing: 0) {
@@ -23,16 +26,21 @@ struct CreateCompanyView: View {
                         .font(.title2.bold())
                         .padding(.top, 12)
 
+                    // MARK: - Şirket Bilgileri
                     field("Şirket İsmi", "Şirket adı", $vm.companyName)
 
+                    // MARK: - Ofisler
                     officeSection
 
+                    // MARK: - Şehir
                     cityPicker
 
+                    // MARK: - İlçe
                     if vm.showDistricts {
                         districtPicker
                     }
 
+                    // MARK: - Ek Alanlar
                     field("Detaylı Adres", "Adres gir", $vm.detailedAddress)
                     field("Telefon", "555 555 55 55", $vm.phone)
                     field("Açıklama", "Açıklama gir", $vm.description)
@@ -42,6 +50,7 @@ struct CreateCompanyView: View {
                 .padding(.horizontal, 20)
             }
 
+            // MARK: - OLUŞTUR
             Button {
                 Task { await vm.createCompany() }
             } label: {
@@ -52,43 +61,65 @@ struct CreateCompanyView: View {
             .padding(.horizontal, 20)
             .padding(.bottom, 24)
         }
+        .ignoresSafeArea(edges: .bottom)
+        .navigationBarBackButtonHidden(true)
+
+        // MARK: - OTP SHEET
         .sheet(isPresented: $vm.showOTP) {
-            
+            EmailVerifyView(email: vm.verifyEmail) { code in
                 Task {
-                    let success = await vm.verifyBusiness(code: code)
-                    if success {
+                    do {
+                        _ = try await vm.verifyBusiness(code: code)
+
                         vm.showOTP = false
-                        print("✅ Business verified → Home")
+
+                        DispatchQueue.main.asyncAfter(deadline: .now() + 0.25) {
+                            dismiss()
+                            onVerified()
+                        }
+
+                    } catch {
+                        vm.errorMessage = error.localizedDescription
                     }
                 }
             }
         }
+        // MARK: - ERROR
         .alert(
             vm.errorMessage ?? "",
-            isPresented: .constant(vm.errorMessage != nil)
+            isPresented: Binding(
+                get: { vm.errorMessage != nil },
+                set: { newValue in if !newValue { vm.errorMessage = nil } }
+            )
         ) {
             Button("Tamam") { vm.errorMessage = nil }
         }
     }
 }
 
+// MARK: - HEADER
 private extension CreateCompanyView {
 
     var header: some View {
         HStack {
-            Button(action: {}) {
+            Button(action: { dismiss() }) {
                 Image(systemName: "chevron.left")
-                    .padding(10)
+                    .foregroundColor(.primary)
+                    .frame(width: 44, height: 44)
                     .background(Color(UIColor.systemGray6))
                     .clipShape(Circle())
             }
+
             Spacer()
         }
         .padding(.horizontal, 20)
         .padding(.top, 8)
+        .padding(.bottom, 6)
+        .background(Color.clear)
     }
 }
 
+// MARK: - FIELD
 private extension CreateCompanyView {
 
     func field(
@@ -110,6 +141,7 @@ private extension CreateCompanyView {
     }
 }
 
+// MARK: - OFFICE SECTION
 private extension CreateCompanyView {
 
     var officeSection: some View {
@@ -153,6 +185,7 @@ private extension CreateCompanyView {
     }
 }
 
+// MARK: - CITY PICKER
 private extension CreateCompanyView {
 
     var cityPicker: some View {
@@ -161,8 +194,8 @@ private extension CreateCompanyView {
                 .font(.system(size: 14, weight: .medium))
 
             Picker("Şehir seç", selection: $vm.selectedCity) {
-                ForEach(vm.cities, id: \.self) {
-                    Text($0)
+                ForEach(vm.cities, id: \.self) { city in
+                    Text(city).tag(city)
                 }
             }
             .pickerStyle(.menu)
@@ -178,6 +211,7 @@ private extension CreateCompanyView {
     }
 }
 
+// MARK: - DISTRICT PICKER
 private extension CreateCompanyView {
 
     var districtPicker: some View {
@@ -186,8 +220,8 @@ private extension CreateCompanyView {
                 .font(.system(size: 14, weight: .medium))
 
             Picker("İlçe seç", selection: $vm.selectedDistrict) {
-                ForEach(vm.districts[vm.selectedCity] ?? [], id: \.self) {
-                    Text($0)
+                ForEach(vm.districts[vm.selectedCity] ?? [], id: \.self) { dist in
+                    Text(dist).tag(dist)
                 }
             }
             .pickerStyle(.menu)
@@ -199,4 +233,3 @@ private extension CreateCompanyView {
         }
     }
 }
-

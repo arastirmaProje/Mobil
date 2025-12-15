@@ -35,7 +35,7 @@ struct LoginView: View {
                     Text("Email")
                         .font(.system(size: 14, weight: .medium))
                     
-                    TextField("damn@gmail.com", text: $vm.email)
+                    TextField("ornek@gmail.com", text: $vm.email)
                         .textInputAutocapitalization(.never)
                         .keyboardType(.emailAddress)
                         .padding()

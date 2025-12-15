@@ -10,7 +10,7 @@ import Foundation
 @MainActor
 final class SignupViewModel: ObservableObject {
 
-    // MARK: - Form Inputs
+    // MARK: - Inputs
     @Published var firstName = ""
     @Published var lastName = ""
     @Published var email = ""
@@ -20,37 +20,28 @@ final class SignupViewModel: ObservableObject {
     @Published var isLoading = false
     @Published var showError = false
     @Published var errorMessage = ""
-    @Published var goToVerifyEmail = false
 
-    // EmailVerifyView’e gönderilecek email
-    @Published private(set) var registeredEmail = ""
+    // MARK: - Navigation
+    @Published var goToCreateCompany = false
 
-    // MARK: - Dependency
+    // MARK: - Dependencies
     private let registerUseCase: RegisterUserUseCaseProtocol
 
     init(registerUseCase: RegisterUserUseCaseProtocol = RegisterUserUseCase()) {
         self.registerUseCase = registerUseCase
     }
-
-    // MARK: - ACTION
+    // MARK: - Actions
     func register() async {
         guard validateForm() else { return }
 
         isLoading = true
         showError = false
 
-        let entity = RegisterUserEntity(
-            firstName: firstName,
-            lastName: lastName,
-            email: email,
-            password: password
-        )
-
         do {
-            let user = try await registerUseCase.execute(entity)
-
-            registeredEmail = user.email
-            goToVerifyEmail = true
+            let authUser = try await registerUseCase.execute(
+                RegisterUserEntity( firstName: firstName, lastName: lastName, email: email, password: password))
+            TokenStore.shared.save(authUser.token)
+            goToCreateCompany = true
 
         } catch {
             errorMessage = error.localizedDescription
@@ -60,7 +51,6 @@ final class SignupViewModel: ObservableObject {
         isLoading = false
     }
 
-    // MARK: - VALIDATION
     private func validateForm() -> Bool {
         if firstName.isEmpty || lastName.isEmpty || email.isEmpty || password.isEmpty {
             errorMessage = "Tüm alanlar gereklidir."

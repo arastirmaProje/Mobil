@@ -4,12 +4,6 @@
 //
 //  Created by Tuğberk Acabey on 23.11.2025.
 //
-
-//
-//  NetworkManager.swift
-//  personelim
-//
-
 import Foundation
 
 final class NetworkManager: NetworkManagerProtocol {
@@ -22,39 +16,47 @@ final class NetworkManager: NetworkManagerProtocol {
         body: Encodable?
     ) async throws -> T {
 
-        // 1) URL
+        // URL
         guard let url = URL(string: baseURL + endpoint.path) else {
             throw URLError(.badURL)
         }
 
-        var urlRequest = URLRequest(url: url)
-        urlRequest.httpMethod = method.rawValue
-        urlRequest.setValue("application/json", forHTTPHeaderField: "Content-Type")
-        urlRequest.setValue("application/json", forHTTPHeaderField: "Accept")
+        var request = URLRequest(url: url)
+        request.httpMethod = method.rawValue
+        request.setValue("application/json", forHTTPHeaderField: "Content-Type")
+        request.setValue("application/json", forHTTPHeaderField: "Accept")
 
-        // 2) Body encode
-        if let body = body {
-            urlRequest.httpBody = try JSONEncoder().encode(body)
+        // AUTH HEADER
+        if let token = TokenStore.shared.token {
+            request.setValue("Bearer \(token)", forHTTPHeaderField: "Authorization")
         }
 
-        // 3) Request
-        let (data, response) = try await URLSession.shared.data(for: urlRequest)
+        // Body
+        if let body = body {
+            request.httpBody = try JSONEncoder().encode(body)
+        }
 
+        // DEBUG LOG
         print("🔵 REQUEST:", endpoint.path)
         print("📤 BODY:", body ?? "NO BODY")
+        print("🔐 TOKEN:", TokenStore.shared.token ?? "NO TOKEN")
+
+        // Network call
+        let (data, response) = try await URLSession.shared.data(for: request)
+
         print("📥 RAW RESPONSE:", String(data: data, encoding: .utf8) ?? "NO DATA")
 
-        // 4) HTTP Response
+        // HTTP Check
         guard let http = response as? HTTPURLResponse else {
             throw URLError(.badServerResponse)
         }
 
         guard (200...299).contains(http.statusCode) else {
             print("❌ HTTP ERROR:", http.statusCode)
-            throw URLError(.badServerResponse)
+            throw URLError(.init(rawValue: http.statusCode))
         }
 
-        // 5) Decode
+        // Decode
         return try JSONDecoder().decode(T.self, from: data)
     }
 }
