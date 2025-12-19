@@ -8,7 +8,11 @@
 import Foundation
 
 struct Office: Identifiable {
-    let id = UUID()
-    let index: Int
+    let id: UUID = UUID()
+    var index: Int
+    var name: String
     var address: String
+    var latitude: Double?
+    var longitude: Double?
 }
+

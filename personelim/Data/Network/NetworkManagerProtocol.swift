@@ -11,6 +11,13 @@ protocol NetworkManagerProtocol {
     func request<T: Decodable>(
         endpoint: Endpoint,
         method: HTTPMethod,
-        body: Encodable?
+        body: (any Encodable)?
+    ) async throws -> T
+
+    func uploadMultipart<T: Decodable>(
+        endpoint: Endpoint,
+        method: HTTPMethod,
+        fields: [String: String],
+        files: [MultipartFile]
     ) async throws -> T
 }

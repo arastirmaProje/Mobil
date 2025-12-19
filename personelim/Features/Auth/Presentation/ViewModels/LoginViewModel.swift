@@ -7,7 +7,7 @@
 import SwiftUI
 
 @MainActor
-class LoginViewModel: ObservableObject {
+final class LoginViewModel: ObservableObject {
 
     @Published var email: String = ""
     @Published var password: String = ""
@@ -24,7 +24,7 @@ class LoginViewModel: ObservableObject {
         self.loginUseCase = loginUseCase
     }
 
-    func login() async {
+    func login(appState: AppState) async {
         guard !email.isEmpty, !password.isEmpty else {
             errorMessage = "Email ve şifre zorunludur."
             return
@@ -32,11 +32,12 @@ class LoginViewModel: ObservableObject {
 
         isLoading = true
         errorMessage = nil
+        defer { isLoading = false }
 
         do {
             let user = try await loginUseCase.execute(email: email, password: password)
 
-            // UserDefaults save
+    
             UserDefaults.standard.set(user.token, forKey: "auth_token")
             UserDefaults.standard.set(user.fullName, forKey: "full_name")
             UserDefaults.standard.set(user.email, forKey: "user_email")
@@ -45,14 +46,17 @@ class LoginViewModel: ObservableObject {
 
             if rememberMe {
                 UserDefaults.standard.set(email, forKey: "remember_email")
+            } else {
+                UserDefaults.standard.removeObject(forKey: "remember_email")
             }
+
+
+            appState.applyLogin(userId: user.userId, role: user.role)
 
             isLoggedIn = true
 
         } catch {
             errorMessage = error.localizedDescription
         }
-
-        isLoading = false
     }
 }

@@ -18,6 +18,7 @@ struct AuthUserEntity {
     let fullName: String
     let token: String
     let expiresAt: String
+    let role: UserRole
 }
 
 struct ForgotPasswordResponseEntity {

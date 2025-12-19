@@ -14,20 +14,6 @@ struct ForgotPasswordView: View {
     var body: some View {
         VStack(spacing: 0) {
             
-            // Back Button
-            HStack {
-                Button(action: {}) {
-                    Image(systemName: "chevron.left")
-                        .foregroundColor(.black)
-                        .padding(10)
-                        .background(Color(UIColor.systemGray6))
-                        .clipShape(Circle())
-                }
-                Spacer()
-            }
-            .padding(.horizontal, 20)
-            .padding(.top, 8)
-            
             // Title
             Text("Şifremi unuttum")
                 .font(.title2.weight(.semibold))

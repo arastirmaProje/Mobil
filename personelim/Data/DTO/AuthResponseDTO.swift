@@ -13,7 +13,8 @@ struct AuthResponseDTO: Codable {
     let lastName: String?
     let fullName: String?
     let token: String?
-    let expiresAt: String
+    let expiresAt: String?
+    let role: UserRole?
 }
 
 struct AuthResponseServiceDTO: Codable {

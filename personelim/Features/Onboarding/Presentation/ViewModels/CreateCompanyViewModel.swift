@@ -6,27 +6,28 @@
 //
 
 import Foundation
+import CoreLocation
 
 @MainActor
 final class CreateCompanyViewModel: ObservableObject {
 
-    // MARK: - VERIFY EMAIL (Signup'tan gelir)
+    // MARK: - VERIFY EMAIL
     @Published private(set) var verifyEmail: String = ""
-
-    func setVerifyEmail(_ email: String) {
-        self.verifyEmail = email
-    }
+    func setVerifyEmail(_ email: String) { self.verifyEmail = email }
 
     // MARK: - Inputs
     @Published var companyName = ""
-    @Published var selectedCity = ""
-    @Published var selectedDistrict = ""
+    @Published var selectedProvinceId: Int? = nil
+    @Published var selectedDistrictId: Int? = nil
+
+    @Published var provinces: [ProvinceDTO] = []
+    @Published var districts: [DistrictDTO] = []
     @Published var detailedAddress = ""
     @Published var phone = ""
     @Published var description = ""
     @Published var offices: [Office] = []
-
-    // MARK: - UI State
+    @Published var showMapPicker = false
+    @Published var selectingOfficeId: UUID? = nil
     @Published var isLoading = false
     @Published var showOTP = false
     @Published var errorMessage: String?
@@ -34,39 +35,49 @@ final class CreateCompanyViewModel: ObservableObject {
     // MARK: - Dependencies
     private let createBusinessUseCase: CreateBusinessUseCaseProtocol
     private let verifyBusinessUseCase: VerifyBusinessUseCaseProtocol
+    private let createBusinessAndGetIdUseCase: CreateBusinessAndGetIdUseCaseProtocol
+    private let getProvincesUseCase: GetProvincesUseCaseProtocol
+    private let getDistrictsUseCase: GetDistrictsUseCaseProtocol
 
     init(
         createBusinessUseCase: CreateBusinessUseCaseProtocol = CreateBusinessUseCase(),
-        verifyBusinessUseCase: VerifyBusinessUseCaseProtocol = VerifyBusinessUseCase()
+        verifyBusinessUseCase: VerifyBusinessUseCaseProtocol = VerifyBusinessUseCase(),
+        createBusinessAndGetIdUseCase: CreateBusinessAndGetIdUseCaseProtocol = CreateBusinessAndGetIdUseCase(),
+        getProvincesUseCase: GetProvincesUseCaseProtocol = GetProvincesUseCase(),
+        getDistrictsUseCase: GetDistrictsUseCaseProtocol = GetDistrictsUseCase()
     ) {
         self.createBusinessUseCase = createBusinessUseCase
         self.verifyBusinessUseCase = verifyBusinessUseCase
+        self.createBusinessAndGetIdUseCase = createBusinessAndGetIdUseCase
+        self.getProvincesUseCase = getProvincesUseCase
+        self.getDistrictsUseCase = getDistrictsUseCase
     }
 
-    // MARK: - Mock Location Data
-    let cities = ["İstanbul", "Ankara", "İzmir"]
-
-    let districts: [String: [String]] = [
-        "İstanbul": ["Kadıköy", "Üsküdar", "Beşiktaş"],
-        "Ankara": ["Çankaya", "Keçiören"],
-        "İzmir": ["Bornova", "Konak"]
-    ]
-
-    // MARK: - Computed
-    var showDistricts: Bool {
-        !selectedCity.isEmpty
+    // MARK: - Loaders
+    func loadProvinces() async {
+        do { provinces = try await getProvincesUseCase.execute() }
+        catch { errorMessage = error.localizedDescription }
     }
 
-    var isFormValid: Bool {
-        !companyName.isEmpty &&
-        !selectedCity.isEmpty &&
-        !selectedDistrict.isEmpty
+    func selectProvince(_ provinceId: Int) async {
+        selectedProvinceId = provinceId
+        selectedDistrictId = nil
+        districts = []
+        do { districts = try await getDistrictsUseCase.execute(provinceId: provinceId) }
+        catch { errorMessage = error.localizedDescription }
     }
 
     // MARK: - Office
     func addOffice() {
+        let nextIndex = offices.count + 1
         offices.append(
-            Office(index: offices.count + 1, address: "")
+            Office(
+                index: nextIndex,
+                name: "Ofis \(nextIndex)",
+                address: "",
+                latitude: nil,
+                longitude: nil
+            )
         )
     }
 
@@ -75,33 +86,61 @@ final class CreateCompanyViewModel: ObservableObject {
         offices.removeLast()
     }
 
-    // MARK: - STEP 1: Create Business
-    func createCompany() async {
+    // MARK: - Map Picker Bridge
+    func beginPickLocation(for officeId: UUID) {
+        selectingOfficeId = officeId
+        showMapPicker = true
+    }
+
+    func setLocation(_ coord: CLLocationCoordinate2D, address: String?) {
+        guard let id = selectingOfficeId,
+              let idx = offices.firstIndex(where: { $0.id == id }) else { return }
+
+        offices[idx].latitude = coord.latitude
+        offices[idx].longitude = coord.longitude
+
+        if let address, !address.isEmpty {
+            offices[idx].address = address
+        }
+
+        selectingOfficeId = nil
+    }
+
+    // MARK: - Create Business
+    func createCompany(appState: AppState) async {
+
+        let isFormValid =
+            !companyName.isEmpty &&
+            selectedProvinceId != nil &&
+            selectedDistrictId != nil
+
         guard isFormValid else {
-            errorMessage = "Lütfen zorunlu alanları doldurun."
+            errorMessage = "Şirket adı, il ve ilçe zorunludur."
             return
         }
 
         isLoading = true
+        errorMessage = nil
 
         let request = CreateBusinessRequestDTO(
             businessName: companyName,
             phoneNumber: phone,
-            provinceId: 1,
-            districtId: 1,
+            provinceId: selectedProvinceId ?? 0,
+            districtId: selectedDistrictId ?? 0,
             address: detailedAddress,
             description: description,
             offices: offices.map {
                 OfficeLocationDTO(
-                    officeName: "Ofis \($0.index)",
-                    latitude: 0,
-                    longitude: 0
+                    officeName: $0.name,
+                    latitude: $0.latitude ?? 0,
+                    longitude: $0.longitude ?? 0
                 )
             }
         )
 
         do {
-            try await createBusinessUseCase.execute(request: request)
+            let businessId = try await createBusinessAndGetIdUseCase.execute(request: request)
+            appState.businessId = businessId
             showOTP = true
         } catch {
             errorMessage = error.localizedDescription
@@ -110,12 +149,9 @@ final class CreateCompanyViewModel: ObservableObject {
         isLoading = false
     }
 
-    // MARK: - STEP 2: Verify Business (EMAIL CODE)
+    // MARK: - Verify Business
     func verifyBusiness(code: String) async throws {
         let success = try await verifyBusinessUseCase.execute(code: code)
-
-        if !success {
-            throw NSError(domain: "VERIFY_FAILED", code: -1)
-        }
+        if !success { throw NSError(domain: "VERIFY_FAILED", code: -1) }
     }
 }

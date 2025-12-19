@@ -18,27 +18,29 @@ final class AuthRepositoryImpl: AuthRepositoryProtocol {
 
     // MARK: - LOGIN
     func login(email: String, password: String) async throws -> AuthUserEntity {
+           let body = LoginRequestDTO(email: email, password: password)
 
-        let body = LoginRequestDTO(email: email, password: password)
+           let response: AuthResponseServiceDTO = try await network.request(
+               endpoint: .login,
+               method: .post,
+               body: body
+           )
 
-        let response: AuthResponseServiceDTO = try await network.request(
-            endpoint: .login,
-            method: .post,
-            body: body
-        )
+           guard let data = response.data else {
+               throw RepositoryError.api(message: response.message ?? "Login failed")
+           }
 
-        guard let data = response.data else {
-            throw RepositoryError.api(message: response.message ?? "Login failed")
-        }
+          
 
-        return AuthUserEntity(
-            userId: data.userId,
-            email: data.email ?? "",
-            fullName: data.fullName ?? "",
-            token: data.token ?? "",
-            expiresAt: data.expiresAt
-        )
-    }
+           return AuthUserEntity(
+               userId: data.userId,
+               email: data.email ?? "",
+               fullName: data.fullName ?? "\(data.firstName ?? "") \(data.lastName ?? "")".trimmingCharacters(in: .whitespaces),
+               token: data.token ?? "",
+               expiresAt: data.expiresAt ?? "",
+               role: data.role ?? .default
+           )
+       }
 
     // MARK: - REGISTER
     func register(_ user: RegisterUserEntity) async throws -> AuthUserEntity {
@@ -65,7 +67,8 @@ final class AuthRepositoryImpl: AuthRepositoryProtocol {
             email: data.email ?? "",
             fullName: data.fullName ?? "",
             token: data.token ?? "",
-            expiresAt: data.expiresAt
+            expiresAt: data.expiresAt ?? "",
+            role: data.role ?? .default
         )
     }
 
@@ -130,6 +133,60 @@ final class AuthRepositoryImpl: AuthRepositoryProtocol {
 
         return response.success
     }
+    
+    // MARK: - PROFILE
+    func getProfile() async throws -> UserProfileDTO {
+
+        let response: UserProfileServiceResponseDTO = try await network.request(
+            endpoint: .profile,
+            method: .get,
+            body: nil        
+        )
+
+        guard let data = response.data else {
+            throw RepositoryError.api(message: response.message ?? "Profile alınamadı")
+        }
+
+        return data
+    }
+
+
+    func updateProfile(email: String, firstName: String, lastName: String, imageData: Data?) async throws -> UserProfileDTO {
+
+        let fields: [String: String] = [
+            "Email": email,
+            "FirstName": firstName,
+            "LastName": lastName
+        ]
+
+        var files: [MultipartFile] = []
+        if let imageData {
+            files.append(
+                MultipartFile(
+                    fieldName: "Image",
+                    fileName: "profile.jpg",
+                    mimeType: "image/jpeg",
+                    data: imageData
+                )
+            )
+        }
+
+        let response: UserProfileServiceResponseDTO = try await network.uploadMultipart(
+            endpoint: .profileUpdate,
+            method: .put,
+            fields: fields,
+            files: files
+        )
+
+        guard let data = response.data else {
+            throw RepositoryError.api(message: response.message ?? "Profil güncellenemedi")
+        }
+
+        return data
+    }
+
+
+
 }
 
 // MARK: - Repository Specific Error

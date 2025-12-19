@@ -23,6 +23,7 @@ final class SignupViewModel: ObservableObject {
 
     // MARK: - Navigation
     @Published var goToCreateCompany = false
+    @Published var createdUser: AuthUserEntity?
 
     // MARK: - Dependencies
     private let registerUseCase: RegisterUserUseCaseProtocol
@@ -30,25 +31,34 @@ final class SignupViewModel: ObservableObject {
     init(registerUseCase: RegisterUserUseCaseProtocol = RegisterUserUseCase()) {
         self.registerUseCase = registerUseCase
     }
-    // MARK: - Actions
+
     func register() async {
         guard validateForm() else { return }
 
         isLoading = true
         showError = false
+        errorMessage = ""
+        defer { isLoading = false }
 
         do {
             let authUser = try await registerUseCase.execute(
-                RegisterUserEntity( firstName: firstName, lastName: lastName, email: email, password: password))
+                RegisterUserEntity(
+                    firstName: firstName,
+                    lastName: lastName,
+                    email: email,
+                    password: password
+                )
+            )
+
             TokenStore.shared.save(authUser.token)
+
+            createdUser = authUser
             goToCreateCompany = true
 
         } catch {
             errorMessage = error.localizedDescription
             showError = true
         }
-
-        isLoading = false
     }
 
     private func validateForm() -> Bool {

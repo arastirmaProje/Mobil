@@ -12,14 +12,13 @@ protocol LoginUseCaseProtocol {
 }
 
 final class LoginUseCase: LoginUseCaseProtocol {
+    private let repo: AuthRepositoryProtocol
 
-    private let repository: AuthRepositoryProtocol
-
-    init(repository: AuthRepositoryProtocol = AuthRepositoryImpl(network: NetworkManager())) {
-        self.repository = repository
+    init(repo: AuthRepositoryProtocol = AuthRepositoryImpl(network: NetworkManager())) {
+        self.repo = repo
     }
 
     func execute(email: String, password: String) async throws -> AuthUserEntity {
-        try await repository.login(email: email, password: password)
+        try await repo.login(email: email, password: password)
     }
 }
