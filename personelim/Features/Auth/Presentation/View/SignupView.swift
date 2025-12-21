@@ -15,44 +15,61 @@ struct SignupView: View {
 
     var body: some View {
         ZStack {
-
-            // MARK: - CONTENT
             VStack(spacing: 0) {
-
-              
-                ScrollView(showsIndicators: false) {
-                    VStack(spacing: 24) {
-
-                        Text("Kayıt olun")
-                            .font(.title2.weight(.semibold))
-                            .padding(.top, 8)
-
-                        formFields
+                // MARK: - Custom Top Bar
+                HStack {
+                    Button {
+                        dismiss()
+                    } label: {
+                        Image(systemName: "chevron.left")
+                            .foregroundColor(.primary)
+                            .padding(10)
+                            .background(Color(.systemGray5))
+                            .clipShape(Circle())
                     }
-                    .padding(.horizontal, 20)
-                    .padding(.top, 12)
-                    .padding(.bottom, 120)
+                    
+                    Spacer()
                 }
-            }
-
-            // MARK: - BOTTOM BUTTON
-            VStack {
-                Spacer()
-
-                Button {
-                    Task { await vm.register() }
-                } label: {
-                    Text("Devam et")
-                        .frame(maxWidth: .infinity, minHeight: 52)
-                }
-                .disabled(vm.isLoading)
-                .buttonStyle(OnboardingButtonStyle())
                 .padding(.horizontal, 20)
-                .padding(.bottom, 12)
-                .background(Color.white)
+                .padding(.top, 12)
+                
+                // MARK: - CONTENT
+                VStack(spacing: 0) {
+                    ScrollView(showsIndicators: false) {
+                        VStack(spacing: 24) {
+                            
+                            Text("Kayıt olun")
+                                .font(.title2.weight(.semibold))
+                                .padding(.top, 8)
+                            
+                            formFields
+                        }
+                        .padding(.horizontal, 20)
+                        .padding(.top, 12)
+                        .padding(.bottom, 120)
+                    }
+                }
+                
+                // MARK: - BOTTOM BUTTON
+                VStack {
+                    Spacer()
+                    
+                    Button {
+                        Task { await vm.register() }
+                    } label: {
+                        Text("Devam et")
+                            .frame(maxWidth: .infinity, minHeight: 52)
+                    }
+                    .disabled(vm.isLoading)
+                    .buttonStyle(OnboardingButtonStyle())
+                    .padding(.horizontal, 20)
+                    .padding(.bottom, 12)
+                    .background(Color.white)
+                }
             }
         }
-
+        .navigationBarBackButtonHidden(true)
+        
         // MARK: - NAVIGATION
         .navigationDestination(isPresented: $vm.goToCreateCompany) {
             CreateCompanyView {
@@ -70,9 +87,6 @@ struct SignupView: View {
     }
 }
 
-
-
-    
 // MARK: - FORM
 private extension SignupView {
 

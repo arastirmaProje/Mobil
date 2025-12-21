@@ -89,10 +89,12 @@ final class ProfileViewModel: ObservableObject {
                 )
                 return
             }
+            appState.businessId = business.id
 
             let businessId = business.id
 
             let members = try await memberRepo.getMembers(businessId: businessId)
+            appState.businessMembers = members.filter { $0.isActive == true }
             let me = members.first { $0.userId.lowercased() == auth.id.lowercased() }
 
             appState.role = me?.role ?? .default

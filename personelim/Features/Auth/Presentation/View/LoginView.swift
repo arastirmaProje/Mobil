@@ -1,3 +1,10 @@
+//
+//  LoginViewModel.swift
+//  personelim
+//
+//  Created by Tuğberk Acabey on 06.12.2025.
+//
+
 import SwiftUI
 
 struct LoginView: View {
@@ -12,6 +19,24 @@ struct LoginView: View {
         NavigationStack {
             VStack(spacing: 0) {
 
+                // MARK: - Custom Top Bar
+                HStack {
+                    Button {
+                        dismiss()
+                    } label: {
+                        Image(systemName: "chevron.left")
+                            .foregroundColor(.primary)
+                            .padding(10)
+                            .background(Color(.systemGray5))
+                            .clipShape(Circle())
+                    }
+
+                    Spacer()
+                }
+                .padding(.horizontal, 20)
+                .padding(.top, 12)
+
+                // MARK: - Title
                 Text("Giriş Yapalım")
                     .font(.title2.weight(.semibold))
                     .padding(.top, 24)
@@ -47,10 +72,13 @@ struct LoginView: View {
                     }
 
                     HStack {
-                        Button(action: { vm.rememberMe.toggle() }) {
+                        Button {
+                            vm.rememberMe.toggle()
+                        } label: {
                             Image(systemName: vm.rememberMe ? "checkmark.square" : "square")
                                 .foregroundColor(.gray)
                         }
+
                         Text("Beni hatırla")
                             .font(.system(size: 14))
                     }
@@ -83,6 +111,7 @@ struct LoginView: View {
                 .padding(.bottom, 24)
             }
             .ignoresSafeArea(edges: .bottom)
+            .navigationBarBackButtonHidden(true)
             .fullScreenCover(isPresented: $vm.isLoggedIn) {
                 MainTabView()
                     .environmentObject(appState)

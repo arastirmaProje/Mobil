@@ -27,6 +27,8 @@ enum Endpoint {
     case getBusinessMember(memberId: String)
     case updateBusinessMember(memberId: String)
     case downloadDocument(documentId: String)
+    case myTasks
+    case createTask
     
     case updateBusiness(businessId: String)
 
@@ -52,16 +54,18 @@ enum Endpoint {
         case .updateBusinessMember(let memberId): return "/api/BusinessMember/\(memberId)"
         case .downloadDocument(let documentId): return "/api/BusinessMember/documents/\(documentId)/download"
         case .updateBusiness(let id): return "/api/Business/\(id)"
+        case .myTasks: return "/api/Task/my-tasks"
+        case .createTask: return "/api/Task/create"
 
         }
     }
 
     var method: HTTPMethod {
         switch self {
-        case .login, .register, .forgotPassword, .verifyResetCode, .resetPassword, .verifyBusiness, .createBusiness, .uploadMemberDocuments:
+        case .login, .register, .forgotPassword, .verifyResetCode, .resetPassword, .verifyBusiness, .createBusiness, .uploadMemberDocuments, .createTask:
             return .post
 
-        case .businessMembers, .profile, .getBusiness, .provinces, .districts, .business, .businessList, .getBusinessMember, .downloadDocument:
+        case .businessMembers, .profile, .getBusiness, .provinces, .districts, .business, .businessList, .getBusinessMember, .downloadDocument, .myTasks:
             return .get
 
         case .profileUpdate, .updateBusinessMember, .updateBusiness:

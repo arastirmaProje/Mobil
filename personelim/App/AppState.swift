@@ -15,6 +15,7 @@ final class AppState: ObservableObject {
     @Published var userId: String?
     @Published var businessId: String?
     @Published var role: UserRole = .default
+    @Published var businessMembers: [BusinessMemberDTO] = []
 
     init() {
         isLoggedIn = TokenStore.shared.hasValidToken()
@@ -32,6 +33,7 @@ final class AppState: ObservableObject {
         userId = nil
         businessId = nil
         role = .default
+        businessMembers = []
     }
 
     func loadRoleIfNeeded(
@@ -40,29 +42,39 @@ final class AppState: ObservableObject {
     ) async {
         guard isLoggedIn else { return }
 
-        if role != .default { return }
-
         if userId == nil {
             do {
                 let profile = try await authRepository.getProfile()
                 userId = profile.id
             } catch {
-                role = .default
                 return
             }
         }
 
-        guard let businessId, let userId else {
-            role = .default
-            return
-        }
+        guard let businessId, let userId else { return }
 
         do {
             let members = try await businessMemberRepository.getMembers(businessId: businessId)
+            self.businessMembers = members.filter { $0.isActive == true }
+
             let me = members.first { $0.userId.lowercased() == userId.lowercased() }
             role = me?.role ?? .default
         } catch {
             role = .default
+        }
+    }
+
+    func loadBusinessMembersIfNeeded(
+        repository: BusinessMemberRepositoryProtocol
+    ) async {
+        guard let businessId else { return }
+        guard businessMembers.isEmpty else { return }
+
+        do {
+            let members = try await repository.getMembers(businessId: businessId)
+            self.businessMembers = members.filter { $0.isActive == true }
+        } catch {
+            print("❌ Failed to load members:", error)
         }
     }
 }

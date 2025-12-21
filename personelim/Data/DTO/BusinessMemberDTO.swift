@@ -7,7 +7,7 @@
 
 import Foundation
 
-struct BusinessMemberDTO: Codable {
+struct BusinessMemberDTO: Codable, Identifiable {
     let id: String
     let userId: String
     let fullName: String

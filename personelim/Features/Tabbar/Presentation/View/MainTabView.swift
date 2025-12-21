@@ -21,21 +21,21 @@ struct MainTabView: View {
     var body: some View {
         TabView(selection: $selected) {
 
-            NavigationStack { HomeView().navigationTitle("Ana Sayfa") }
+            NavigationStack { HomeView()}
                 .tabItem { Label("Ana Sayfa", systemImage: "house.circle.fill") }
                 .tag(Tab.home)
 
-            NavigationStack { TasksView().navigationTitle("Görevler") }
+            NavigationStack { TasksListView()}
                 .tabItem { Label("Görevler", systemImage: "tray.circle.fill") }
                 .tag(Tab.tasks)
 
             if appState.role.canSeePersonnelTab {
-                NavigationStack { PersonnelView().navigationTitle("Personel") }
+                NavigationStack { PersonnelView()}
                     .tabItem { Label("Personel", systemImage: "person.3.fill") }
                     .tag(Tab.personnel)
             }
 
-            NavigationStack { ProfileView().navigationTitle("Profil") }
+            NavigationStack { ProfileView()}
                 .tabItem { Label("Profil", systemImage: "person.crop.circle.fill") }
                 .tag(Tab.profile)
         }
