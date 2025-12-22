@@ -8,7 +8,9 @@
 import Foundation
 
 protocol TaskRepositoryProtocol {
+    
     func getMyTasks() async throws -> [TaskEntity]
+    
     func createTask(
         businessId: String,
         title: String,
@@ -17,4 +19,11 @@ protocol TaskRepositoryProtocol {
         endDate: Date,
         assignedToUserId: String
     ) async throws
+    
+    func updateTaskStatus(
+            taskId: String,
+            status: String,
+            thoughts: String,
+            difficulty: String
+        ) async throws
 }

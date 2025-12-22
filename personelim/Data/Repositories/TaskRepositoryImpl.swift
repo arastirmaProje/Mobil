@@ -15,13 +15,14 @@ final class TaskRepositoryImpl: TaskRepositoryProtocol {
         self.network = network
     }
 
+    // MARK: - Get My Tasks
     func getMyTasks() async throws -> [TaskEntity] {
         let response: ServiceResponse<[TaskDTO]> = try await network.request(
             endpoint: .myTasks,
             method: .get,
             body: nil
         )
-
+        print("🟢 RAW TASK RESPONSE:", response)
         let formatter = ISO8601DateFormatter()
 
         return (response.data ?? []).map { dto in
@@ -38,7 +39,8 @@ final class TaskRepositoryImpl: TaskRepositoryProtocol {
             )
         }
     }
-    
+
+    // MARK: - Create Task
     func createTask(
         businessId: String,
         title: String,
@@ -60,6 +62,27 @@ final class TaskRepositoryImpl: TaskRepositoryProtocol {
         let _: ServiceResponse<EmptyResponse> = try await network.request(
             endpoint: .createTask,
             method: .post,
+            body: body
+        )
+    }
+
+    // MARK: - Update Task Status (Complete / Feedback)
+    func updateTaskStatus(
+        taskId: String,
+        status: String,
+        thoughts: String,
+        difficulty: String
+    ) async throws {
+
+        let body = [
+            "status": status,
+            "thoughts": thoughts,
+            "difficulty": difficulty
+        ]
+
+        let _: ServiceResponse<EmptyResponse> = try await network.request(
+            endpoint: .updateTaskStatus(taskId: taskId),
+            method: .put,
             body: body
         )
     }

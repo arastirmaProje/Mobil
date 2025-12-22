@@ -29,6 +29,7 @@ enum Endpoint {
     case downloadDocument(documentId: String)
     case myTasks
     case createTask
+    case updateTaskStatus(taskId: String)
     
     case updateBusiness(businessId: String)
 
@@ -56,6 +57,7 @@ enum Endpoint {
         case .updateBusiness(let id): return "/api/Business/\(id)"
         case .myTasks: return "/api/Task/my-tasks"
         case .createTask: return "/api/Task/create"
+        case .updateTaskStatus(let taskId): return "/api/Task/\(taskId)/status"
 
         }
     }
@@ -68,7 +70,7 @@ enum Endpoint {
         case .businessMembers, .profile, .getBusiness, .provinces, .districts, .business, .businessList, .getBusinessMember, .downloadDocument, .myTasks:
             return .get
 
-        case .profileUpdate, .updateBusinessMember, .updateBusiness:
+        case .profileUpdate, .updateBusinessMember, .updateBusiness, .updateTaskStatus:
             return .put
         }
     }

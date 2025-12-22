@@ -15,9 +15,19 @@ struct TaskDetailView: View {
 
     @Environment(\.dismiss) private var dismiss
 
+    // MARK: - UI State
+    @State private var showStatusPicker = false
+    @State private var selectedStatus: TaskStatus?
+    @State private var navigateToFeedback = false
+
+    enum TaskStatus: String {
+        case completed = "Tamamlandı"
+        case pending = "Tamamlanmadı"
+    }
+
     // MARK: - Derived States
     private var isCompleted: Bool {
-        task.status.lowercased() == "tamamlandı"
+        selectedStatus == .completed || task.status.lowercased() == "tamamlandı"
     }
 
     private var isExpired: Bool {
@@ -45,6 +55,7 @@ struct TaskDetailView: View {
                 headerSection
                 dateSection
                 descriptionSection
+                statusSection
                 footerSection
 
                 Spacer(minLength: 40)
@@ -52,6 +63,9 @@ struct TaskDetailView: View {
             .padding(.bottom, 32)
         }
         .navigationBarBackButtonHidden(true)
+        .navigationDestination(isPresented: $navigateToFeedback) {
+            TaskFeedbackView(task: task)
+        }
     }
 }
 
@@ -68,6 +82,23 @@ private extension TaskDetailView {
             }
 
             Spacer()
+
+            Button {
+                if selectedStatus == .completed {
+                    navigateToFeedback = true
+                }
+            } label: {
+                Image(systemName: "checkmark")
+                    .foregroundStyle(
+                        selectedStatus == .completed
+                        ? .primary
+                        : .secondary
+                    )
+                    .frame(width: 44, height: 44)
+                    .background(Color(.systemGray5))
+                    .clipShape(Circle())
+            }
+            .disabled(selectedStatus != .completed)
         }
         .padding(.horizontal)
         .padding(.top, 12)
@@ -156,6 +187,71 @@ private extension TaskDetailView {
         .padding()
         .background(Color(.systemGray6))
         .cornerRadius(16)
+        .padding(.horizontal)
+    }
+}
+
+private extension TaskDetailView {
+
+    var statusSection: some View {
+        VStack(alignment: .leading, spacing: 8) {
+
+            Text("Durumu seçiniz")
+                .font(.headline)
+
+            Button {
+                withAnimation {
+                    showStatusPicker.toggle()
+                }
+            } label: {
+                HStack {
+                    Text(selectedStatus?.rawValue ?? "Seçiniz")
+                        .foregroundColor(
+                            selectedStatus == nil ? .secondary : .primary
+                        )
+
+                    Spacer()
+
+                    Image(systemName: "chevron.down")
+                        .foregroundColor(.secondary)
+                }
+                .padding()
+                .background(Color(.systemGray6))
+                .cornerRadius(12)
+            }
+
+            if showStatusPicker {
+                VStack(spacing: 0) {
+                    Button {
+                        selectedStatus = .completed
+                        showStatusPicker = false
+                    } label: {
+                        HStack {
+                            Text("Tamamlandı")
+                                .foregroundColor(.black)
+                            Spacer()
+                        }
+                        .padding()
+                    }
+
+                    Divider()
+
+                    Button {
+                        selectedStatus = .pending
+                        showStatusPicker = false
+                    } label: {
+                        HStack {
+                            Text("Tamamlanmadı")
+                                .foregroundColor(.black)
+                            Spacer()
+                        }
+                        .padding()
+                    }
+                }
+                .background(Color(.systemGray6))
+                .cornerRadius(12)
+            }
+        }
         .padding(.horizontal)
     }
 }
