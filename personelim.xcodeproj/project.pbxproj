@@ -265,9 +265,11 @@
 				CODE_SIGN_STYLE = Automatic;
 				CURRENT_PROJECT_VERSION = 1;
 				DEVELOPMENT_ASSET_PATHS = "\"personelim/Preview Content\"";
-				DEVELOPMENT_TEAM = 327M37XF2W;
+				DEVELOPMENT_TEAM = QHNUG992DU;
 				ENABLE_PREVIEWS = YES;
 				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_FILE = personelim/Info.plist;
+				INFOPLIST_KEY_NSCameraUsageDescription = "Kimlik doğrulama ve belge tarama işlemleri için kameraya erişim gereklidir.";
 				INFOPLIST_KEY_UIApplicationSceneManifest_Generation = YES;
 				INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents = YES;
 				INFOPLIST_KEY_UILaunchScreen_Generation = YES;
@@ -296,9 +298,11 @@
 				CODE_SIGN_STYLE = Automatic;
 				CURRENT_PROJECT_VERSION = 1;
 				DEVELOPMENT_ASSET_PATHS = "\"personelim/Preview Content\"";
-				DEVELOPMENT_TEAM = 327M37XF2W;
+				DEVELOPMENT_TEAM = QHNUG992DU;
 				ENABLE_PREVIEWS = YES;
 				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_FILE = personelim/Info.plist;
+				INFOPLIST_KEY_NSCameraUsageDescription = "Kimlik doğrulama ve belge tarama işlemleri için kameraya erişim gereklidir.";
 				INFOPLIST_KEY_UIApplicationSceneManifest_Generation = YES;
 				INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents = YES;
 				INFOPLIST_KEY_UILaunchScreen_Generation = YES;

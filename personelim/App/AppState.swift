@@ -11,6 +11,8 @@ import Foundation
 final class AppState: ObservableObject {
 
     @Published private(set) var isLoggedIn: Bool = false
+    @Published var isBootstrapping: Bool = false
+    @Published var bootstrapError: String?
 
     @Published var userId: String?
     @Published var businessId: String?
@@ -19,54 +21,118 @@ final class AppState: ObservableObject {
 
     init() {
         isLoggedIn = TokenStore.shared.hasValidToken()
+        businessId = TokenStore.shared.selectedBusinessId
     }
 
-    func applyLogin(userId: String, role: UserRole) {
+    func applyLogin(userId: String, role: UserRole, businessId: String? = nil) {
         self.userId = userId
         self.role = role
         self.isLoggedIn = true
+
+        if let businessId {
+            self.businessId = businessId
+            TokenStore.shared.selectedBusinessId = businessId
+        }
+    }
+
+    func setSelectedBusiness(_ id: String?) {
+        businessId = id
+        TokenStore.shared.selectedBusinessId = id
     }
 
     func logout() {
         TokenStore.shared.clear()
         isLoggedIn = false
+        isBootstrapping = false
+        bootstrapError = nil
+
         userId = nil
         businessId = nil
         role = .default
         businessMembers = []
     }
 
-    func loadRoleIfNeeded(
+    func bootstrap(
         authRepository: AuthRepositoryProtocol,
+        businessRepository: BusinessRepositoryProtocol,
         businessMemberRepository: BusinessMemberRepositoryProtocol
     ) async {
-        guard isLoggedIn else { return }
+        bootstrapError = nil
 
-        if userId == nil {
-            do {
-                let profile = try await authRepository.getProfile()
-                userId = profile.id
-            } catch {
-                return
-            }
+        guard TokenStore.shared.hasValidToken() else {
+            logout()
+            return
         }
 
-        guard let businessId, let userId else { return }
+        isLoggedIn = true
+        isBootstrapping = true
+        defer { isBootstrapping = false }
 
         do {
-            let members = try await businessMemberRepository.getMembers(businessId: businessId)
+            if userId == nil {
+                let profile = try await authRepository.getProfile()
+                userId = profile.id
+            }
+
+            if businessId == nil {
+                let businesses = try await businessRepository.getBusinesses()
+                let firstId = businesses.first?.id
+                businessId = firstId
+                TokenStore.shared.selectedBusinessId = firstId
+            }
+
+            guard let bid = businessId, let uid = userId else {
+                role = .default
+                businessMembers = []
+                return
+            }
+
+            let members = try await businessMemberRepository.getMembers(businessId: bid)
             self.businessMembers = members.filter { $0.isActive == true }
 
-            let me = members.first { $0.userId.lowercased() == userId.lowercased() }
+            let me = members.first { $0.userId.lowercased() == uid.lowercased() }
             role = me?.role ?? .default
+
+        } catch {
+            bootstrapError = error.localizedDescription
+            logout()
+        }
+    }
+
+    func loadRoleIfNeeded(
+        authRepository: AuthRepositoryProtocol,
+        businessRepository: BusinessRepositoryProtocol,
+        businessMemberRepository: BusinessMemberRepositoryProtocol
+    ) async {
+        guard TokenStore.shared.hasValidToken() else { return }
+        isLoggedIn = true
+
+        do {
+            if userId == nil {
+                let profile = try await authRepository.getProfile()
+                userId = profile.id
+            }
+
+            if businessId == nil {
+                let businesses = try await businessRepository.getBusinesses()
+                businessId = businesses.first?.id
+                TokenStore.shared.selectedBusinessId = businessId
+            }
+
+            guard let bid = businessId, let uid = userId else { return }
+
+            let members = try await businessMemberRepository.getMembers(businessId: bid)
+            self.businessMembers = members.filter { $0.isActive == true }
+
+            let me = members.first { $0.userId.lowercased() == uid.lowercased() }
+            role = me?.role ?? .default
+
         } catch {
             role = .default
         }
     }
 
-    func loadBusinessMembersIfNeeded(
-        repository: BusinessMemberRepositoryProtocol
-    ) async {
+    func loadBusinessMembersIfNeeded(repository: BusinessMemberRepositoryProtocol) async {
         guard let businessId else { return }
         guard businessMembers.isEmpty else { return }
 
@@ -74,7 +140,7 @@ final class AppState: ObservableObject {
             let members = try await repository.getMembers(businessId: businessId)
             self.businessMembers = members.filter { $0.isActive == true }
         } catch {
-            print("❌ Failed to load members:", error)
+            print("Failed to load members:", error)
         }
     }
 }

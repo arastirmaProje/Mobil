@@ -22,7 +22,7 @@ final class TaskRepositoryImpl: TaskRepositoryProtocol {
             method: .get,
             body: nil
         )
-        print("🟢 RAW TASK RESPONSE:", response)
+        print("RAW TASK RESPONSE:", response)
         let formatter = ISO8601DateFormatter()
 
         return (response.data ?? []).map { dto in

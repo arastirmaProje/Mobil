@@ -7,12 +7,27 @@ final class EditPersonalProfileViewModel: ObservableObject {
     @Published var email = ""
     @Published var firstName = ""
     @Published var lastName = ""
+
     @Published var photoItem: PhotosPickerItem?
     @Published var photoData: Data?
+    @Published var remoteImageUrl: String?
+
     @Published var tcIdentityNumber: String = ""
+    private var initialTCIdentityNumber: String = ""
+
+    private var initialEmail: String = ""
+    private var initialFirstName: String = ""
+    private var initialLastName: String = ""
+    private var initialRemoteImageUrl: String?
+
     @Published var cvURL: URL?
     @Published var documentURL: URL?
+
+    @Published var existingCVs: [BusinessMemberDocumentDTO] = []
+    @Published var existingDocuments: [BusinessMemberDocumentDTO] = []
+
     @Published var isLoading = false
+    @Published var isDeletingDoc = false
     @Published var errorMessage: String?
 
     private let authRepo: AuthRepositoryProtocol
@@ -29,20 +44,57 @@ final class EditPersonalProfileViewModel: ObservableObject {
         self.memberRepo = memberRepo
     }
 
+    // MARK: - Load
     func load() async {
+        isLoading = true
+        errorMessage = nil
+        defer { isLoading = false }
+
         do {
-            isLoading = true
             let p = try await authRepo.getProfile()
+
             email = p.email
             firstName = p.firstName ?? ""
             lastName = p.lastName ?? ""
-            isLoading = false
+            remoteImageUrl = p.imageUrl
+            initialEmail = email
+            initialFirstName = firstName
+            initialLastName = lastName
+            initialRemoteImageUrl = remoteImageUrl
+
+            let businesses = try await businessRepo.getBusinesses()
+            guard let business = businesses.first else {
+                existingCVs = []
+                existingDocuments = []
+                tcIdentityNumber = ""
+                initialTCIdentityNumber = ""
+                return
+            }
+
+            let members = try await memberRepo.getMembers(businessId: business.id)
+            guard let me = members.first(where: { $0.userId.lowercased() == p.id.lowercased() }) else {
+                existingCVs = []
+                existingDocuments = []
+                tcIdentityNumber = ""
+                initialTCIdentityNumber = ""
+                return
+            }
+
+            let detail = try await memberRepo.getMember(memberId: me.id)
+
+            tcIdentityNumber = detail.tcIdentityNumber ?? ""
+            initialTCIdentityNumber = tcIdentityNumber
+
+            let docs = detail.documents ?? []
+            existingCVs = docs.filter { $0.documentType.uppercased() == "CV" }
+            existingDocuments = docs.filter { $0.documentType.uppercased() != "CV" }
+
         } catch {
-            isLoading = false
             errorMessage = error.localizedDescription
         }
     }
 
+    // MARK: - Photo
     func onPickPhoto(_ item: PhotosPickerItem?) async {
         guard let item else { return }
         do {
@@ -54,52 +106,115 @@ final class EditPersonalProfileViewModel: ObservableObject {
         }
     }
 
-    func setTC(_ value: String) {
-        tcIdentityNumber = value
-    }
+    func setTC(_ value: String) { tcIdentityNumber = value }
+    func setCV(url: URL) { cvURL = url }
+    func setDocument(url: URL) { documentURL = url }
 
-    func setCV(url: URL) {
-        cvURL = url
-    }
-
-    func setDocument(url: URL) {
-        documentURL = url
-    }
-
+    // MARK: - Save (Company gibi: işlem sonrası reload)
     func save() async throws {
         isLoading = true
+        errorMessage = nil
         defer { isLoading = false }
 
-        _ = try await authRepo.updateProfile(
-            email: email,
-            firstName: firstName,
-            lastName: lastName,
-            imageData: photoData
-        )
+        var didChangeAnything = false
+
+        if shouldUpdateProfile() {
+            _ = try await authRepo.updateProfile(
+                email: email.trimmed,
+                firstName: firstName.trimmed,
+                lastName: lastName.trimmed,
+                imageData: photoData
+            )
+            didChangeAnything = true
+        }
 
     
-        try await updateTCIdentityIfNeeded()
-        try await uploadSelectedPDFsIfNeeded()
+        do {
+            let tcUpdated = try await updateTCIdentityIfNeeded()
+            if tcUpdated { didChangeAnything = true }
+        } catch {
+         
+            self.errorMessage = error.localizedDescription
+        }
+
+        let uploaded = try await uploadSelectedPDFsIfNeeded()
+        if uploaded { didChangeAnything = true }
+
+        if didChangeAnything {
+            photoData = nil
+            photoItem = nil
+            cvURL = nil
+            documentURL = nil
+
+            await load()
+        }
     }
 
-    // MARK: - TC Update
-    private func updateTCIdentityIfNeeded() async throws {
-        let tc = tcIdentityNumber.trimmingCharacters(in: .whitespacesAndNewlines)
-        guard !tc.isEmpty else { return }
+    // MARK: - Delete account
+    func deleteMyAccount() async {
+        isLoading = true
+        errorMessage = nil
+        defer { isLoading = false }
 
-   
+        do {
+            try await authRepo.deleteAccount()
+            TokenStore.shared.clear()
+        } catch {
+            errorMessage = error.localizedDescription
+        }
+    }
+
+    // MARK: - Delete document
+    func deleteDocument(_ doc: BusinessMemberDocumentDTO) async {
+        isDeletingDoc = true
+        errorMessage = nil
+        defer { isDeletingDoc = false }
+
+        do {
+            try await memberRepo.deleteMemberDocument(documentId: doc.id)
+
+            if doc.documentType.uppercased() == "CV" {
+                existingCVs.removeAll { $0.id == doc.id }
+            } else {
+                existingDocuments.removeAll { $0.id == doc.id }
+            }
+        } catch {
+            errorMessage = error.localizedDescription
+        }
+    }
+
+    // MARK: - Helpers
+
+    private func shouldUpdateProfile() -> Bool {
+        let e = email.trimmed
+        let f = firstName.trimmed
+        let l = lastName.trimmed
+
+        if e != initialEmail { return true }
+        if f != initialFirstName { return true }
+        if l != initialLastName { return true }
+
+        if photoData != nil { return true }
+
+        return false
+    }
+
+    private func updateTCIdentityIfNeeded() async throws -> Bool {
+        let tc = tcIdentityNumber.trimmed
+        let initial = initialTCIdentityNumber.trimmed
+
+        guard tc != initial else { return false }
+
+        guard !tc.isEmpty else { return false }
+
         let auth = try await authRepo.getProfile()
         let myUserId = auth.id
 
-   
         let businesses = try await businessRepo.getBusinesses()
-        guard let business = businesses.first else { return }
+        guard let business = businesses.first else { return false }
 
- 
         let members = try await memberRepo.getMembers(businessId: business.id)
-        guard let me = members.first(where: { $0.userId.lowercased() == myUserId.lowercased() }) else { return }
-
-        let memberId = me.id
+        guard let me = members.first(where: { $0.userId.lowercased() == myUserId.lowercased() }) else { return false }
 
         let req = UpdateBusinessMemberRequestDTO(
             role: nil,
@@ -108,53 +223,49 @@ final class EditPersonalProfileViewModel: ObservableObject {
             tcIdentityNumber: tc
         )
 
-        try await memberRepo.updateMember(memberId: memberId, request: req)
+        try await memberRepo.updateMember(memberId: me.id, request: req)
 
-     
-        let detail = try await memberRepo.getMember(memberId: memberId)
-        print("✅ MEMBER DETAIL (after TC update) tcIdentityNumber:", detail.tcIdentityNumber ?? "nil")
+        initialTCIdentityNumber = tc
+        return true
     }
 
-    // MARK: - Upload PDFs
-    private func uploadSelectedPDFsIfNeeded() async throws {
-        if cvURL == nil && documentURL == nil { return }
+    private func uploadSelectedPDFsIfNeeded() async throws -> Bool {
+        if cvURL == nil && documentURL == nil { return false }
 
-    
         let auth = try await authRepo.getProfile()
         let myUserId = auth.id
 
-       
         let businesses = try await businessRepo.getBusinesses()
-        guard let business = businesses.first else { return }
-
+        guard let business = businesses.first else { return false }
 
         let members = try await memberRepo.getMembers(businessId: business.id)
-        guard let me = members.first(where: { $0.userId.lowercased() == myUserId.lowercased() }) else { return }
+        guard let me = members.first(where: { $0.userId.lowercased() == myUserId.lowercased() }) else { return false }
 
-        let memberId = me.id
+        var didUpload = false
 
         if let url = cvURL {
             let data = try readFileData(url: url)
             _ = try await memberRepo.uploadDocument(
-                memberId: memberId,
+                memberId: me.id,
                 documentType: "CV",
                 fileData: data,
                 fileName: url.lastPathComponent.isEmpty ? "cv.pdf" : url.lastPathComponent
             )
+            didUpload = true
         }
 
         if let url = documentURL {
             let data = try readFileData(url: url)
             _ = try await memberRepo.uploadDocument(
-                memberId: memberId,
+                memberId: me.id,
                 documentType: "DOCUMENT",
                 fileData: data,
                 fileName: url.lastPathComponent.isEmpty ? "document.pdf" : url.lastPathComponent
             )
+            didUpload = true
         }
 
-        let detail = try await memberRepo.getMember(memberId: memberId)
-        print("✅ MEMBER DETAIL DOCUMENTS:", detail.documents ?? [])
+        return didUpload
     }
 
     private func readFileData(url: URL) throws -> Data {
@@ -162,4 +273,9 @@ final class EditPersonalProfileViewModel: ObservableObject {
         defer { if needsSecurity { url.stopAccessingSecurityScopedResource() } }
         return try Data(contentsOf: url)
     }
+}
+
+// MARK: - String helper
+private extension String {
+    var trimmed: String { trimmingCharacters(in: .whitespacesAndNewlines) }
 }

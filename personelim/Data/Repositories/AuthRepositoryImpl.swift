@@ -185,6 +185,19 @@ final class AuthRepositoryImpl: AuthRepositoryProtocol {
         return data
     }
 
+    
+        func deleteAccount() async throws {
+            let res: ServiceResponse<Bool> = try await network.request(
+                endpoint: .deleteAccount,
+                method: .delete,
+                body: nil
+            )
+
+            guard res.success else {
+                throw RepositoryError.api(message: res.message ?? "Hesap silinemedi")
+            }
+        }
+    
 
 
 }

@@ -17,4 +17,5 @@ protocol BusinessMemberRepositoryProtocol {
         fileData: Data,
         fileName: String
     ) async throws -> BusinessMemberDocumentDTO
+    func deleteMemberDocument(documentId: String) async throws
 }

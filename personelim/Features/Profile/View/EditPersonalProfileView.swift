@@ -11,6 +11,8 @@ struct EditPersonalProfileView: View {
     @State private var showCVPicker = false
     @State private var showDocPicker = false
 
+    @State private var showDeleteAccountConfirm = false
+
     init(authRepo: AuthRepositoryProtocol) {
         _vm = StateObject(wrappedValue: EditPersonalProfileViewModel(authRepo: authRepo))
     }
@@ -51,6 +53,14 @@ struct EditPersonalProfileView: View {
                             .keyboardType(.emailAddress)
                     }
 
+                    LabeledRoundedField(title: "İsim") {
+                        TextField("", text: $vm.firstName)
+                    }
+
+                    LabeledRoundedField(title: "Soyisim") {
+                        TextField("", text: $vm.lastName)
+                    }
+
                     LabeledRoundedField(title: "Kimlik", trailingTitle: "Tara", trailingAction: {
                         showIDScanner = true
                     }) {
@@ -58,7 +68,41 @@ struct EditPersonalProfileView: View {
                             .keyboardType(.numberPad)
                     }
 
-                  
+                    LabeledRoundedField(title: "CV", trailingTitle: "Ekle", trailingAction: {
+                        showCVPicker = true
+                    }) {
+                        TextField("", text: Binding(
+                            get: { vm.cvURL?.lastPathComponent ?? "" },
+                            set: { _ in }
+                        ))
+                        .disabled(true)
+                    }
+
+                    if !vm.existingCVs.isEmpty {
+                        VStack(alignment: .leading, spacing: 8) {
+                            Text("Yüklenmiş CV’ler")
+                                .font(.footnote)
+                                .foregroundColor(.gray)
+
+                            ForEach(vm.existingCVs, id: \.id) { d in
+                                HStack(spacing: 10) {
+                                    Text(d.fileName)
+                                        .font(.callout)
+                                        .frame(maxWidth: .infinity, alignment: .leading)
+
+                                    Button(role: .destructive) {
+                                        Task { await vm.deleteDocument(d) }
+                                    } label: {
+                                        Image(systemName: "trash")
+                                    }
+                                    .disabled(vm.isDeletingDoc || vm.isLoading)
+                                }
+                                .padding()
+                                .background(Color(.systemGray6))
+                                .cornerRadius(10)
+                            }
+                        }
+                    }
 
                     LabeledRoundedField(title: "Belgeler", trailingTitle: "Ekle", trailingAction: {
                         showDocPicker = true
@@ -70,12 +114,51 @@ struct EditPersonalProfileView: View {
                         .disabled(true)
                     }
 
+                    if !vm.existingDocuments.isEmpty {
+                        VStack(alignment: .leading, spacing: 8) {
+                            Text("Yüklenmiş Belgeler")
+                                .font(.footnote)
+                                .foregroundColor(.gray)
+
+                            ForEach(vm.existingDocuments, id: \.id) { d in
+                                HStack(spacing: 10) {
+                                    Text(d.fileName)
+                                        .font(.callout)
+                                        .frame(maxWidth: .infinity, alignment: .leading)
+
+                                    Button(role: .destructive) {
+                                        Task { await vm.deleteDocument(d) }
+                                    } label: {
+                                        Image(systemName: "trash")
+                                    }
+                                    .disabled(vm.isDeletingDoc || vm.isLoading)
+                                }
+                                .padding()
+                                .background(Color(.systemGray6))
+                                .cornerRadius(10)
+                            }
+                        }
+                    }
+
                     if let err = vm.errorMessage {
                         Text(err)
                             .foregroundColor(.red)
                             .font(.footnote)
                             .padding(.top, 4)
                     }
+
+                    Divider().padding(.top, 8)
+
+                    Button(role: .destructive) {
+                        showDeleteAccountConfirm = true
+                    } label: {
+                        Text("Hesabı Sil")
+                            .frame(maxWidth: .infinity)
+                            .padding(.vertical, 14)
+                            .background(Color.red.opacity(0.12))
+                            .cornerRadius(12)
+                    }
+                    .disabled(vm.isLoading)
 
                     Spacer().frame(height: 24)
                 }
@@ -117,12 +200,35 @@ struct EditPersonalProfileView: View {
         }
 
         .sheet(isPresented: $showIDScanner) {
-            IDNumberScannerView { tc in
-                vm.setTC(tc)
-                showIDScanner = false
-            } onCancel: {
-                showIDScanner = false
+            IDNumberScannerView(
+                onFound: { tc in
+                    vm.setTC(tc)
+                    showIDScanner = false
+                },
+                onCancel: {
+                    showIDScanner = false
+                },
+                onError: { msg in
+                    vm.errorMessage = msg   
+                    showIDScanner = false
+                }
+            )
+        }
+
+        .confirmationDialog(
+            "Hesabınızı silmek istiyor musunuz?",
+            isPresented: $showDeleteAccountConfirm,
+            titleVisibility: .visible
+        ) {
+            Button("Hesabı Sil", role: .destructive) {
+                Task {
+                    await vm.deleteMyAccount()
+                    if vm.errorMessage == nil {
+                        dismiss()
+                    }
+                }
             }
+            Button("Vazgeç", role: .cancel) { }
         }
     }
 
@@ -154,8 +260,6 @@ struct EditPersonalProfileView: View {
                     .font(.system(size: 18, weight: .semibold))
                     .foregroundColor(.black)
                     .frame(width: 44, height: 44)
-                    .foregroundColor(.black)
-                    .frame(width: 44, height: 44)
                     .background(Color(.systemGray6))
                     .clipShape(Circle())
             }
@@ -166,19 +270,40 @@ struct EditPersonalProfileView: View {
         .padding(.bottom, 10)
     }
 
-    // MARK: - Foto preview
+    // MARK: - Foto preview 
     private func profileImage(size: CGFloat) -> some View {
         Group {
             if let data = vm.photoData, let ui = UIImage(data: data) {
                 Image(uiImage: ui)
                     .resizable()
                     .scaledToFill()
+            } else if let url = absoluteURL(from: vm.remoteImageUrl) {
+                AsyncImage(url: url) { phase in
+                    switch phase {
+                    case .success(let img):
+                        img.resizable().scaledToFill()
+                    case .failure:
+                        Circle().fill(Color.gray.opacity(0.25))
+                    case .empty:
+                        ProgressView()
+                    @unknown default:
+                        Circle().fill(Color.gray.opacity(0.25))
+                    }
+                }
             } else {
                 Circle().fill(Color.gray.opacity(0.25))
             }
         }
         .frame(width: size, height: size)
         .clipShape(Circle())
+    }
+
+    private func absoluteURL(from pathOrUrl: String?) -> URL? {
+        let baseURL = "https://personelimapi.onrender.com"
+        guard var s = pathOrUrl, !s.isEmpty else { return nil }
+        if s.lowercased().hasPrefix("http") { return URL(string: s) }
+        if !s.hasPrefix("/") { s = "/" + s }
+        return URL(string: baseURL + s)
     }
 }
 

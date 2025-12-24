@@ -27,8 +27,6 @@ struct CreateTaskRequestDTO: Encodable {
         self.assignedToUserId = assignedToUserId
         self.title = title
         self.description = description
-
-        // Backend'in beklediği format: "2025-12-21T00:00:00Z"
         let iso = ISO8601DateFormatter()
         iso.formatOptions = [.withInternetDateTime, .withFractionalSeconds]
 

@@ -1,10 +1,3 @@
-//
-//  BusinessMemberRepositoryImpl.swift
-//  personelim
-//
-//  Created by Yusuf Kaan USTA on 16.12.2025.
-//
-
 import Foundation
 
 final class BusinessMemberRepositoryImpl: BusinessMemberRepositoryProtocol {
@@ -16,7 +9,6 @@ final class BusinessMemberRepositoryImpl: BusinessMemberRepositoryProtocol {
     }
 
     func getMembers(businessId: String) async throws -> [BusinessMemberDTO] {
-
         let response: BusinessMemberServiceResponseDTO = try await network.request(
             endpoint: .businessMembers(businessId: businessId),
             method: .get,
@@ -31,7 +23,6 @@ final class BusinessMemberRepositoryImpl: BusinessMemberRepositoryProtocol {
     }
 
     func getMember(memberId: String) async throws -> BusinessMemberDTO {
-
         let res: ServiceResponse<BusinessMemberDTO> = try await network.request(
             endpoint: .getBusinessMember(memberId: memberId),
             method: .get,
@@ -46,7 +37,6 @@ final class BusinessMemberRepositoryImpl: BusinessMemberRepositoryProtocol {
     }
 
     func updateMember(memberId: String, request: UpdateBusinessMemberRequestDTO) async throws {
-
         let res: ServiceResponse<Bool> = try await network.request(
             endpoint: .updateBusinessMember(memberId: memberId),
             method: .put,
@@ -89,4 +79,35 @@ final class BusinessMemberRepositoryImpl: BusinessMemberRepositoryProtocol {
 
         return data
     }
+
+    func deleteMemberDocument(documentId: String) async throws {
+        let res: ServiceResponse<Bool> = try await network.request(
+            endpoint: .deleteMemberDocument(documentId: documentId),
+            method: .delete,
+            body: nil
+        )
+
+        guard res.success else {
+            throw RepositoryError.api(message: res.message ?? "Belge silinemedi")
+        }
+    }
+
+    // üye belgesi güncellem eklenmesi lazım
+  //  func updateMemberDocument<T: Encodable>(
+  //      documentId: String,
+    //      body: T
+    //  ) async throws -> BusinessMemberDocumentDTO {
+
+    //    let res: ServiceResponse<BusinessMemberDocumentDTO> = try await network.request(
+    //       endpoint: .updateMemberDocument(documentId: documentId),
+    //       method: .put,
+    //       body: body
+    //    )
+
+    //    guard res.success, let data = res.data else {
+    //        throw RepositoryError.api(message: res.message ?? "Belge güncellenemedi")
+    //   }
+
+    //   return data
+    // }
 }

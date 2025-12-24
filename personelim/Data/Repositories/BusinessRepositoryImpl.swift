@@ -1,42 +1,35 @@
-//
-//  BusinessRepositoryImpl.swift
-//  personelim
-//
-//  Created by Tuğberk Acabey on 6.12.2025.
-//
-
 import Foundation
 
 final class BusinessRepositoryImpl: BusinessRepositoryProtocol {
-    
+
     private let networkManager: NetworkManagerProtocol
-    
+
     init(networkManager: NetworkManagerProtocol) {
         self.networkManager = networkManager
     }
-    
+
     func createBusiness(request: CreateBusinessRequestDTO) async throws {
         _ = try await createBusinessAndReturnId(request: request)
     }
-    
+
     func createBusinessAndReturnId(request: CreateBusinessRequestDTO) async throws -> String {
-        
+
         let response: CreateBusinessServiceResponseDTO = try await networkManager.request(
             endpoint: .createBusiness,
             method: .post,
             body: request
         )
-        
+
         guard response.success, let id = response.data?.id else {
             throw RepositoryError.api(message: response.message ?? "Şirket oluşturulamadı")
         }
-        
+
         return id
     }
-    
+
     func verifyBusiness(code: String) async throws -> VerifyBusinessResponseDTO {
         let body = VerifyBusinessRequestDTO(code: code)
-        
+
         let response: VerifyBusinessResponseDTO = try await networkManager.request(
             endpoint: .verifyBusiness,
             method: .post,
@@ -44,46 +37,46 @@ final class BusinessRepositoryImpl: BusinessRepositoryProtocol {
         )
         return response
     }
-    
+
     func getBusiness(businessId: String) async throws -> BusinessDTO {
-        
+
         let response: BusinessServiceResponseDTO = try await networkManager.request(
             endpoint: .getBusiness(businessId: businessId),
             method: .get,
             body: nil
         )
-        
+
         guard let data = response.data else {
             throw RepositoryError.api(message: response.message ?? "Şirket bilgisi alınamadı")
         }
-        
+
         return data
     }
-    
-        func getBusinesses() async throws -> [BusinessDTO] {
-            let response: ServiceResponse<[BusinessDTO]> = try await networkManager.request(
-                endpoint: .businessList,
-                method: .get,
-                body: nil
-            )
 
-            guard response.success, let data = response.data else {
-                throw RepositoryError.api(message: response.message ?? "Şirketler alınamadı")
-            }
+    func getBusinesses() async throws -> [BusinessDTO] {
+        let response: ServiceResponse<[BusinessDTO]> = try await networkManager.request(
+            endpoint: .businessList,
+            method: .get,
+            body: nil
+        )
 
-            return data
+        guard response.success, let data = response.data else {
+            throw RepositoryError.api(message: response.message ?? "Şirketler alınamadı")
         }
 
-        func getMyBusiness() async throws -> BusinessDTO {
-            let list = try await getBusinesses()
+        return data
+    }
 
-            guard let first = list.first else {
-                throw RepositoryError.api(message: "Şirket bulunamadı")
-            }
+    func getMyBusiness() async throws -> BusinessDTO {
+        let list = try await getBusinesses()
 
-            return first
+        guard let first = list.first else {
+            throw RepositoryError.api(message: "Şirket bulunamadı")
         }
-    
+
+        return first
+    }
+
     func updateBusiness(businessId: String, request: UpdateBusinessRequestDTO) async throws -> EmptyResponse {
 
         var fields: [String: String] = [:]
@@ -104,7 +97,7 @@ final class BusinessRepositoryImpl: BusinessRepositoryProtocol {
         if let img = request.imageData {
             files.append(
                 MultipartFile(
-                    fieldName: "Image",       
+                    fieldName: "Image",
                     fileName: "company.jpg",
                     mimeType: "image/jpeg",
                     data: img
@@ -122,7 +115,47 @@ final class BusinessRepositoryImpl: BusinessRepositoryProtocol {
         return resp
     }
 
+    func uploadBusinessDocument(
+        businessId: String,
+        documentType: String,
+        fileData: Data,
+        fileName: String
+    ) async throws -> BusinessMemberDocumentDTO {
 
+        let fields: [String: String] = [
+            "documentType": documentType
+        ]
 
+        let file = MultipartFile(
+            fieldName: "file",
+            fileName: fileName,
+            mimeType: "application/pdf",
+            data: fileData
+        )
 
+        let res: ServiceResponse<BusinessMemberDocumentDTO> = try await networkManager.uploadMultipart(
+            endpoint: .uploadBusinessDocument(businessId: businessId), 
+            method: .post,
+            fields: fields,
+            files: [file]
+        )
+
+        guard res.success, let data = res.data else {
+            throw RepositoryError.api(message: res.message ?? "Şirket belgesi yüklenemedi")
+        }
+
+        return data
+    }
+
+    func deleteBusinessDocument(documentId: String) async throws {
+        let res: ServiceResponse<Bool> = try await networkManager.request(
+            endpoint: .deleteBusinessDocument(documentId: documentId),
+            method: .delete,
+            body: nil
+        )
+
+        guard res.success else {
+            throw RepositoryError.api(message: res.message ?? "Şirket belgesi silinemedi")
+        }
+    }
 }

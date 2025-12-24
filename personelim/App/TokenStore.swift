@@ -13,6 +13,7 @@ final class TokenStore {
     private init() {}
 
     private let tokenKey = "auth_token"
+    private let selectedBusinessIdKey = "selected_business_id"
 
     var token: String? {
         UserDefaults.standard.string(forKey: tokenKey)
@@ -22,8 +23,20 @@ final class TokenStore {
         UserDefaults.standard.set(token, forKey: tokenKey)
     }
 
+    var selectedBusinessId: String? {
+        get { UserDefaults.standard.string(forKey: selectedBusinessIdKey) }
+        set {
+            if let v = newValue {
+                UserDefaults.standard.set(v, forKey: selectedBusinessIdKey)
+            } else {
+                UserDefaults.standard.removeObject(forKey: selectedBusinessIdKey)
+            }
+        }
+    }
+
     func clear() {
         UserDefaults.standard.removeObject(forKey: tokenKey)
+        UserDefaults.standard.removeObject(forKey: selectedBusinessIdKey)
     }
 
     func hasValidToken() -> Bool {

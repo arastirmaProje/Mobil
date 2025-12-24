@@ -108,9 +108,7 @@ struct EditCompanyView: View {
         ) { result in
             switch result {
             case .success(let urls):
-                if let url = urls.first {
-                    vm.setDocument(url: url)
-                }
+                if let url = urls.first { vm.setDocument(url: url) }
             case .failure(let error):
                 vm.errorMessage = error.localizedDescription
             }
@@ -118,7 +116,7 @@ struct EditCompanyView: View {
 
         .sheet(isPresented: $vm.showMapPicker) {
             MapPickerView { result in
-                vm.setLocation(result.coordinate, address: result.address)
+                vm.setLocation(result.coordinate)
             }
         }
 
@@ -133,7 +131,7 @@ struct EditCompanyView: View {
         }
     }
 
-    // MARK: - Top Bar (geri + check)
+    // MARK: - Top Bar
     private var topBar: some View {
         HStack {
             Button { dismiss() } label: {
@@ -186,13 +184,13 @@ struct EditCompanyView: View {
     }
 }
 
-// MARK: - Lokasyon ekle (CreateCompany ile aynı yapı)
+// MARK: - Ofisler
 private extension EditCompanyView {
     var officeSection: some View {
         VStack(alignment: .leading, spacing: 12) {
 
             HStack {
-                Text("Lokasyon düzenle")
+                Text("Ofisler")
                     .font(.system(size: 14, weight: .medium))
                 Spacer()
                 Button("Ekle") { vm.addOffice() }
@@ -212,17 +210,11 @@ private extension EditCompanyView {
                                 Image(systemName: "trash")
                                     .foregroundColor(.red)
                             }
+                            .disabled(vm.offices.count <= 1)
                         }
                     }
 
                     TextField("Ofis adı (örn: Ofis 1)", text: $office.name)
-                        .padding()
-                        .overlay(
-                            RoundedRectangle(cornerRadius: 8)
-                                .stroke(.gray.opacity(0.4))
-                        )
-
-                    TextField("Adres", text: $office.address)
                         .padding()
                         .overlay(
                             RoundedRectangle(cornerRadius: 8)
@@ -238,6 +230,10 @@ private extension EditCompanyView {
                         Text("Seçilen Konum: \(lat), \(lng)")
                             .font(.system(size: 12))
                             .foregroundColor(.gray)
+                    } else {
+                        Text("Konum seçilmedi")
+                            .font(.system(size: 12))
+                            .foregroundColor(.gray.opacity(0.8))
                     }
                 }
             }
@@ -245,6 +241,7 @@ private extension EditCompanyView {
     }
 }
 
+// MARK: - İl / İlçe
 private extension EditCompanyView {
     var provincePicker: some View {
         VStack(alignment: .leading, spacing: 6) {
@@ -303,7 +300,7 @@ private extension EditCompanyView {
     }
 }
 
-// MARK: - UI Helper 
+// MARK: - UI Helper
 private struct LabeledRoundedField<Content: View>: View {
     let title: String
     var trailingTitle: String? = nil

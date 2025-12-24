@@ -30,8 +30,14 @@ enum Endpoint {
     case myTasks
     case createTask
     case updateTaskStatus(taskId: String)
-    
     case updateBusiness(businessId: String)
+    case uploadBusinessDocument(businessId: String)
+    case getBusinessDocuments(businessId: String)
+    case deleteBusinessDocument(documentId: String)
+    case deleteMemberDocument(documentId: String)
+    case deleteBusiness(businessId: String)
+    case deleteBusinessMember(memberId: String)
+    case deleteAccount
 
     var path: String {
         switch self {
@@ -58,20 +64,35 @@ enum Endpoint {
         case .myTasks: return "/api/Task/my-tasks"
         case .createTask: return "/api/Task/create"
         case .updateTaskStatus(let taskId): return "/api/Task/\(taskId)/status"
+        case .uploadBusinessDocument(let businessId): return "/api/Business/\(businessId)/documents"
+        case .getBusinessDocuments(let businessId): return "/api/Business/\(businessId)/documents"
+        case .deleteBusinessDocument(let documentId): return "/api/Business/documents/\(documentId)"
+        case .deleteMemberDocument(let documentId): return "/api/BusinessMember/documents/\(documentId)"
+        case .deleteBusiness(let businessId): return "/api/Business/\(businessId)"
+        case .deleteBusinessMember(let memberId): return "/api/BusinessMember/\(memberId)"
+        case .deleteAccount: return "/api/Auth/delete-account"
+            
 
         }
     }
 
     var method: HTTPMethod {
         switch self {
-        case .login, .register, .forgotPassword, .verifyResetCode, .resetPassword, .verifyBusiness, .createBusiness, .uploadMemberDocuments, .createTask:
+        case .login, .register, .forgotPassword, .verifyResetCode, .resetPassword, .verifyBusiness, .createBusiness, .uploadMemberDocuments, .createTask, .uploadBusinessDocument:
             return .post
 
-        case .businessMembers, .profile, .getBusiness, .provinces, .districts, .business, .businessList, .getBusinessMember, .downloadDocument, .myTasks:
+        case .businessMembers, .profile, .getBusiness, .provinces, .districts, .business, .businessList, .getBusinessMember, .downloadDocument, .myTasks, .getBusinessDocuments:
             return .get
 
         case .profileUpdate, .updateBusinessMember, .updateBusiness, .updateTaskStatus:
             return .put
+            
+        case .deleteBusinessDocument,
+             .deleteMemberDocument,
+             .deleteBusiness,
+             .deleteBusinessMember,
+             .deleteAccount:
+        return .delete
         }
     }
 }

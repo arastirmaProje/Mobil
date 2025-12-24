@@ -1,10 +1,3 @@
-//
-//  EditCompanyViewModel.swift
-//  personelim
-//
-//  Created by Yusuf Kaan USTA on 18.12.2025.
-//
-
 import SwiftUI
 import PhotosUI
 import UniformTypeIdentifiers
@@ -15,8 +8,6 @@ struct CompanyOfficeForm: Identifiable, Equatable {
     var index: Int
 
     var name: String
-    var address: String
-
     var latitude: Double?
     var longitude: Double?
 }
@@ -32,13 +23,16 @@ final class EditCompanyViewModel: ObservableObject {
     @Published var photoItem: PhotosPickerItem?
     @Published var photoData: Data?
     @Published var documentURL: URL?
+
     @Published var provinces: [ProvinceDTO] = []
     @Published var districts: [DistrictDTO] = []
     @Published var selectedProvinceId: Int?
     @Published var selectedDistrictId: Int?
+
     @Published var offices: [CompanyOfficeForm] = [
-        .init(index: 1, name: "", address: "", latitude: nil, longitude: nil)
+        .init(index: 1, name: "", latitude: nil, longitude: nil)
     ]
+
     @Published var selectingOfficeUUID: UUID?
     @Published var showMapPicker: Bool = false
     @Published var isLoading: Bool = false
@@ -59,7 +53,6 @@ final class EditCompanyViewModel: ObservableObject {
         self.businessRepo = businessRepo
         self.locationRepo = locationRepo
     }
-
 
     func load() async {
         isLoading = true
@@ -85,16 +78,19 @@ final class EditCompanyViewModel: ObservableObject {
             selectedProvinceId = b.provinceId
             selectedDistrictId = b.districtId
 
-
-            offices = [
-                .init(
-                    index: 1,
-                    name: b.locationName?.isEmpty == false ? (b.locationName ?? "") : "Ofis 1",
-                    address: (b.address ?? ""),
-                    latitude: (b.latitude == 0 ? nil : b.latitude),
-                    longitude: (b.longitude == 0 ? nil : b.longitude)
-                )
-            ]
+            if let list = b.offices, !list.isEmpty {
+                offices = list.enumerated().map { idx, o in
+                    let n = (o.officeName ?? "").trimmingCharacters(in: .whitespacesAndNewlines)
+                    return CompanyOfficeForm(
+                        index: idx + 1,
+                        name: n.isEmpty ? "Ofis \(idx + 1)" : n,
+                        latitude: (o.latitude == 0 ? nil : o.latitude),
+                        longitude: (o.longitude == 0 ? nil : o.longitude)
+                    )
+                }
+            } else {
+                offices = [.init(index: 1, name: "", latitude: nil, longitude: nil)]
+            }
 
             provinces = try await locationRepo.getProvinces()
             if let pid = selectedProvinceId {
@@ -130,13 +126,16 @@ final class EditCompanyViewModel: ObservableObject {
 
     // MARK: - Office ops
     func addOffice() {
-        let next = (offices.last?.index ?? 0) + 1
-        offices.append(.init(index: next, name: "", address: "", latitude: nil, longitude: nil))
+        let next = (offices.count) + 1
+        offices.append(.init(index: next, name: "", latitude: nil, longitude: nil))
     }
 
     func removeLastOffice() {
         guard offices.count > 1 else { return }
         offices.removeLast()
+        for i in offices.indices {
+            offices[i].index = i + 1
+        }
     }
 
     func beginPickLocation(for officeId: UUID) {
@@ -144,16 +143,12 @@ final class EditCompanyViewModel: ObservableObject {
         showMapPicker = true
     }
 
-    func setLocation(_ coordinate: CLLocationCoordinate2D, address: String?) {
+    func setLocation(_ coordinate: CLLocationCoordinate2D) {
         guard let oid = selectingOfficeUUID,
               let i = offices.firstIndex(where: { $0.id == oid }) else { return }
 
         offices[i].latitude = coordinate.latitude
         offices[i].longitude = coordinate.longitude
-
-        if let address, !address.isEmpty {
-            offices[i].address = address
-        }
 
         showMapPicker = false
         selectingOfficeUUID = nil
@@ -171,7 +166,7 @@ final class EditCompanyViewModel: ObservableObject {
 
         isLoading = true
         defer { isLoading = false }
-        
+
         let mainOffice = offices.first
 
         let req = UpdateBusinessRequestDTO(
@@ -188,6 +183,6 @@ final class EditCompanyViewModel: ObservableObject {
         )
 
         _ = try await businessRepo.updateBusiness(businessId: businessId, request: req)
-        
     }
 }
+ 

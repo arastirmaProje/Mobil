@@ -31,40 +31,38 @@ final class NetworkManager: NetworkManagerProtocol {
             request.setValue("Bearer \(token)", forHTTPHeaderField: "Authorization")
         }
 
-    
-        if method != .get, let body = body {
+        if (method == .post || method == .put), let body = body {
             request.httpBody = try JSONEncoder().encode(AnyEncodable(body))
         } else {
             request.httpBody = nil
         }
 
-    
         if let bodyData = request.httpBody {
             if let obj = try? JSONSerialization.jsonObject(with: bodyData),
                let pretty = try? JSONSerialization.data(withJSONObject: obj, options: [.prettyPrinted]),
                let json = String(data: pretty, encoding: .utf8) {
-                print("📦 JSON BODY (pretty):\n\(json)")
+                print("JSON BODY :\n\(json)")
             } else {
-                print("📦 JSON BODY:", String(data: bodyData, encoding: .utf8) ?? "non-utf8")
+                print("JSON BODY:", String(data: bodyData, encoding: .utf8) ?? "non-utf8")
             }
         } else {
-            print("📦 JSON BODY: nil")
+            print("JSON BODY: nil")
         }
 
-        print("🔵 REQUEST:", endpoint.path)
-        print("📤 BODY OBJECT:", body ?? "NO BODY")
-        print("🔐 TOKEN:", TokenStore.shared.token ?? "NO TOKEN")
+        print("REQUEST:", endpoint.path)
+        print("BODY OBJECT:", body ?? "NO BODY")
+        print("TOKEN:", TokenStore.shared.token ?? "NO TOKEN")
 
         let (data, response) = try await URLSession.shared.data(for: request)
 
-        print("📥 RAW RESPONSE:", String(data: data, encoding: .utf8) ?? "NO DATA")
+        print("RAW RESPONSE:", String(data: data, encoding: .utf8) ?? "NO DATA")
 
         guard let http = response as? HTTPURLResponse else {
             throw URLError(.badServerResponse)
         }
 
         guard (200...299).contains(http.statusCode) else {
-            print("❌ HTTP ERROR:", http.statusCode)
+            print("HTTP ERROR:", http.statusCode)
             throw URLError(.init(rawValue: http.statusCode))
         }
 
@@ -72,9 +70,9 @@ final class NetworkManager: NetworkManagerProtocol {
             let decoded = try JSONDecoder().decode(T.self, from: data)
             return decoded
         } catch {
-            print("❌ DECODING ERROR:", error)
-            print("❌ DECODING TYPE:", String(describing: T.self))
-            print("❌ RAW RESPONSE AGAIN:", String(data: data, encoding: .utf8) ?? "NO DATA")
+            print("DECODING ERROR:", error)
+            print("DECODING TYPE:", String(describing: T.self))
+            print("RAW RESPONSE AGAIN:", String(data: data, encoding: .utf8) ?? "NO DATA")
             throw error
         }
     }
@@ -121,28 +119,28 @@ final class NetworkManager: NetworkManagerProtocol {
         body.appendString("--\(boundary)--\r\n")
         request.httpBody = body
 
-        print("🟣 MULTIPART REQUEST:", endpoint.path)
-        print("📤 FIELDS:", fields)
-        print("📎 FILES:", files.map { "\($0.fieldName)=\($0.fileName) size=\($0.data.count) mime=\($0.mimeType)" })
-        print("🔐 TOKEN:", TokenStore.shared.token ?? "NO TOKEN")
+        print("MULTIPART REQUEST:", endpoint.path)
+        print("FIELDS:", fields)
+        print("FILES:", files.map { "\($0.fieldName)=\($0.fileName) size=\($0.data.count) mime=\($0.mimeType)" })
+        print("TOKEN:", TokenStore.shared.token ?? "NO TOKEN")
 
         let (data, response) = try await URLSession.shared.data(for: request)
 
-        print("📥 RAW RESPONSE:", String(data: data, encoding: .utf8) ?? "NO DATA")
+        print(" RAW RESPONSE:", String(data: data, encoding: .utf8) ?? "NO DATA")
 
         guard let http = response as? HTTPURLResponse else {
             throw URLError(.badServerResponse)
         }
 
         guard (200...299).contains(http.statusCode) else {
-            print("❌ HTTP ERROR:", http.statusCode)
+            print("HTTP ERROR:", http.statusCode)
             throw URLError(.init(rawValue: http.statusCode))
         }
 
         do {
             return try JSONDecoder().decode(T.self, from: data)
         } catch {
-            print("❌ MULTIPART DECODING ERROR:", error)
+            print(" MULTIPART DECODING ERROR:", error)
             throw error
         }
     }
@@ -162,8 +160,8 @@ final class NetworkManager: NetworkManagerProtocol {
             request.setValue("Bearer \(token)", forHTTPHeaderField: "Authorization")
         }
 
-        print("🟢 DOWNLOAD REQUEST:", endpoint.path)
-        print("🔐 TOKEN:", TokenStore.shared.token ?? "NO TOKEN")
+        print("DOWNLOAD REQUEST:", endpoint.path)
+        print("TOKEN:", TokenStore.shared.token ?? "NO TOKEN")
 
         let (data, response) = try await URLSession.shared.data(for: request)
 
@@ -172,11 +170,11 @@ final class NetworkManager: NetworkManagerProtocol {
         }
 
         let contentType = http.value(forHTTPHeaderField: "Content-Type") ?? "-"
-        print("🟢 DOWNLOAD STATUS:", http.statusCode, "Content-Type:", contentType, "Size:", data.count)
+        print("DOWNLOAD STATUS:", http.statusCode, "Content-Type:", contentType, "Size:", data.count)
 
         if !(200...299).contains(http.statusCode) {
             let msg = String(data: data, encoding: .utf8) ?? "non-utf8"
-            print("❌ DOWNLOAD BODY:", msg)
+            print("DOWNLOAD BODY:", msg)
             throw NSError(domain: "download", code: http.statusCode, userInfo: [
                 NSLocalizedDescriptionKey: "Download hata kodu: \(http.statusCode) - \(msg)"
             ])
