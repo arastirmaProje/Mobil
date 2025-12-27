@@ -10,7 +10,6 @@ import Foundation
 enum UserRole: String, Codable, CaseIterable {
     case `default` = "Default"
     case owner = "Owner"
-    case manager = "Manager"
     case employee = "Employee"
 
     init(from decoder: Decoder) throws {
@@ -41,18 +40,28 @@ enum UserRole: String, Codable, CaseIterable {
     private static func fromInt(_ i: Int) -> UserRole {
         switch i {
         case 0: return .owner
-        case 1: return .manager
-        case 2: return .employee
+        case 1: return .employee
         default: return .default
         }
     }
 
     var canSeePersonnelTab: Bool {
         switch self {
-        case .owner, .manager:
+        case .owner:
             return true
         default:
             return false
         }
     }
 }
+
+extension UserRole {
+    var apiIntValue: Int {
+        switch self {
+        case .owner: return 0
+        case .employee: return 1
+        default: return 0
+        }
+    }
+}
+

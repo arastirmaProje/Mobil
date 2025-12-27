@@ -18,6 +18,15 @@ final class AppState: ObservableObject {
     @Published var businessId: String?
     @Published var role: UserRole = .default
     @Published var businessMembers: [BusinessMemberDTO] = []
+    @Published var firstName: String?
+    @Published var lastName: String?
+
+    var displayName: String {
+        let f = (firstName ?? "").trimmingCharacters(in: .whitespacesAndNewlines)
+        let l = (lastName ?? "").trimmingCharacters(in: .whitespacesAndNewlines)
+        let full = [f, l].filter { !$0.isEmpty }.joined(separator: " ")
+        return full.isEmpty ? "—" : full
+    }
 
     init() {
         isLoggedIn = TokenStore.shared.hasValidToken()
@@ -50,6 +59,9 @@ final class AppState: ObservableObject {
         businessId = nil
         role = .default
         businessMembers = []
+
+        firstName = nil
+        lastName = nil
     }
 
     func bootstrap(
@@ -72,6 +84,9 @@ final class AppState: ObservableObject {
             if userId == nil {
                 let profile = try await authRepository.getProfile()
                 userId = profile.id
+
+                firstName = profile.firstName
+                lastName = profile.lastName
             }
 
             if businessId == nil {
@@ -91,7 +106,17 @@ final class AppState: ObservableObject {
             self.businessMembers = members.filter { $0.isActive == true }
 
             let me = members.first { $0.userId.lowercased() == uid.lowercased() }
+
+            print("🟣 BOOT uid:", uid)
+            print("🟣 BOOT bid:", bid)
+            print("🟣 BOOT members count:", members.count)
+            print("🟣 BOOT me userId:", me?.userId ?? "nil")
+            print("🟣 BOOT me role raw:", me?.role.rawValue ?? "nil")
+            print("🟣 BOOT final role BEFORE assign:", role)
+
             role = me?.role ?? .default
+
+            print("🟢 BOOT final role AFTER assign:", role)
 
         } catch {
             bootstrapError = error.localizedDescription
@@ -111,6 +136,9 @@ final class AppState: ObservableObject {
             if userId == nil {
                 let profile = try await authRepository.getProfile()
                 userId = profile.id
+
+                firstName = profile.firstName
+                lastName = profile.lastName
             }
 
             if businessId == nil {
@@ -141,6 +169,16 @@ final class AppState: ObservableObject {
             self.businessMembers = members.filter { $0.isActive == true }
         } catch {
             print("Failed to load members:", error)
+        }
+    }
+
+    func refreshBusinessMembers(repository: BusinessMemberRepositoryProtocol) async {
+        guard let businessId else { return }
+        do {
+            let members = try await repository.getMembers(businessId: businessId)
+            self.businessMembers = members.filter { $0.isActive == true }
+        } catch {
+            print("Failed to refresh members:", error)
         }
     }
 }

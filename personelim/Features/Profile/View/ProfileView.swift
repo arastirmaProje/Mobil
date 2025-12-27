@@ -86,11 +86,15 @@ struct ProfileView: View {
                     Button(action: { showEditPersonalProfile = true }) {
                         Text("Düzenle")
                             .font(.system(size: 14, weight: .semibold))
-                            .foregroundColor(.white)
-                            .padding(.horizontal, 12)
-                            .padding(.vertical, 8)
-                            .background(Color.blue)
-                            .cornerRadius(12)
+                            .foregroundStyle(.blue)
+                               .padding(.horizontal, 12)
+                               .padding(.vertical, 7)
+                               .background(.ultraThinMaterial)
+                               .clipShape(Capsule())
+                               .overlay(
+                                   Capsule().strokeBorder(.blue.opacity(0.35), lineWidth: 1)
+                               )
+                               .shadow(color: .black.opacity(0.10), radius: 10, x: 0, y: 4)
                     }
                 }
             }
@@ -147,11 +151,15 @@ struct ProfileView: View {
                     Button(action: { showEditPersonalProfile = true }) {
                         Text("Düzenle")
                             .font(.system(size: 14, weight: .semibold))
-                            .foregroundColor(.white)
-                            .padding(.horizontal, 12)
-                            .padding(.vertical, 8)
-                            .background(Color.blue)
-                            .cornerRadius(12)
+                            .foregroundStyle(.blue)
+                               .padding(.horizontal, 12)
+                               .padding(.vertical, 7)
+                               .background(.ultraThinMaterial)
+                               .clipShape(Capsule())
+                               .overlay(
+                                   Capsule().strokeBorder(.blue.opacity(0.35), lineWidth: 1)
+                               )
+                               .shadow(color: .black.opacity(0.10), radius: 10, x: 0, y: 4)
                     }
                 }
 
@@ -192,11 +200,15 @@ struct ProfileView: View {
                 Button(action: { showEditCompany = true }) {
                     Text("Düzenle")
                         .font(.system(size: 14, weight: .semibold))
-                        .foregroundColor(.white)
-                        .padding(.horizontal, 12)
-                        .padding(.vertical, 8)
-                        .background(Color.blue)
-                        .cornerRadius(12)
+                        .foregroundStyle(.blue)
+                           .padding(.horizontal, 12)
+                           .padding(.vertical, 7)
+                           .background(.ultraThinMaterial)    
+                           .clipShape(Capsule())
+                           .overlay(
+                               Capsule().strokeBorder(.blue.opacity(0.35), lineWidth: 1)
+                           )
+                           .shadow(color: .black.opacity(0.10), radius: 10, x: 0, y: 4)
                 }
             }
         }

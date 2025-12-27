@@ -91,6 +91,16 @@ final class BusinessMemberRepositoryImpl: BusinessMemberRepositoryProtocol {
             throw RepositoryError.api(message: res.message ?? "Belge silinemedi")
         }
     }
+    
+    func deleteMember(memberId: String) async throws -> EmptyResponse {
+        let res: EmptyResponse = try await network.request(
+            endpoint: .deleteBusinessMember(memberId: memberId),
+            method: .delete,
+            body: nil
+        )
+        return res
+    }
+
 
     // üye belgesi güncellem eklenmesi lazım
   //  func updateMemberDocument<T: Encodable>(

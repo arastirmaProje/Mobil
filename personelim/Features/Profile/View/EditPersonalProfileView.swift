@@ -234,15 +234,21 @@ struct EditPersonalProfileView: View {
 
     // MARK: - Top Bar (geri + check)
     private var topBar: some View {
-        HStack {
+        HStack(spacing: 12) {
+
             Button { dismiss() } label: {
                 Image(systemName: "chevron.left")
-                    .font(.system(size: 18, weight: .semibold))
-                    .foregroundColor(.black)
-                    .frame(width: 44, height: 44)
-                    .background(Color(.systemGray6))
+                    .font(.system(size: 16, weight: .semibold))
+                    .foregroundStyle(.primary)
+                    .frame(width: 36, height: 36)
+                    .background(.ultraThinMaterial)
                     .clipShape(Circle())
+                    .overlay(
+                        Circle().strokeBorder(.white.opacity(0.25), lineWidth: 1)
+                    )
+                    .shadow(color: .black.opacity(0.10), radius: 10, x: 0, y: 4)
             }
+            .buttonStyle(.plain)
 
             Spacer()
 
@@ -257,18 +263,25 @@ struct EditPersonalProfileView: View {
                 }
             } label: {
                 Image(systemName: "checkmark")
-                    .font(.system(size: 18, weight: .semibold))
-                    .foregroundColor(.black)
-                    .frame(width: 44, height: 44)
-                    .background(Color(.systemGray6))
+                    .font(.system(size: 15, weight: .semibold))
+                    .foregroundStyle(.primary)
+                    .frame(width: 36, height: 36)
+                    .background(.ultraThinMaterial)
                     .clipShape(Circle())
+                    .overlay(
+                        Circle().strokeBorder(.white.opacity(0.25), lineWidth: 1)
+                    )
+                    .shadow(color: .black.opacity(0.10), radius: 10, x: 0, y: 4)
             }
+            .buttonStyle(.plain)
             .disabled(vm.isLoading)
+            .opacity(vm.isLoading ? 0.55 : 1.0)
         }
         .padding(.horizontal, 20)
         .padding(.top, 16)
         .padding(.bottom, 10)
     }
+
 
     // MARK: - Foto preview 
     private func profileImage(size: CGFloat) -> some View {

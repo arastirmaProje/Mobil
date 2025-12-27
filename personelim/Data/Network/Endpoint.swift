@@ -38,6 +38,12 @@ enum Endpoint {
     case deleteBusiness(businessId: String)
     case deleteBusinessMember(memberId: String)
     case deleteAccount
+    case sendInvitation
+    case performanceQuery
+    case performanceReports(businessId: String, employeeUserId: String)
+    case performanceReportDetail(reportId: String)
+    case createShift
+    case myShifts(businessId: String)
 
     var path: String {
         switch self {
@@ -71,6 +77,12 @@ enum Endpoint {
         case .deleteBusiness(let businessId): return "/api/Business/\(businessId)"
         case .deleteBusinessMember(let memberId): return "/api/BusinessMember/\(memberId)"
         case .deleteAccount: return "/api/Auth/delete-account"
+        case .sendInvitation: return "/api/Invitation/send"
+        case .performanceQuery: return "/api/Performance/query"
+        case .performanceReports(let businessId, let employeeUserId): return "/api/Performance/business/\(businessId)/employee/\(employeeUserId)"
+        case .performanceReportDetail(let reportId): return "/api/Performance/\(reportId)"
+        case .createShift: return "/api/Shift"
+        case .myShifts(let businessId): return "/api/Shift/my?businessId=\(businessId)"
             
 
         }
@@ -78,10 +90,10 @@ enum Endpoint {
 
     var method: HTTPMethod {
         switch self {
-        case .login, .register, .forgotPassword, .verifyResetCode, .resetPassword, .verifyBusiness, .createBusiness, .uploadMemberDocuments, .createTask, .uploadBusinessDocument:
+        case .login, .register, .forgotPassword, .verifyResetCode, .resetPassword, .verifyBusiness, .createBusiness, .uploadMemberDocuments, .createTask, .uploadBusinessDocument, .sendInvitation, .performanceQuery, .createShift:
             return .post
 
-        case .businessMembers, .profile, .getBusiness, .provinces, .districts, .business, .businessList, .getBusinessMember, .downloadDocument, .myTasks, .getBusinessDocuments:
+        case .businessMembers, .profile, .getBusiness, .provinces, .districts, .business, .businessList, .getBusinessMember, .downloadDocument, .myTasks, .getBusinessDocuments, .performanceReports, .performanceReportDetail, .myShifts:
             return .get
 
         case .profileUpdate, .updateBusinessMember, .updateBusiness, .updateTaskStatus:

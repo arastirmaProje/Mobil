@@ -19,7 +19,7 @@ struct MainTabView: View {
                 .tag(Tab.tasks)
 
             if appState.role.canSeePersonnelTab {
-                NavigationStack { PersonnelView() }
+                NavigationStack { PersonnelListView() }
                     .tabItem { Label("Personel", systemImage: "person.3.fill") }
                     .tag(Tab.personnel)
             }

@@ -36,6 +36,7 @@ struct BusinessDTO: Codable, Identifiable {
     let createdAt: String?
     
     let offices: [OfficeLocationReadDTO]?
+
     
 }
 

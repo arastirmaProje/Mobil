@@ -1,0 +1,350 @@
+//
+//  PerformanceQueryView.swift
+//  personelim
+//
+//  Created by Yusuf Kaan USTA on 25.12.2025.
+//
+
+import SwiftUI
+
+struct PerformanceQueryView: View {
+
+    @Environment(\.dismiss) private var dismiss
+
+    let businessId: String
+    let employeeUserId: String
+    let onCreated: (PerformanceReportDTO) -> Void
+
+    @StateObject private var vm: PerformanceQueryViewModel
+
+    @State private var visibleMonth: Date = Date()
+
+    init(
+        businessId: String,
+        employeeUserId: String,
+        onCreated: @escaping (PerformanceReportDTO) -> Void
+    ) {
+        self.businessId = businessId
+        self.employeeUserId = employeeUserId
+        self.onCreated = onCreated
+
+        let repo = PerformanceRepositoryImpl(network: NetworkManager())
+        let useCase = QueryPerformanceUseCase(repo: repo)
+        _vm = StateObject(wrappedValue: PerformanceQueryViewModel(queryUseCase: useCase))
+    }
+
+    var body: some View {
+        VStack(spacing: 0) {
+
+            topBar
+
+            ScrollView(showsIndicators: false) {
+                VStack(alignment: .leading, spacing: 16) {
+
+                    Text("Sorgu")
+                        .font(.system(size: 24, weight: .semibold))
+
+                    Text("Takvimden bir tarih aralığı seçin.")
+                        .font(.system(size: 14))
+                        .foregroundColor(.gray)
+
+                    rangeSummary
+
+                    RangeCalendarView(
+                        visibleMonth: $visibleMonth,
+                        startDate: $vm.startDate,
+                        endDate: $vm.endDate
+                    )
+
+                    if let err = vm.errorMessage {
+                        Text(err)
+                            .foregroundColor(.red)
+                            .font(.system(size: 13))
+                    }
+
+                    Spacer().frame(height: 18)
+                }
+                .padding(.horizontal, 16)
+                .padding(.top, 12)
+            }
+        }
+        .navigationBarHidden(true)
+        .onAppear {
+            visibleMonth = vm.startDate
+        }
+    }
+
+    // MARK: - Top bar (Liquid Glass)
+    private var topBar: some View {
+        HStack(spacing: 12) {
+
+            Button { dismiss() } label: {
+                Image(systemName: "chevron.left")
+                    .font(.system(size: 16, weight: .semibold))
+                    .foregroundStyle(.primary)
+                    .frame(width: 36, height: 36)
+                    .background(.ultraThinMaterial)
+                    .clipShape(Circle())
+                    .overlay(Circle().strokeBorder(.white.opacity(0.25), lineWidth: 1))
+                    .shadow(color: .black.opacity(0.10), radius: 10, x: 0, y: 4)
+            }
+            .buttonStyle(.plain)
+
+            Spacer()
+
+            Button {
+                dismiss()
+                Task {
+                    if let report = await vm.submit(businessId: businessId, employeeUserId: employeeUserId) {
+                        onCreated(report)
+                    }
+                }
+            } label: {
+                Image(systemName: vm.isLoading ? "hourglass" : "checkmark")
+                    .font(.system(size: 14, weight: .semibold))
+                    .foregroundStyle(.primary)
+                    .frame(width: 36, height: 36)
+                    .background(.ultraThinMaterial)
+                    .clipShape(Circle())
+                    .overlay(Circle().strokeBorder(.white.opacity(0.25), lineWidth: 1))
+                    .shadow(color: .black.opacity(0.10), radius: 10, x: 0, y: 4)
+            }
+            .buttonStyle(.plain)
+            .disabled(vm.isLoading)
+            .opacity(vm.isLoading ? 0.6 : 1.0)
+        }
+        .padding(.horizontal, 16)
+        .padding(.top, 10)
+    }
+
+    private var rangeSummary: some View {
+        HStack( spacing: 6) {
+            Text("Başlangıç: \(vm.startDate.trShortDate())")
+                .font(.system(size: 13, weight: .medium))
+                .foregroundColor(.gray)
+
+            Text("Bitiş: \(vm.endDate.trShortDate())")
+                .font(.system(size: 13, weight: .medium))
+                .foregroundColor(.gray)
+        }
+        .padding(.top, 2)
+    }
+}
+
+// MARK: - RangeCalendarView
+
+private struct RangeCalendarView: View {
+
+    @Binding var visibleMonth: Date
+    @Binding var startDate: Date
+    @Binding var endDate: Date
+
+    private let columns = Array(repeating: GridItem(.flexible(), spacing: 8), count: 7)
+
+    @State private var isSelectingEnd: Bool = false
+
+    var body: some View {
+        VStack(spacing: 12) {
+            HStack {
+                Button {
+                    visibleMonth = Calendar.current.date(byAdding: .month, value: -1, to: visibleMonth) ?? visibleMonth
+                } label: {
+                    Image(systemName: "chevron.left")
+                        .font(.system(size: 14, weight: .semibold))
+                        .foregroundColor(.primary)
+                        .frame(width: 34, height: 34)
+                        .background(Color(.systemGray6))
+                        .clipShape(Circle())
+                }
+                .buttonStyle(.plain)
+
+                Spacer()
+
+                Text(visibleMonth.trMonthTitle())
+                    .font(.system(size: 16, weight: .semibold))
+
+                Spacer()
+
+                Button {
+                    visibleMonth = Calendar.current.date(byAdding: .month, value: 1, to: visibleMonth) ?? visibleMonth
+                } label: {
+                    Image(systemName: "chevron.right")
+                        .font(.system(size: 14, weight: .semibold))
+                        .foregroundColor(.primary)
+                        .frame(width: 34, height: 34)
+                        .background(Color(.systemGray6))
+                        .clipShape(Circle())
+                }
+                .buttonStyle(.plain)
+            }
+
+            LazyVGrid(columns: columns, spacing: 8) {
+                ForEach(weekdaysTR, id: \.self) { w in
+                    Text(w)
+                        .font(.system(size: 11, weight: .semibold))
+                        .foregroundColor(.secondary)
+                        .frame(maxWidth: .infinity)
+                }
+            }
+
+            LazyVGrid(columns: columns, spacing: 8) {
+                ForEach(daysForVisibleMonth(), id: \.self) { day in
+                    DayCell(
+                        day: day,
+                        visibleMonth: visibleMonth,
+                        start: startDate,
+                        end: endDate
+                    )
+                    .onTapGesture {
+                        handleTap(day)
+                    }
+                }
+            }
+            .padding(.top, 4)
+        }
+        .padding(12)
+        .background(Color(.systemGray6))
+        .clipShape(RoundedRectangle(cornerRadius: 16))
+    }
+
+    private func handleTap(_ day: Date) {
+        let d = day.stripTime()
+        let s = startDate.stripTime()
+        let e = endDate.stripTime()
+
+        if !isSelectingEnd {
+            startDate = d
+            endDate = d
+            isSelectingEnd = true
+            return
+        }
+
+        if d < s {
+            startDate = d
+            endDate = s
+        } else {
+            startDate = s
+            endDate = d
+        }
+
+        isSelectingEnd = false
+    }
+
+    private func daysForVisibleMonth() -> [Date] {
+        let cal = Calendar.current
+        let startOfMonth = visibleMonth.startOfMonth()
+        let weekday = cal.component(.weekday, from: startOfMonth)
+        let leadingEmpty = (weekday + 5) % 7
+
+        var days: [Date] = []
+        for i in 0..<leadingEmpty {
+            days.append(cal.date(byAdding: .day, value: -(leadingEmpty - i), to: startOfMonth)!)
+        }
+
+        let range = cal.range(of: .day, in: .month, for: startOfMonth) ?? 1..<2
+        for d in range {
+            days.append(cal.date(byAdding: .day, value: d - 1, to: startOfMonth)!)
+        }
+
+        while days.count < 42 {
+            days.append(cal.date(byAdding: .day, value: 1, to: days.last!)!)
+        }
+
+        return days
+    }
+
+    private var weekdaysTR: [String] { ["Pzt","Sal","Çar","Per","Cum","Cmt","Paz"] }
+}
+
+// MARK: - DayCell (range highlight)
+
+private struct DayCell: View {
+
+    let day: Date
+    let visibleMonth: Date
+    let start: Date
+    let end: Date
+
+    var body: some View {
+        let isInMonth = day.isSameMonth(as: visibleMonth)
+        let isStart = day.stripTime() == start.stripTime()
+        let isEnd = day.stripTime() == end.stripTime()
+        let inRange = day.isBetweenInclusive(start: start, end: end)
+        let isToday = day.stripTime() == Date().stripTime()
+
+        ZStack {
+            if inRange {
+                RoundedRectangle(cornerRadius: 10)
+                    .fill(Color.blue.opacity(0.14))
+            }
+
+            if isStart || isEnd {
+                RoundedRectangle(cornerRadius: 10)
+                    .fill(Color.blue.opacity(0.28))
+            }
+
+            if isToday {
+                RoundedRectangle(cornerRadius: 10)
+                    .stroke(Color.primary.opacity(0.20), lineWidth: 1)
+            }
+
+            Text("\(Calendar.current.component(.day, from: day))")
+                .font(.system(size: 13, weight: (isStart || isEnd) ? .semibold : .regular))
+                .foregroundColor(isInMonth ? .primary : .secondary.opacity(0.5))
+                .frame(maxWidth: .infinity, minHeight: 34)
+        }
+        .frame(height: 34)
+        .contentShape(Rectangle())
+    }
+}
+
+// MARK: - Date helpers
+
+private extension Date {
+
+    static func isoToDate(_ iso: String) -> Date? {
+        let f = ISO8601DateFormatter()
+        f.formatOptions = [.withInternetDateTime, .withFractionalSeconds]
+        if let d = f.date(from: iso) { return d }
+        let f2 = ISO8601DateFormatter()
+        f2.formatOptions = [.withInternetDateTime]
+        return f2.date(from: iso)
+    }
+
+    func stripTime() -> Date {
+        Calendar.current.startOfDay(for: self)
+    }
+
+    func startOfMonth() -> Date {
+        let cal = Calendar.current
+        let comps = cal.dateComponents([.year, .month], from: self)
+        return cal.date(from: comps) ?? self
+    }
+
+    func isSameMonth(as other: Date) -> Bool {
+        let cal = Calendar.current
+        return cal.component(.year, from: self) == cal.component(.year, from: other)
+        && cal.component(.month, from: self) == cal.component(.month, from: other)
+    }
+
+    func isBetweenInclusive(start: Date, end: Date) -> Bool {
+        let d = self.stripTime()
+        let s = start.stripTime()
+        let e = end.stripTime()
+        return d >= min(s, e) && d <= max(s, e)
+    }
+
+    func trShortDate() -> String {
+        let f = DateFormatter()
+        f.locale = Locale(identifier: "tr_TR")
+        f.dateFormat = "d MMM yyyy"
+        return f.string(from: self)
+    }
+
+    func trMonthTitle() -> String {
+        let f = DateFormatter()
+        f.locale = Locale(identifier: "tr_TR")
+        f.dateFormat = "LLLL yyyy"
+        return f.string(from: self).capitalized(with: Locale(identifier: "tr_TR"))
+    }
+}
