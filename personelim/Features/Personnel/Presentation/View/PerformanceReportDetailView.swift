@@ -6,6 +6,7 @@
 //
 
 import SwiftUI
+import Foundation
 
 struct PerformanceReportDetailView: View {
 
@@ -45,15 +46,17 @@ struct PerformanceReportDetailView: View {
                     if let r = vm.report {
                         donutRow(r)
 
-                        RoundedRectangle(cornerRadius: 14)
-                            .fill(Color(UIColor.systemGray6))
-                            .frame(minHeight: 140)
-                            .overlay(
-                                Text(r.summaryText ?? "-")
-                                    .font(.system(size: 14, weight: .semibold))
-                                    .multilineTextAlignment(.center)
-                                    .padding(18)
-                            )
+                    
+                        textCard(
+                            title: "Özet",
+                            text: (r.summaryText ?? "-").cleanedMarkdownAndRedactedIDs
+                        )
+
+        
+                        textCard(
+                            title: "Detay",
+                            text: (r.detailText ?? "-").cleanedMarkdownAndRedactedIDs
+                        )
                     }
 
                     Spacer().frame(height: 40)
@@ -102,10 +105,28 @@ struct PerformanceReportDetailView: View {
         }
         .padding(.top, 6)
     }
+
+    private func textCard(title: String, text: String) -> some View {
+        VStack(alignment: .leading, spacing: 10) {
+            Text(title)
+                .font(.system(size: 13, weight: .semibold))
+                .foregroundColor(.secondary)
+
+            Text(text.isEmpty ? "-" : text)
+                .font(.system(size: 13))
+                .multilineTextAlignment(.leading)
+                .fixedSize(horizontal: false, vertical: true)
+        }
+        .padding(16)
+        .background(
+            RoundedRectangle(cornerRadius: 14)
+                .fill(Color(UIColor.systemGray6))
+        )
+    }
 }
 
 private struct ScoreDonut: View {
-    let score: Int 
+    let score: Int
 
     var body: some View {
         ZStack {
@@ -120,5 +141,56 @@ private struct ScoreDonut: View {
             Text("\(score)")
                 .font(.system(size: 22, weight: .semibold))
         }
+    }
+}
+
+// MARK: - Markdown Cleaner + ID Redaction
+
+private extension String {
+
+    var cleanedMarkdownAndRedactedIDs: String {
+        var s = self
+
+        s = s.replacingOccurrences(of: "**", with: "")
+        s = s.replacingOccurrences(of: "\n---\n", with: "\n")
+        s = s.replacingOccurrences(of: "---", with: "")
+
+        s = s.replacingOccurrences(of: "\n*   ", with: "\n• ")
+        s = s.replacingOccurrences(of: "\n* ", with: "\n• ")
+        s = s.replacingOccurrences(of: "\n- ", with: "\n• ")
+
+        s = s.removingLines(containingAnyOf: [
+            "Çalışan ID:",
+            "Çalışan Kimliği:",
+            "Employee ID:",
+            "Employee Identifier:"
+        ])
+
+        s = s.replacingUUIDs(with: "")
+
+        s = s.replacingOccurrences(of: "  ", with: " ")
+        while s.contains("\n\n\n") {
+            s = s.replacingOccurrences(of: "\n\n\n", with: "\n\n")
+        }
+
+        return s.trimmingCharacters(in: .whitespacesAndNewlines)
+    }
+
+    private func removingLines(containingAnyOf needles: [String]) -> String {
+        let lines = self.components(separatedBy: .newlines)
+        let filtered = lines.filter { line in
+            let trimmed = line.trimmingCharacters(in: .whitespacesAndNewlines)
+            guard trimmed.isEmpty == false else { return true }
+            return needles.contains(where: { trimmed.localizedCaseInsensitiveContains($0) }) == false
+        }
+        return filtered.joined(separator: "\n")
+    }
+
+    private func replacingUUIDs(with replacement: String) -> String {
+        let pattern = #"\b[0-9a-fA-F]{8}\-[0-9a-fA-F]{4}\-[0-9a-fA-F]{4}\-[0-9a-fA-F]{4}\-[0-9a-fA-F]{12}\b"#
+
+        guard let regex = try? NSRegularExpression(pattern: pattern) else { return self }
+        let range = NSRange(self.startIndex..<self.endIndex, in: self)
+        return regex.stringByReplacingMatches(in: self, range: range, withTemplate: replacement)
     }
 }
