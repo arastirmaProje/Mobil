@@ -219,12 +219,17 @@ final class ShiftTimerViewModel: ObservableObject {
 
     private func startTimer() {
         timer?.invalidate()
+
         timer = Timer.scheduledTimer(withTimeInterval: 1, repeats: true) { [weak self] _ in
             guard let self else { return }
-            updateElapsed()
+            Task { @MainActor in
+                self.updateElapsed()
+            }
         }
+
         updateElapsed()
     }
+
 
     private func stopTimer() {
         timer?.invalidate()
@@ -256,31 +261,23 @@ final class ShiftTimerViewModel: ObservableObject {
         guard let startedAt, let startOption else { return }
 
         let state = ShiftPauseStateDTO(
-            startedAtIso: ISODate.string(from: startedAt),
+            startedAtTs: startedAt.timeIntervalSince1970,
             pausedTotalSeconds: pausedTotalSeconds,
             isPaused: isPaused,
-            pausedAtIso: pausedAt.map { ISODate.string(from: $0) },
+            pausedAtTs: pausedAt?.timeIntervalSince1970,
             option: StoredShiftOption.from(startOption)
         )
         store.save(state)
     }
 
+
     private func restoreIfNeeded() {
         guard let s = store.load() else { return }
-        guard let startedAt = ISO8601DateFormatter().date(from: s.startedAtIso)
-            ?? ISO8601DateFormatter().date(from: s.startedAtIso.replacingOccurrences(of: "Z", with: "+00:00"))
-        else { return }
 
-        self.startedAt = startedAt
+        self.startedAt = Date(timeIntervalSince1970: s.startedAtTs)
         self.pausedTotalSeconds = s.pausedTotalSeconds
         self.isPaused = s.isPaused
-
-        if let p = s.pausedAtIso {
-            self.pausedAt = ISO8601DateFormatter().date(from: p)
-                ?? ISO8601DateFormatter().date(from: p.replacingOccurrences(of: "Z", with: "+00:00"))
-        } else {
-            self.pausedAt = nil
-        }
+        self.pausedAt = s.pausedAtTs.map { Date(timeIntervalSince1970: $0) }
 
         self.startOption = s.option.toDomain()
         self.isRunning = (self.startOption != nil)
@@ -291,4 +288,5 @@ final class ShiftTimerViewModel: ObservableObject {
             updateElapsed()
         }
     }
+
 }

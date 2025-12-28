@@ -1,7 +1,6 @@
 import Foundation
 
 struct PerformanceReportDTO: Decodable, Identifiable {
-
     var id: String { reportId ?? employeeId ?? UUID().uuidString }
 
     let reportId: String?
@@ -31,26 +30,30 @@ struct PerformanceReportDTO: Decodable, Identifiable {
         let scoreCamel = try c1.decodeIfPresent(Int.self, forKey: .score)
         let summaryCamel = try c1.decodeIfPresent(String.self, forKey: .summaryText)
         let detailCamel = try c1.decodeIfPresent(String.self, forKey: .detailText)
-
         let c2 = try decoder.container(keyedBy: BackendKeys.self)
 
         let employeeId = try c2.decodeIfPresent(String.self, forKey: .employeeId)
+        let scoreBackendInt = try c2.decodeIntLossyIfPresent(forKey: .backendScore)
 
-        let scoreBackend = try c2.decodeIfPresent(Int.self, forKey: .backendScore)
         let summaryBackend = try c2.decodeIfPresent(String.self, forKey: .backendSummary)
         let detailBackend = try c2.decodeIfPresent(String.self, forKey: .backendDetail)
+        let c3 = try? decoder.container(keyedBy: ListKeys.self)
 
+        let listStart = try c3?.decodeIfPresent(String.self, forKey: .periodStart)
+        let listEnd = try c3?.decodeIfPresent(String.self, forKey: .periodEnd)
+        let listScoreInt = try c3?.decodeIntLossyIfPresent(forKey: .performanceScore)
         self.reportId = reportId
         self.businessId = businessId
         self.employeeUserId = employeeUserId
 
         self.createdByName = createdByName
-        self.startDate = startDate
-        self.endDate = endDate
+
+        self.startDate = startDate ?? listStart
+        self.endDate = endDate ?? listEnd
 
         self.employeeId = employeeId
+        self.score = scoreCamel ?? scoreBackendInt ?? listScoreInt
 
-        self.score = scoreCamel ?? scoreBackend
         self.summaryText = summaryCamel ?? summaryBackend
         self.detailText = detailCamel ?? detailBackend
     }
@@ -72,5 +75,32 @@ struct PerformanceReportDTO: Decodable, Identifiable {
         case backendScore = "performans_skoru"
         case backendSummary = "rapor_ozeti"
         case backendDetail = "detayli_rapor"
+    }
+
+    private enum ListKeys: String, CodingKey {
+        case periodStart
+        case periodEnd
+        case performanceScore
+        case createdAt
+    }
+}
+
+// MARK: - Lossy decode helpers (Double / Int / String -> Int)
+private extension KeyedDecodingContainer {
+
+    func decodeIntLossyIfPresent(forKey key: Key) throws -> Int? {
+        if let i = try? decodeIfPresent(Int.self, forKey: key) {
+            return i
+        }
+        if let d = try? decodeIfPresent(Double.self, forKey: key) {
+            return Int(d.rounded())
+        }
+        if let s = try? decodeIfPresent(String.self, forKey: key) {
+            let normalized = s.replacingOccurrences(of: ",", with: ".")
+            if let d = Double(normalized) {
+                return Int(d.rounded())
+            }
+        }
+        return nil
     }
 }
