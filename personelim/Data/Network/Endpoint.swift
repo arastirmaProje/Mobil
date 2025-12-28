@@ -44,6 +44,7 @@ enum Endpoint {
     case performanceReportDetail(reportId: String)
     case createShift
     case myShifts(businessId: String)
+    case performanceQueryBulkScores
 
     var path: String {
         switch self {
@@ -82,6 +83,8 @@ enum Endpoint {
         case .performanceReports(let businessId, let employeeUserId): return "/api/Performance/business/\(businessId)/employee/\(employeeUserId)"
         case .performanceReportDetail(let reportId): return "/api/Performance/\(reportId)"
         case .createShift: return "/api/Shift"
+        case .performanceQueryBulkScores:
+                   return "/api/Performance/query-bulk-scores"
         case .myShifts(let businessId): return "/api/Shift/my?businessId=\(businessId)"
             
 
@@ -90,7 +93,7 @@ enum Endpoint {
 
     var method: HTTPMethod {
         switch self {
-        case .login, .register, .forgotPassword, .verifyResetCode, .resetPassword, .verifyBusiness, .createBusiness, .uploadMemberDocuments, .createTask, .uploadBusinessDocument, .sendInvitation, .performanceQuery, .createShift:
+        case .login, .register, .forgotPassword, .verifyResetCode, .resetPassword, .verifyBusiness, .createBusiness, .uploadMemberDocuments, .createTask, .uploadBusinessDocument, .sendInvitation, .performanceQuery, .createShift, .performanceQueryBulkScores:
             return .post
 
         case .businessMembers, .profile, .getBusiness, .provinces, .districts, .business, .businessList, .getBusinessMember, .downloadDocument, .myTasks, .getBusinessDocuments, .performanceReports, .performanceReportDetail, .myShifts:

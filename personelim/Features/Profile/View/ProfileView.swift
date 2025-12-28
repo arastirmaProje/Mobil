@@ -5,16 +5,41 @@ import MapKit
 struct ProfileView: View {
 
     @EnvironmentObject private var appState: AppState
-    @StateObject private var vm = ProfileViewModel()
 
+    // ✅ Shared network (tek instance)
+    private let network: NetworkManager
+
+    // ✅ ViewModels
+    @StateObject private var vm: ProfileViewModel
+    @StateObject private var perfVM: ProfilePerformanceViewModel
+
+    // Sheets / Nav
     @State private var showEditPersonalProfile = false
     @State private var showEditCompany = false
     @State private var previewDoc: DocumentToPreview?
 
+    @State private var showQuery = false
+    @State private var selectedReportId: String?
+
     @State private var avatarRefreshToken = UUID()
 
-    private let network = NetworkManager()
     private var authRepo: AuthRepositoryProtocol { AuthRepositoryImpl(network: network) }
+
+    init(network: NetworkManager = NetworkManager()) {
+        self.network = network
+
+        // Profile VM - mümkünse tek network ile
+        _vm = StateObject(wrappedValue: ProfileViewModel(
+            authRepo: AuthRepositoryImpl(network: network),
+            memberRepo: BusinessMemberRepositoryImpl(network: network),
+            businessRepo: BusinessRepositoryImpl(networkManager: network)
+        ))
+
+        // Performance VM
+        let perfRepo = PerformanceRepositoryImpl(network: network)
+        let getReports = GetPerformanceReportsUseCase(repo: perfRepo)
+        _perfVM = StateObject(wrappedValue: ProfilePerformanceViewModel(getReportsUseCase: getReports))
+    }
 
     var body: some View {
         ScrollView(showsIndicators: false) {
@@ -39,11 +64,54 @@ struct ProfileView: View {
         }
         .background(Color.white)
 
-        .task { await vm.loadIfNeeded(appState: appState) }
+        .task {
+            await vm.loadIfNeeded(appState: appState)
+            await loadReportsIfPossible()
+        }
+        .refreshable {
+            await vm.reload(appState: appState)
+            await loadReportsIfPossible()
+        }
 
+        // ✅ Report detail navigation
+        .navigationDestination(isPresented: Binding(
+            get: { selectedReportId != nil },
+            set: { if !$0 { selectedReportId = nil } }
+        )) {
+            if let rid = selectedReportId {
+                PerformanceReportDetailView(reportId: rid)
+            }
+        }
+
+        // ✅ Query sheet
+        .sheet(isPresented: $showQuery) {
+            if let bid = appState.businessId,
+               let uid = appState.userId {
+                PerformanceQueryView(
+                    businessId: bid,
+                    employeeUserId: uid,
+                    onCreated: { _ in
+                        Task { await perfVM.load(businessId: bid, employeeUserId: uid) }
+                    }
+                )
+                .presentationDetents([.large])
+            } else {
+                VStack(spacing: 12) {
+                    ProgressView()
+                    Text("Yükleniyor...")
+                        .foregroundColor(.gray)
+                }
+                .presentationDetents([.medium])
+            }
+        }
+
+        // ✅ Edit sheets
         .sheet(isPresented: $showEditPersonalProfile, onDismiss: {
             avatarRefreshToken = UUID()
-            Task { await vm.reload(appState: appState) }
+            Task {
+                await vm.reload(appState: appState)
+                await loadReportsIfPossible()
+            }
         }) {
             EditPersonalProfileView(authRepo: authRepo)
         }
@@ -58,6 +126,13 @@ struct ProfileView: View {
         .sheet(item: $previewDoc) { doc in
             DocumentPreviewSheet(title: doc.title, documentId: doc.documentId, network: network)
         }
+    }
+
+    // MARK: - Load reports helper
+    private func loadReportsIfPossible() async {
+        guard let bid = appState.businessId,
+              let uid = appState.userId else { return }
+        await perfVM.load(businessId: bid, employeeUserId: uid)
     }
 
     // MARK: - Employee
@@ -87,19 +162,27 @@ struct ProfileView: View {
                         Text("Düzenle")
                             .font(.system(size: 14, weight: .semibold))
                             .foregroundStyle(.blue)
-                               .padding(.horizontal, 12)
-                               .padding(.vertical, 7)
-                               .background(.ultraThinMaterial)
-                               .clipShape(Capsule())
-                               .overlay(
-                                   Capsule().strokeBorder(.blue.opacity(0.35), lineWidth: 1)
-                               )
-                               .shadow(color: .black.opacity(0.10), radius: 10, x: 0, y: 4)
+                            .padding(.horizontal, 12)
+                            .padding(.vertical, 7)
+                            .background(.ultraThinMaterial)
+                            .clipShape(Capsule())
+                            .overlay(Capsule().strokeBorder(.blue.opacity(0.35), lineWidth: 1))
+                            .shadow(color: .black.opacity(0.10), radius: 10, x: 0, y: 4)
                     }
                 }
             }
             .padding(16)
             .headerStyle()
+            .padding(.horizontal, 16)
+
+            // ✅ Sorgu + geçmiş (çalışan altında)
+            PerformanceSectionView(
+                reports: perfVM.reports,
+                isLoading: perfVM.isLoading,
+                error: perfVM.error,
+                onCreateQuery: { showQuery = true },
+                onSelectReport: { selectedReportId = $0 }
+            )
             .padding(.horizontal, 16)
 
             VStack(alignment: .leading, spacing: 14) {
@@ -152,22 +235,31 @@ struct ProfileView: View {
                         Text("Düzenle")
                             .font(.system(size: 14, weight: .semibold))
                             .foregroundStyle(.blue)
-                               .padding(.horizontal, 12)
-                               .padding(.vertical, 7)
-                               .background(.ultraThinMaterial)
-                               .clipShape(Capsule())
-                               .overlay(
-                                   Capsule().strokeBorder(.blue.opacity(0.35), lineWidth: 1)
-                               )
-                               .shadow(color: .black.opacity(0.10), radius: 10, x: 0, y: 4)
+                            .padding(.horizontal, 12)
+                            .padding(.vertical, 7)
+                            .background(.ultraThinMaterial)
+                            .clipShape(Capsule())
+                            .overlay(Capsule().strokeBorder(.blue.opacity(0.35), lineWidth: 1))
+                            .shadow(color: .black.opacity(0.10), radius: 10, x: 0, y: 4)
                     }
                 }
+
+             
 
                 VStack(alignment: .leading, spacing: 14) {
                     infoSection(title: "Kimlik", value: m.employee.tcIdentityNumber ?? "-")
                     infoSection(title: "Email", value: m.employee.email)
                     documentsSection(title: "Belgeler", documents: m.employee.documentFiles)
                 }
+                
+                // ✅ Sorgu + geçmiş (yöneticide çalışan kartı altında)
+                PerformanceSectionView(
+                    reports: perfVM.reports,
+                    isLoading: perfVM.isLoading,
+                    error: perfVM.error,
+                    onCreateQuery: { showQuery = true },
+                    onSelectReport: { selectedReportId = $0 }
+                )
             }
             .padding(16)
             .headerStyle()
@@ -201,14 +293,12 @@ struct ProfileView: View {
                     Text("Düzenle")
                         .font(.system(size: 14, weight: .semibold))
                         .foregroundStyle(.blue)
-                           .padding(.horizontal, 12)
-                           .padding(.vertical, 7)
-                           .background(.ultraThinMaterial)    
-                           .clipShape(Capsule())
-                           .overlay(
-                               Capsule().strokeBorder(.blue.opacity(0.35), lineWidth: 1)
-                           )
-                           .shadow(color: .black.opacity(0.10), radius: 10, x: 0, y: 4)
+                        .padding(.horizontal, 12)
+                        .padding(.vertical, 7)
+                        .background(.ultraThinMaterial)
+                        .clipShape(Capsule())
+                        .overlay(Capsule().strokeBorder(.blue.opacity(0.35), lineWidth: 1))
+                        .shadow(color: .black.opacity(0.10), radius: 10, x: 0, y: 4)
                 }
             }
         }
@@ -235,9 +325,7 @@ struct ProfileView: View {
                 }
 
                 if let phone = trimmedOrNil(m.companyPhoneNumber) {
-                    tappableInfoRow(title: "Telefon", value: phone) {
-                        openPhone(phone)
-                    }
+                    tappableInfoRow(title: "Telefon", value: phone) { openPhone(phone) }
                 }
 
                 if let addr = trimmedOrNil(m.companyAddress) {

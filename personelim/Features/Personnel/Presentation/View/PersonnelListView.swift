@@ -13,6 +13,7 @@ struct PersonnelListView: View {
     @StateObject private var vm = PersonnelListViewModel()
 
     @State private var showAddEmployee = false
+    @State private var showBulkQuerySheet = false
 
     private enum SortOption: String, CaseIterable {
         case nameAZ, nameZA, salaryHighLow, salaryLowHigh
@@ -42,6 +43,7 @@ struct PersonnelListView: View {
     var body: some View {
         NavigationStack {
             VStack(spacing: 12) {
+
                 HStack(spacing: 10) {
                     HStack(spacing: 8) {
                         Image(systemName: "magnifyingglass")
@@ -77,16 +79,12 @@ struct PersonnelListView: View {
                             .frame(width: 36, height: 36)
                             .background(.ultraThinMaterial)
                             .clipShape(Circle())
-                            .overlay(
-                                Circle().strokeBorder(.white.opacity(0.25), lineWidth: 1)
-                            )
+                            .overlay(Circle().strokeBorder(.white.opacity(0.25), lineWidth: 1))
                             .shadow(color: .black.opacity(0.10), radius: 10, x: 0, y: 4)
                     }
                     .buttonStyle(.plain)
 
-                    Button {
-                        showAddEmployee = true
-                    } label: {
+                    Button { showAddEmployee = true } label: {
                         Text("Ekle")
                             .font(.system(size: 14, weight: .semibold))
                             .foregroundStyle(.blue)
@@ -94,9 +92,7 @@ struct PersonnelListView: View {
                             .padding(.vertical, 7)
                             .background(.ultraThinMaterial)
                             .clipShape(Capsule())
-                            .overlay(
-                                Capsule().strokeBorder(.blue.opacity(0.35), lineWidth: 1)
-                            )
+                            .overlay(Capsule().strokeBorder(.blue.opacity(0.35), lineWidth: 1))
                             .shadow(color: .black.opacity(0.10), radius: 10, x: 0, y: 4)
                     }
                     .buttonStyle(.plain)
@@ -104,10 +100,37 @@ struct PersonnelListView: View {
                 .padding(.horizontal, 16)
                 .padding(.top, 10)
 
-                Text("Personellerim")
-                    .font(.title3.weight(.semibold))
-                    .frame(maxWidth: .infinity, alignment: .leading)
-                    .padding(.horizontal, 16)
+                HStack {
+                    Text("Personellerim")
+                        .font(.title3.weight(.semibold))
+
+                    Spacer()
+
+                    Button { showBulkQuerySheet = true } label: {
+                        HStack(spacing: 6) {
+                            if vm.isBulkLoading {
+                                ProgressView().scaleEffect(0.85)
+                            } else {
+                                Image(systemName: "sparkle.magnifyingglass")
+                                    .font(.system(size: 12, weight: .semibold))
+                            }
+
+                            Text("Toplu Sorgu")
+                                .font(.system(size: 13, weight: .semibold))
+                        }
+                        .foregroundStyle(.blue)
+                        .padding(.horizontal, 12)
+                        .padding(.vertical, 7)
+                        .background(.ultraThinMaterial)
+                        .clipShape(Capsule())
+                        .overlay(Capsule().strokeBorder(.blue.opacity(0.35), lineWidth: 1))
+                        .shadow(color: .black.opacity(0.10), radius: 10, x: 0, y: 4)
+                    }
+                    .buttonStyle(.plain)
+                    .disabled(vm.isBulkLoading || appState.businessId == nil)
+                    .opacity((vm.isBulkLoading || appState.businessId == nil) ? 0.55 : 1.0)
+                }
+                .padding(.horizontal, 16)
 
                 if vm.isLoading {
                     ProgressView().padding(.top, 20)
@@ -115,6 +138,12 @@ struct PersonnelListView: View {
 
                 if let err = vm.errorMessage {
                     Text(err)
+                        .foregroundColor(.red)
+                        .padding(.horizontal, 16)
+                }
+
+                if let e = vm.bulkError {
+                    Text(e)
                         .foregroundColor(.red)
                         .padding(.horizontal, 16)
                 }
@@ -127,7 +156,10 @@ struct PersonnelListView: View {
                         NavigationLink {
                             PersonnelDetailView(memberId: m.id)
                         } label: {
-                            PersonnelRow(member: m)
+                            PersonnelRow(
+                                member: m,
+                                scoreText: vm.scoreText(for: m)
+                            )
                         }
                         .buttonStyle(.plain)
                         .listRowBackground(Color.clear)
@@ -142,13 +174,37 @@ struct PersonnelListView: View {
                 }
             }
             .navigationBarHidden(true)
+
             .task {
                 vm.isLoading = true
                 defer { vm.isLoading = false }
                 await appState.loadBusinessMembersIfNeeded(repository: memberRepo)
             }
+
             .sheet(isPresented: $showAddEmployee) {
                 AddEmployeeView()
+            }
+
+            .sheet(isPresented: $showBulkQuerySheet) {
+                if let bid = appState.businessId {
+                    NavigationStack {
+                        PerformanceBulkQueryView(
+                            businessId: bid,
+                            vm: vm,
+                            onCompleted: { _, _ in
+                                showBulkQuerySheet = false
+                            }
+                        )
+                    }
+                    .presentationDetents([.large])
+                } else {
+                    VStack(spacing: 12) {
+                        ProgressView()
+                        Text("Yükleniyor...")
+                            .foregroundColor(.gray)
+                    }
+                    .presentationDetents([.medium])
+                }
             }
         }
     }
@@ -169,14 +225,11 @@ struct PersonnelListView: View {
             switch option {
             case .nameAZ:
                 return an == bn ? salaryValue(a) > salaryValue(b) : (an < bn)
-
             case .nameZA:
                 return an == bn ? salaryValue(a) > salaryValue(b) : (an > bn)
-
             case .salaryHighLow:
                 let sa = salaryValue(a), sb = salaryValue(b)
                 return sa == sb ? (an < bn) : (sa > sb)
-
             case .salaryLowHigh:
                 let sa = salaryValue(a), sb = salaryValue(b)
                 return sa == sb ? (an < bn) : (sa < sb)
@@ -185,8 +238,11 @@ struct PersonnelListView: View {
     }
 }
 
+// MARK: - Row (same)
+
 private struct PersonnelRow: View {
     let member: BusinessMemberDTO
+    let scoreText: String?
 
     var body: some View {
         HStack(spacing: 12) {
@@ -202,10 +258,19 @@ private struct PersonnelRow: View {
                 )
 
             VStack(alignment: .leading, spacing: 6) {
-                Text(member.fullName)
-                    .font(.system(size: 16, weight: .semibold))
-                    .foregroundStyle(.primary)
-                    .lineLimit(1)
+
+                HStack(spacing: 8) {
+                    Text(member.fullName)
+                        .font(.system(size: 16, weight: .semibold))
+                        .foregroundStyle(.primary)
+                        .lineLimit(1)
+
+                    if let scoreText {
+                        scorePill(scoreText)
+                    }
+
+                    Spacer(minLength: 0)
+                }
 
                 HStack(spacing: 8) {
                     if let p = member.position, !p.isEmpty {
@@ -220,6 +285,22 @@ private struct PersonnelRow: View {
             Spacer()
         }
         .padding(.vertical, 8)
+    }
+
+    private func scorePill(_ text: String) -> some View {
+        HStack(spacing: 6) {
+            Image(systemName: "gauge.with.dots.needle.67percent")
+                .font(.system(size: 11, weight: .semibold))
+                .symbolRenderingMode(.hierarchical)
+            Text(text)
+                .font(.system(size: 12, weight: .semibold))
+                .lineLimit(1)
+        }
+        .foregroundStyle(.secondary)
+        .padding(.horizontal, 10)
+        .padding(.vertical, 6)
+        .background(Color(UIColor.systemGray6).opacity(0.65))
+        .clipShape(Capsule())
     }
 
     private func pill(text: String, systemImage: String) -> some View {

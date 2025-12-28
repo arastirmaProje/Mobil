@@ -194,3 +194,4 @@ private extension String {
         return regex.stringByReplacingMatches(in: self, range: range, withTemplate: replacement)
     }
 }
+

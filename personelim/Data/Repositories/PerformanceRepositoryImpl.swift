@@ -51,4 +51,13 @@ final class PerformanceRepositoryImpl: PerformanceRepositoryProtocol {
         }
         return data
     }
+    
+    func bulkQueryScores(request: PerformanceBulkQueryRequestDTO) async throws -> ServiceResponse<[PerformanceBulkScoreItemDTO]> {
+            let res: ServiceResponse<[PerformanceBulkScoreItemDTO]> = try await network.request(
+                endpoint: .performanceQueryBulkScores,
+                method: .post,
+                body: request
+            )
+            return res
+        }
 }
