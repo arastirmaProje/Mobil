@@ -2,21 +2,21 @@ import Foundation
 
 @MainActor
 final class ProfileViewModel: ObservableObject {
-
+    
     @Published var isLoading = false
     @Published var errorMessage: String?
-
+    
     @Published var employeeUI: EmployeeProfileUI?
     @Published var managerUI: ManagerProfileUI?
-
+    
     private let authRepo: AuthRepositoryProtocol
     private let memberRepo: BusinessMemberRepositoryProtocol
     private let businessRepo: BusinessRepositoryProtocol
     private let leaveRepo: LeaveRepositoryProtocol
-
+    
     private var didLoadOnce = false
     private var loadTask: Task<Void, Never>?
-
+    
     init(
         authRepo: AuthRepositoryProtocol = AuthRepositoryImpl(network: NetworkManager()),
         memberRepo: BusinessMemberRepositoryProtocol = BusinessMemberRepositoryImpl(network: NetworkManager()),
@@ -28,24 +28,24 @@ final class ProfileViewModel: ObservableObject {
         self.businessRepo = businessRepo
         self.leaveRepo = leaveRepo
     }
-
+    
     func loadIfNeeded(appState: AppState) async {
         guard !didLoadOnce else { return }
         await loadInternal(appState: appState, force: false)
     }
-
+    
     func reload(appState: AppState) async {
         await loadInternal(appState: appState, force: true)
     }
-
+    
     private func loadInternal(appState: AppState, force: Bool) async {
-
+        
         if loadTask != nil { return }
         if didLoadOnce && !force { return }
-
+        
         isLoading = true
         errorMessage = nil
-
+        
         loadTask = Task {
             defer {
                 Task { @MainActor in
@@ -54,11 +54,11 @@ final class ProfileViewModel: ObservableObject {
                     self.didLoadOnce = true
                 }
             }
-
+            
             do {
                 let auth = try await authRepo.getProfile()
                 appState.userId = auth.id
-
+                
                 let myNameFromAuth: String = {
                     if let full = auth.fullName?.trimmingCharacters(in: .whitespacesAndNewlines), !full.isEmpty {
                         return full
@@ -67,7 +67,7 @@ final class ProfileViewModel: ObservableObject {
                     let l = (auth.lastName ?? "").trimmingCharacters(in: .whitespacesAndNewlines)
                     return "\(f) \(l)".trimmingCharacters(in: .whitespacesAndNewlines)
                 }()
-
+                
                 let businesses = try await businessRepo.getBusinesses()
                 guard let business = businesses.first else {
                     self.employeeUI = EmployeeProfileUI(
@@ -84,20 +84,17 @@ final class ProfileViewModel: ObservableObject {
                     self.managerUI = nil
                     return
                 }
-
+                
                 appState.businessId = business.id
                 let businessId = business.id
-
-                // ===============================
-                // İZİNLERİ ÇEK & HESAPLA (GÜVENLİ)
-                // Leave patlarsa profil yine yüklensin diye ayrı do-catch
-                // ===============================
-
+                
+                // MARK: - Leave
+                
                 var usedLeaveText = "0 gün"
-
+                
                 do {
                     let leaves = try await leaveRepo.getMyLeaves(businessId: businessId)
-
+                    
                     let calendar = Calendar.current
                     let usedLeaveDays = leaves.reduce(into: 0) { result, leave in
                         result += leave.dayCount
@@ -107,7 +104,7 @@ final class ProfileViewModel: ObservableObject {
                     // leave decode / endpoint hatası olursa profil çökmesin
                     print("⚠️ Leave load failed:", error.localizedDescription)
                 }
-
+                
                 let members: [BusinessMemberDTO]
                 if force {
                     let fetched = try await memberRepo.getMembers(businessId: businessId)
@@ -123,19 +120,19 @@ final class ProfileViewModel: ObservableObject {
                     appState.businessMembers = active
                     members = active
                 }
-
+                
                 let me = members.first { $0.userId.lowercased() == auth.id.lowercased() }
                 appState.role = me?.role ?? .default
-
+                
                 let salaryText: String? = {
                     guard let s = me?.salary else { return nil }
                     return "\(Int(s))TL"
                 }()
-
+                
                 var cvFiles: [BusinessMemberDocumentDTO] = []
                 var documentFiles: [BusinessMemberDocumentDTO] = []
                 var tcIdentityNumber: String? = nil
-
+                
                 if let me {
                     let detail = try await memberRepo.getMember(memberId: me.id)
                     let docs = detail.documents ?? []
@@ -143,7 +140,7 @@ final class ProfileViewModel: ObservableObject {
                     documentFiles = docs.filter { $0.documentType.uppercased() != "CV" }
                     tcIdentityNumber = detail.tcIdentityNumber ?? me.tcIdentityNumber
                 }
-
+                
                 let employee = EmployeeProfileUI(
                     fullName: myNameFromAuth,
                     position: me?.position,
@@ -155,7 +152,7 @@ final class ProfileViewModel: ObservableObject {
                     documentFiles: documentFiles,
                     remainingLeaveDaysText: usedLeaveText
                 )
-
+                
                 let officesUI: [OfficeUI] = {
                     if let offices = business.offices, !offices.isEmpty {
                         return offices.enumerated().map { idx, o in
@@ -168,7 +165,7 @@ final class ProfileViewModel: ObservableObject {
                             )
                         }
                     }
-
+                    
                     let name = (business.locationName ?? "").trimmingCharacters(in: .whitespacesAndNewlines)
                     return [
                         OfficeUI(
@@ -179,7 +176,7 @@ final class ProfileViewModel: ObservableObject {
                         )
                     ]
                 }()
-
+                
                 if appState.role.canSeePersonnelTab {
                     self.managerUI = ManagerProfileUI(
                         companyName: business.name,
@@ -199,12 +196,12 @@ final class ProfileViewModel: ObservableObject {
                     self.employeeUI = employee
                     self.managerUI = nil
                 }
-
+                
             } catch {
                 self.errorMessage = error.localizedDescription
             }
         }
-
+        
         await loadTask?.value
     }
 }
