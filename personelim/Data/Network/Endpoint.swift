@@ -45,6 +45,11 @@ enum Endpoint {
     case createShift
     case myShifts(businessId: String)
     case performanceQueryBulkScores
+    case createLeave
+    case myLeaves(businessId: String)
+    case businessLeaves(businessId: String)
+    case updateLeaveStatus(leaveId: String)
+    case deleteLeave(leaveId: String)
 
     var path: String {
         switch self {
@@ -83,9 +88,13 @@ enum Endpoint {
         case .performanceReports(let businessId, let employeeUserId): return "/api/Performance/business/\(businessId)/employee/\(employeeUserId)"
         case .performanceReportDetail(let reportId): return "/api/Performance/\(reportId)"
         case .createShift: return "/api/Shift"
-        case .performanceQueryBulkScores:
-                   return "/api/Performance/query-bulk-scores"
+        case .performanceQueryBulkScores: return "/api/Performance/query-bulk-scores"
         case .myShifts(let businessId): return "/api/Shift/my?businessId=\(businessId)"
+        case .createLeave: return "/api/Leave"
+        case .myLeaves(let businessId): return "/api/Leave/my-leaves/\(businessId)"
+        case .businessLeaves(let businessId): return "/api/Leave/business/\(businessId)"
+        case .updateLeaveStatus(let leaveId): return "/api/Leave/\(leaveId)/status"
+        case .deleteLeave(let leaveId): return "/api/Leave/\(leaveId)"
             
 
         }
@@ -93,20 +102,21 @@ enum Endpoint {
 
     var method: HTTPMethod {
         switch self {
-        case .login, .register, .forgotPassword, .verifyResetCode, .resetPassword, .verifyBusiness, .createBusiness, .uploadMemberDocuments, .createTask, .uploadBusinessDocument, .sendInvitation, .performanceQuery, .createShift, .performanceQueryBulkScores:
+        case .login, .register, .forgotPassword, .verifyResetCode, .resetPassword, .verifyBusiness, .createBusiness, .uploadMemberDocuments, .createTask, .uploadBusinessDocument, .sendInvitation, .performanceQuery, .createShift, .performanceQueryBulkScores, .createLeave:
             return .post
 
-        case .businessMembers, .profile, .getBusiness, .provinces, .districts, .business, .businessList, .getBusinessMember, .downloadDocument, .myTasks, .getBusinessDocuments, .performanceReports, .performanceReportDetail, .myShifts:
+        case .businessMembers, .profile, .getBusiness, .provinces, .districts, .business, .businessList, .getBusinessMember, .downloadDocument, .myTasks, .getBusinessDocuments, .performanceReports, .performanceReportDetail, .myShifts, .myLeaves, .businessLeaves:
             return .get
 
-        case .profileUpdate, .updateBusinessMember, .updateBusiness, .updateTaskStatus:
+        case .profileUpdate, .updateBusinessMember, .updateBusiness, .updateTaskStatus, .updateLeaveStatus:
             return .put
             
         case .deleteBusinessDocument,
              .deleteMemberDocument,
              .deleteBusiness,
              .deleteBusinessMember,
-             .deleteAccount:
+             .deleteAccount,
+             .deleteLeave:
         return .delete
         }
     }

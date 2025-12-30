@@ -5,11 +5,12 @@ import MapKit
 struct ProfileView: View {
 
     @EnvironmentObject private var appState: AppState
+    @State private var showCreateLeave = false
 
-    // ✅ Shared network (tek instance)
+    // Shared network (tek instance)
     private let network: NetworkManager
 
-    // ✅ ViewModels
+    // ViewModels
     @StateObject private var vm: ProfileViewModel
     @StateObject private var perfVM: ProfilePerformanceViewModel
 
@@ -73,7 +74,7 @@ struct ProfileView: View {
             await loadReportsIfPossible()
         }
 
-        // ✅ Report detail navigation
+        // Report detail navigation
         .navigationDestination(isPresented: Binding(
             get: { selectedReportId != nil },
             set: { if !$0 { selectedReportId = nil } }
@@ -83,7 +84,7 @@ struct ProfileView: View {
             }
         }
 
-        // ✅ Query sheet
+        // Query sheet
         .sheet(isPresented: $showQuery) {
             if let bid = appState.businessId,
                let uid = appState.userId {
@@ -105,7 +106,7 @@ struct ProfileView: View {
             }
         }
 
-        // ✅ Edit sheets
+        // Edit sheets
         .sheet(isPresented: $showEditPersonalProfile, onDismiss: {
             avatarRefreshToken = UUID()
             Task {
@@ -125,6 +126,25 @@ struct ProfileView: View {
 
         .sheet(item: $previewDoc) { doc in
             DocumentPreviewSheet(title: doc.title, documentId: doc.documentId, network: network)
+        }
+
+        .sheet(
+            isPresented: $showCreateLeave,
+            onDismiss: {
+                Task { await vm.reload(appState: appState) }
+            }
+        ) {
+            if let businessId = appState.businessId {
+                CreateLeaveView(businessId: businessId)
+                    .presentationDetents([.large])
+            } else {
+                VStack(spacing: 12) {
+                    ProgressView()
+                    Text("Yükleniyor...")
+                        .foregroundColor(.secondary)
+                }
+                .presentationDetents([.medium])
+            }
         }
     }
 
@@ -175,7 +195,7 @@ struct ProfileView: View {
             .headerStyle()
             .padding(.horizontal, 16)
 
-            // ✅ Sorgu + geçmiş (çalışan altında)
+            // Sorgu + geçmiş (çalışan altında)
             PerformanceSectionView(
                 reports: perfVM.reports,
                 isLoading: perfVM.isLoading,
@@ -189,7 +209,10 @@ struct ProfileView: View {
                 infoSection(title: "Kimlik", value: p.tcIdentityNumber ?? "-")
                 infoSection(title: "Email", value: p.email)
                 documentsSection(title: "Belgeler", documents: p.documentFiles)
-                infoSection(title: "Kalan İzin Günü", value: p.remainingLeaveDaysText)
+                LeaveSectionView(
+                    remainingDaysText: p.remainingLeaveDaysText,
+                    onCreateLeave: { showCreateLeave = true }
+                )
             }
             .padding(.horizontal, 16)
         }
@@ -252,7 +275,7 @@ struct ProfileView: View {
                     documentsSection(title: "Belgeler", documents: m.employee.documentFiles)
                 }
                 
-                // ✅ Sorgu + geçmiş (yöneticide çalışan kartı altında)
+                // Sorgu + geçmiş (yöneticide çalışan kartı altında)
                 PerformanceSectionView(
                     reports: perfVM.reports,
                     isLoading: perfVM.isLoading,

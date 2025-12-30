@@ -12,6 +12,7 @@ final class ProfileViewModel: ObservableObject {
     private let authRepo: AuthRepositoryProtocol
     private let memberRepo: BusinessMemberRepositoryProtocol
     private let businessRepo: BusinessRepositoryProtocol
+    private let leaveRepo: LeaveRepositoryProtocol
 
     private var didLoadOnce = false
     private var loadTask: Task<Void, Never>?
@@ -19,11 +20,13 @@ final class ProfileViewModel: ObservableObject {
     init(
         authRepo: AuthRepositoryProtocol = AuthRepositoryImpl(network: NetworkManager()),
         memberRepo: BusinessMemberRepositoryProtocol = BusinessMemberRepositoryImpl(network: NetworkManager()),
-        businessRepo: BusinessRepositoryProtocol = BusinessRepositoryImpl(networkManager: NetworkManager())
+        businessRepo: BusinessRepositoryProtocol = BusinessRepositoryImpl(networkManager: NetworkManager()),
+        leaveRepo: LeaveRepositoryProtocol = LeaveRepositoryImpl(network: NetworkManager())
     ) {
         self.authRepo = authRepo
         self.memberRepo = memberRepo
         self.businessRepo = businessRepo
+        self.leaveRepo = leaveRepo
     }
 
     func loadIfNeeded(appState: AppState) async {
@@ -38,7 +41,6 @@ final class ProfileViewModel: ObservableObject {
     private func loadInternal(appState: AppState, force: Bool) async {
 
         if loadTask != nil { return }
-
         if didLoadOnce && !force { return }
 
         isLoading = true
@@ -77,7 +79,7 @@ final class ProfileViewModel: ObservableObject {
                         imageUrl: auth.imageUrl,
                         cvFiles: [],
                         documentFiles: [],
-                        remainingLeaveDaysText: "4"
+                        remainingLeaveDaysText: "Kullanılan izin: 0 gün"
                     )
                     self.managerUI = nil
                     return
@@ -86,14 +88,34 @@ final class ProfileViewModel: ObservableObject {
                 appState.businessId = business.id
                 let businessId = business.id
 
+                // ===============================
+                // İZİNLERİ ÇEK & HESAPLA (GÜVENLİ)
+                // Leave patlarsa profil yine yüklensin diye ayrı do-catch
+                // ===============================
+
+                var usedLeaveText = "0 gün"
+
+                do {
+                    let leaves = try await leaveRepo.getMyLeaves(businessId: businessId)
+
+                    let calendar = Calendar.current
+                    let usedLeaveDays = leaves.reduce(into: 0) { result, leave in
+                        result += leave.dayCount
+                    }
+                    usedLeaveText = "\(usedLeaveDays) gün"
+                } catch {
+                    // leave decode / endpoint hatası olursa profil çökmesin
+                    print("⚠️ Leave load failed:", error.localizedDescription)
+                }
+
                 let members: [BusinessMemberDTO]
-                if force == true {
+                if force {
                     let fetched = try await memberRepo.getMembers(businessId: businessId)
                     let active = fetched.filter { $0.isActive == true }
                     appState.businessMembers = active
                     members = active
                 } else if !appState.businessMembers.isEmpty,
-                          (appState.businessId?.lowercased() == businessId.lowercased()) {
+                          appState.businessId?.lowercased() == businessId.lowercased() {
                     members = appState.businessMembers
                 } else {
                     let fetched = try await memberRepo.getMembers(businessId: businessId)
@@ -131,7 +153,7 @@ final class ProfileViewModel: ObservableObject {
                     imageUrl: auth.imageUrl,
                     cvFiles: cvFiles,
                     documentFiles: documentFiles,
-                    remainingLeaveDaysText: "4"
+                    remainingLeaveDaysText: usedLeaveText
                 )
 
                 let officesUI: [OfficeUI] = {
