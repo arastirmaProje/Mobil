@@ -11,5 +11,5 @@ protocol PerformanceRepositoryProtocol {
     func queryPerformance(_ body: PerformanceQueryRequestDTO) async throws -> PerformanceReportDTO
     func getReports(businessId: String, employeeUserId: String) async throws -> [PerformanceReportDTO]
     func getReportDetail(reportId: String) async throws -> PerformanceReportDTO
-    func bulkQueryScores(request: PerformanceBulkQueryRequestDTO) async throws -> ServiceResponse<[PerformanceBulkScoreItemDTO]>
+    func bulkQueryScores(request: PerformanceBulkQueryRequestDTO) async throws -> ServiceResponse<PerformanceBulkScoreResponseDTO>
 }

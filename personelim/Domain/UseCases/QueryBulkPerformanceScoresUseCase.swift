@@ -28,7 +28,8 @@ final class QueryBulkPerformanceScoresUseCase: QueryBulkPerformanceScoresUseCase
         )
 
         let res = try await repo.bulkQueryScores(request: req)
-        return res.data ?? []
+        return res.data?.scores ?? []
+
     }
 
     private static func isoString(_ date: Date) -> String {

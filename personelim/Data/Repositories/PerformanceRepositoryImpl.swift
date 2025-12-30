@@ -52,12 +52,41 @@ final class PerformanceRepositoryImpl: PerformanceRepositoryProtocol {
         return data
     }
     
-    func bulkQueryScores(request: PerformanceBulkQueryRequestDTO) async throws -> ServiceResponse<[PerformanceBulkScoreItemDTO]> {
-            let res: ServiceResponse<[PerformanceBulkScoreItemDTO]> = try await network.request(
-                endpoint: .performanceQueryBulkScores,
-                method: .post,
-                body: request
-            )
-            return res
+    func bulkQueryScores(request: PerformanceBulkQueryRequestDTO) async throws -> ServiceResponse<PerformanceBulkScoreResponseDTO> {
+
+        print("🟡 BULK QUERY START")
+        print("🟡 businessId:", request.businessId)
+        print("🟡 startDate:", request.startDate)
+        print("🟡 endDate:", request.endDate)
+
+        let res: ServiceResponse<PerformanceBulkScoreResponseDTO> = try await network.request(
+            endpoint: .performanceQueryBulkScores,
+            method: .post,
+            body: request
+        )
+
+        print("🟢 BULK QUERY RESPONSE success:", res.success)
+        print("🟢 BULK QUERY message:", res.message ?? "nil")
+
+        if let data = res.data {
+            print("🟢 BULK totalEmployees:", data.totalEmployees ?? -1)
+            print("🟢 BULK scores count:", data.scores.count)
+
+            for s in data.scores {
+                print(
+                    "   ➤ uid:",
+                    s.userId ?? "nil",
+                    "| score:",
+                    s.score ?? -1
+                )
+            }
+        } else {
+            print("🔴 BULK RESPONSE DATA NIL")
         }
+
+        print("🟡 BULK QUERY END")
+        return res
+    }
+
+
 }
