@@ -140,7 +140,6 @@ final class CreateCompanyViewModel: ObservableObject {
 
         do {
             let businessId = try await createBusinessAndGetIdUseCase.execute(request: request)
-            appState.businessId = businessId
             showOTP = true
         } catch {
             errorMessage = error.localizedDescription

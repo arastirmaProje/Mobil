@@ -29,7 +29,6 @@ struct OTPInputView: View {
                 }
             }
 
-            // Hidden textfield for actual input
             TextField("", text: $code.limit(6))
                 .keyboardType(.numberPad)
                 .textContentType(.oneTimeCode)

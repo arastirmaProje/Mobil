@@ -276,7 +276,7 @@ struct MapPickerView: View {
     }
 }
 
-// MARK: - Location Manager (Permission + lastLocation)
+// MARK: - Location Manager 
 @MainActor
 final class LocationPermissionManager: NSObject, ObservableObject, CLLocationManagerDelegate {
 

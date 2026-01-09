@@ -34,14 +34,14 @@ struct HomeView: View {
                 }
                 .padding(.bottom, 24)
             }
-            .task {
-                await vm.loadActiveTasks()
-                await vm.loadOfficeOptions(selectedBusinessId: appState.businessId)
+            .task(id: appState.businessId) {
+                guard let bid = appState.businessId else { return }
 
-                if let bid = appState.businessId {
-                    await vm.loadMonthlyShifts(businessId: bid, month: Date())
-                }
+                await vm.loadActiveTasks()
+                await vm.loadOfficeOptions(selectedBusinessId: bid)
+                await vm.loadMonthlyShifts(businessId: bid, month: Date())
             }
+
             .navigationDestination(isPresented: $showTaskList) {
                 TasksListView()
             }

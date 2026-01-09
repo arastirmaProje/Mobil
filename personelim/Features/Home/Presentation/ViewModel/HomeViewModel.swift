@@ -39,11 +39,11 @@ final class HomeViewModel: ObservableObject {
             let tasks = try await taskRepo.getMyTasks()
             activeTasks = tasks.filter { $0.status == "Beklemede" }
         } catch {
-            print("❌ Home task load error:", error)
+            print(" Home task load error:", error)
         }
     }
 
-    // MARK: - Load month (✅ getMyShifts ile)
+    // MARK: - Load month
     func loadMonthlyShifts(businessId: String, month: Date) async {
         currentMonth = month
 
@@ -62,7 +62,7 @@ final class HomeViewModel: ObservableObject {
             )
 
         } catch {
-            print("❌ Home shifts load error:", error)
+            print("Home shifts load error:", error)
             self.currentMonthSummaries = ShiftCalendarMapper.makeMonthSummaries(
                 month: month,
                 shifts: []
@@ -100,10 +100,10 @@ final class HomeViewModel: ObservableObject {
             }
 
             officeOptions = b.toShiftOfficeOptions()
-            print("🏢 Office options:", officeOptions.map { $0.title })
+            print("Office options:", officeOptions.map { $0.title })
 
         } catch {
-            print("❌ Home business load error:", error)
+            print("Home business load error:", error)
             officeOptions = []
         }
     }

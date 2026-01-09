@@ -15,7 +15,6 @@ final class LoginViewModel: ObservableObject {
 
     @Published var isLoading: Bool = false
     @Published var errorMessage: String?
-    @Published var isLoggedIn: Bool = false
 
     // MARK: - Dependencies
     private let loginUseCase: LoginUseCaseProtocol
@@ -37,26 +36,40 @@ final class LoginViewModel: ObservableObject {
         do {
             let user = try await loginUseCase.execute(email: email, password: password)
 
-    
-            UserDefaults.standard.set(user.token, forKey: "auth_token")
+            TokenStore.shared.save(user.token)
+
             UserDefaults.standard.set(user.fullName, forKey: "full_name")
             UserDefaults.standard.set(user.email, forKey: "user_email")
             UserDefaults.standard.set(user.userId, forKey: "user_id")
-            UserDefaults.standard.set(user.expiresAt, forKey: "token_expires_at")
 
-            if rememberMe {
-                UserDefaults.standard.set(email, forKey: "remember_email")
-            } else {
-                UserDefaults.standard.removeObject(forKey: "remember_email")
+            let dto = UserProfileDTO(
+                id: user.userId,
+                email: user.email,
+                firstName: nil,
+                lastName: nil,
+                fullName: user.fullName,
+                phoneNumber: nil,
+                createdAt: nil,
+                lastLoginAt: nil,
+                businessCount: nil,
+                ownedBusinessCount: nil,
+                imageUrl: nil
+            )
+            appState.applyLogin(
+                userDTO: dto,
+                role: user.role
+            )
+
+            Task { @MainActor in
+                await appState.bootstrap(
+                    authRepository: AuthRepositoryImpl(network: NetworkManager()),
+                    businessRepository: BusinessRepositoryImpl(networkManager: NetworkManager()),
+                    businessMemberRepository: BusinessMemberRepositoryImpl(network: NetworkManager())
+                )
             }
-
-
-            appState.applyLogin(userId: user.userId, role: user.role)
-
-            isLoggedIn = true
-
         } catch {
             errorMessage = error.localizedDescription
         }
     }
+
 }

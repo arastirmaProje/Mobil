@@ -14,14 +14,12 @@ struct ForgotPasswordView: View {
     var body: some View {
         VStack(spacing: 0) {
             
-            // Title
             Text("Şifremi unuttum")
                 .font(.title2.weight(.semibold))
                 .padding(.top, 24)
             
             VStack(alignment: .leading, spacing: 24) {
                 
-                // Email Field
                 VStack(alignment: .leading, spacing: 6) {
                     Text("Email")
                         .font(.system(size: 14, weight: .medium))
@@ -36,7 +34,6 @@ struct ForgotPasswordView: View {
                         )
                 }
                 
-                // OTP Input (6 Digit)
                 if vm.codeSent {
                     VStack(alignment: .leading, spacing: 6) {
                         Text("Kodu Gir")
@@ -54,7 +51,6 @@ struct ForgotPasswordView: View {
             
             Spacer()
             
-            // Send Code Button
             Button(vm.codeSent ? "Tekrar Gönder" : "Kod Gönder") {
                 Task { await vm.sendCode() }
             }

@@ -18,3 +18,10 @@ struct TaskEntity: Identifiable {
     let status: String
     let isOverdue: Bool
 }
+
+extension TaskEntity {
+    var statusEnum: TaskStatus? {
+        TaskStatus(rawValue: status)
+    }
+}
+

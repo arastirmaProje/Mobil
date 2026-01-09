@@ -18,69 +18,69 @@ struct TasksListView: View {
         ScrollView {
             VStack(alignment: .leading, spacing: 24) {
 
-                // MARK: - Loading
                 if vm.isLoading {
                     ProgressView()
                         .frame(maxWidth: .infinity)
                         .padding(.top, 40)
                 }
 
-                // MARK: - Empty State
-                if !vm.isLoading && vm.activeTasks.isEmpty && vm.pastTasks.isEmpty {
+                if !vm.isLoading &&
+                    vm.activeTasks.isEmpty &&
+                    vm.pastTasks.isEmpty {
                     emptyState
                 }
 
-                // MARK: - Active Tasks
                 if !vm.activeTasks.isEmpty {
-                    section(title: "Aktif Görevler", tasks: vm.activeTasks)
+                    section(
+                        title: "Aktif Görevler",
+                        tasks: vm.activeTasks
+                    )
                 }
 
-                // MARK: - Past Tasks
                 if !vm.pastTasks.isEmpty {
-                    section(title: "Geçmiş Görevler", tasks: vm.pastTasks)
+                    section(
+                        title: "Geçmiş Görevler",
+                        tasks: vm.pastTasks
+                    )
                 }
             }
             .padding(.top)
         }
         .safeAreaInset(edge: .bottom) {
-            createTaskButton
+            Button {
+                showCreateTask = true
+            } label: {
+                Text("Yeni görev oluştur")
+                    .font(.headline)
+                    .foregroundColor(.primary)
+                    .frame(maxWidth: .infinity)
+                    .padding()
+                    .background(Color(.systemGray5))
+                    .cornerRadius(16)
+            }
+            .padding(.horizontal)
+            .padding(.vertical, 12)
+            .background(.ultraThinMaterial)
         }
         .task {
-            await vm.load()
+            await vm.loadIfNeeded()
         }
         .navigationDestination(isPresented: $showCreateTask) {
             CreateTaskView()
                 .environmentObject(appState)
                 .onDisappear {
-                    Task { await vm.load() }
+                    Task {
+                        await vm.refresh()
+                    }
                 }
+
         }
     }
-}
 
-private extension TasksListView {
-
-    var createTaskButton: some View {
-        Button {
-            showCreateTask = true
-        } label: {
-            Text("Yeni görev oluştur")
-                .font(.headline)
-                .foregroundColor(.primary)
-                .frame(maxWidth: .infinity)
-                .padding()
-                .background(Color(.systemGray5))
-                .cornerRadius(16)
-        }
-        .padding(.horizontal)
-        .padding(.vertical, 12)
-        .background(.ultraThinMaterial)
-    }
-}
-
-private extension TasksListView {
-
-    func section(title: String, tasks: [TaskEntity]) -> some View {
+    private func section(
+        title: String,
+        tasks: [TaskEntity]
+    ) -> some View {
         VStack(alignment: .leading, spacing: 12) {
 
             Text(title)
@@ -104,12 +104,10 @@ private extension TasksListView {
             }
         }
     }
-}
 
-private extension TasksListView {
-
-    var emptyState: some View {
+    private var emptyState: some View {
         VStack(spacing: 12) {
+
             Image(systemName: "tray")
                 .font(.system(size: 40))
                 .foregroundColor(.secondary)

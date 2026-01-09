@@ -98,20 +98,20 @@ final class ShiftTimerViewModel: ObservableObject {
     private func startFlow(option: ShiftStartOption) async {
         errorMessage = nil
 
-        print("🟡 SHIFT START FLOW")
-        print("➡️ Option:", option)
+        print("SHIFT START FLOW")
+        print("Option:", option)
 
         do {
             if option.isOffice {
-                print("🏢 Office selected – validating location")
+                print("Office selected – validating location")
 
                 let current = try await locationManager.requestCoordinate()
-                print("📍 Current location:",
+                print("Current location:",
                       current.latitude,
                       current.longitude)
 
                 guard let target = option.coordinate else {
-                    print("❌ Target office coordinate is nil")
+                    print("Target office coordinate is nil")
                     throw NSError(
                         domain: "shift",
                         code: 9,
@@ -119,7 +119,7 @@ final class ShiftTimerViewModel: ObservableObject {
                     )
                 }
 
-                print("🎯 Target office location:",
+                print("Target office location:",
                       target.latitude,
                       target.longitude)
 
@@ -129,20 +129,20 @@ final class ShiftTimerViewModel: ObservableObject {
                     toleranceMeters: toleranceMeters
                 )
 
-                print("📏 Distance OK?", ok, "| tolerance:", toleranceMeters, "m")
+                print("Distance OK?", ok, "| tolerance:", toleranceMeters, "m")
 
                 guard ok else {
                     let msg = "Seçilen ofise yeterince yakın değilsin."
-                    print("❌ SHIFT START FAILED:", msg)
+                    print("SHIFT START FAILED:", msg)
                     throw NSError(domain: "shift", code: 10, userInfo: [
                         NSLocalizedDescriptionKey: msg
                     ])
                 }
             } else {
-                print("🏠 Home selected – skipping location validation")
+                print("Home selected – skipping location validation")
             }
 
-            print("✅ SHIFT START SUCCESS")
+            print("SHIFT START SUCCESS")
 
             startedAt = Date()
             startOption = option
@@ -155,7 +155,7 @@ final class ShiftTimerViewModel: ObservableObject {
             persist()
 
         } catch {
-            print("❌ SHIFT START ERROR:", error.localizedDescription)
+            print("SHIFT START ERROR:", error.localizedDescription)
             errorMessage = error.localizedDescription
         }
     }

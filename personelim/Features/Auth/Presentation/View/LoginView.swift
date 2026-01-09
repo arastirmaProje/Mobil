@@ -112,10 +112,6 @@ struct LoginView: View {
             }
             .ignoresSafeArea(edges: .bottom)
             .navigationBarBackButtonHidden(true)
-            .fullScreenCover(isPresented: $vm.isLoggedIn) {
-                MainTabView()
-                    .environmentObject(appState)
-            }
             .navigationDestination(isPresented: $goToResetPassword) {
                 ForgotPasswordView()
             }

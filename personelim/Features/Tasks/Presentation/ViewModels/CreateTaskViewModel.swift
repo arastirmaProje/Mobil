@@ -10,13 +10,10 @@ import Foundation
 @MainActor
 final class CreateTaskViewModel: ObservableObject {
 
-    // MARK: - Input
     @Published var title: String = ""
     @Published var detail: String = ""
     @Published var selectedDates: Set<DateComponents> = []
     @Published var selectedAssignee: BusinessMemberDTO?
-
-    // MARK: - State
     @Published var isLoading: Bool = false
     @Published var errorMessage: String?
 

@@ -10,7 +10,6 @@ import SwiftUI
 @available(iOS 17.0, *)
 struct CreateTaskView: View {
 
-    // MARK: - State
     @StateObject private var vm: CreateTaskViewModel
     @EnvironmentObject private var appState: AppState
     @Environment(\.dismiss) private var dismiss
@@ -43,7 +42,6 @@ struct CreateTaskView: View {
         }
         .navigationBarBackButtonHidden(true)
         .task {
-            // 🔹 Çalışanlar burada garanti yüklenir
             let memberRepo = BusinessMemberRepositoryImpl(
                 network: NetworkManager()
             )

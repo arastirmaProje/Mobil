@@ -16,7 +16,6 @@ struct LeaveDTO: Decodable {
     let dayCount: Int
     let status: LeaveStatus
 
-    // Backend ISO8601 string gönderdiği için Date decode'u custom yapıyoruz
     private enum CodingKeys: String, CodingKey {
         case id, title, description, startDate, endDate, dayCount, status
     }
@@ -36,7 +35,6 @@ struct LeaveDTO: Decodable {
         let iso = ISO8601DateFormatter()
         iso.formatOptions = [.withInternetDateTime, .withFractionalSeconds]
 
-        // bazı backendler fractionalSeconds göndermeyebilir diye fallback:
         if let d1 = iso.date(from: startStr) {
             self.startDate = d1
         } else {

@@ -10,52 +10,62 @@ import Foundation
 @MainActor
 final class TasksListViewModel: ObservableObject {
 
-    // MARK: - UI State
     @Published var activeTasks: [TaskEntity] = []
     @Published var pastTasks: [TaskEntity] = []
-    @Published var isLoading: Bool = false
+    @Published var isLoading = false
     @Published var errorMessage: String?
 
-    // MARK: - UseCase
     private let getMyTasksUseCase: GetMyTasksUseCase
+    private var didLoad = false
 
-    init() {
-        let network = NetworkManager()
-        let repo = TaskRepositoryImpl(network: network)
-        self.getMyTasksUseCase = GetMyTasksUseCase(repository: repo)
+    init(
+        useCase: GetMyTasksUseCase = GetMyTasksUseCase(
+            repository: TaskRepositoryImpl(network: NetworkManager())
+        )
+    ) {
+        self.getMyTasksUseCase = useCase
+
+        Task {
+            await loadIfNeeded()
+        }
     }
 
-    // MARK: - Load
-    func load() async {
+    func loadIfNeeded() async {
+        guard !didLoad else { return }
+        didLoad = true
+        await load()
+    }
+
+    func refresh() async {
+        didLoad = false
+        await loadIfNeeded()
+    }
+
+    private func load() async {
         isLoading = true
         errorMessage = nil
 
         do {
             let tasks = try await getMyTasksUseCase.execute()
             mapTasks(tasks)
+            isLoading = false
         } catch {
             errorMessage = "Görevler yüklenemedi"
-            print("🔴 TASK LOAD ERROR:", error)
+            isLoading = false
         }
-
-        isLoading = false
     }
 
-    // MARK: - Business Logic
     private func mapTasks(_ tasks: [TaskEntity]) {
         let now = Date()
 
         activeTasks = tasks.filter {
-            $0.status.lowercased() != "tamamlandı" &&
+            $0.statusEnum == .beklemede &&
             $0.endDate >= now
         }
 
         pastTasks = tasks.filter {
-            $0.status.lowercased() == "tamamlandı" ||
+            $0.statusEnum == .tamamlandi ||
             $0.endDate < now
         }
-
-        print("🟢 ACTIVE:", activeTasks.count)
-        print("🟡 PAST:", pastTasks.count)
     }
 }

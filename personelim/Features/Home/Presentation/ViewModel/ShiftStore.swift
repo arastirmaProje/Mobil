@@ -12,7 +12,7 @@ final class ShiftStore {
             let data = try JSONEncoder().encode(state)
             UserDefaults.standard.set(data, forKey: key)
         } catch {
-            print("❌ ShiftStore save error:", error)
+            print("ShiftStore save error:", error)
         }
     }
 
@@ -21,7 +21,7 @@ final class ShiftStore {
         do {
             return try JSONDecoder().decode(ShiftPauseStateDTO.self, from: data)
         } catch {
-            print("❌ ShiftStore load/decode error:", error)
+            print("ShiftStore load/decode error:", error)
             return nil
         }
     }
