@@ -32,10 +32,7 @@ struct PerformanceBulkQueryView: View {
     }
 
     var body: some View {
-        VStack(spacing: 0) {
-
-            topBar
-
+        NavigationStack {
             ScrollView(showsIndicators: false) {
                 VStack(alignment: .leading, spacing: 16) {
 
@@ -65,52 +62,31 @@ struct PerformanceBulkQueryView: View {
                 .padding(.horizontal, 16)
                 .padding(.top, 12)
             }
+            .navigationTitle("") // boş başlık
+            .navigationBarBackButtonHidden(true)
+            .toolbar {
+                ToolbarItem(placement: .topBarLeading) {
+                    Button { dismiss() } label: {
+                        Image(systemName: "chevron.left")
+                    }
+                }
+                ToolbarItem(placement: .topBarTrailing) {
+                    Button {
+                        Task {
+                            await vm.runBulkQuery(businessId: businessId, start: startDate, end: endDate)
+                            onCompleted(startDate, endDate)
+                            dismiss()
+                        }
+                    } label: {
+                        Image(systemName: vm.isBulkLoading ? "hourglass" : "checkmark")
+                    }
+                    .disabled(vm.isBulkLoading)
+                }
+            }
         }
-        .navigationBarHidden(true)
         .onAppear {
             visibleMonth = startDate
         }
-    }
-
-    private var topBar: some View {
-        HStack(spacing: 12) {
-
-            Button { dismiss() } label: {
-                Image(systemName: "chevron.left")
-                    .font(.system(size: 16, weight: .semibold))
-                    .foregroundStyle(.primary)
-                    .frame(width: 36, height: 36)
-                    .background(.ultraThinMaterial)
-                    .clipShape(Circle())
-                    .overlay(Circle().strokeBorder(.white.opacity(0.25), lineWidth: 1))
-                    .shadow(color: .black.opacity(0.10), radius: 10, x: 0, y: 4)
-            }
-            .buttonStyle(.plain)
-
-            Spacer()
-
-            Button {
-                Task {
-                    await vm.runBulkQuery(businessId: businessId, start: startDate, end: endDate)
-                    onCompleted(startDate, endDate)
-                    dismiss()
-                }
-            } label: {
-                Image(systemName: vm.isBulkLoading ? "hourglass" : "checkmark")
-                    .font(.system(size: 14, weight: .semibold))
-                    .foregroundStyle(.primary)
-                    .frame(width: 36, height: 36)
-                    .background(.ultraThinMaterial)
-                    .clipShape(Circle())
-                    .overlay(Circle().strokeBorder(.white.opacity(0.25), lineWidth: 1))
-                    .shadow(color: .black.opacity(0.10), radius: 10, x: 0, y: 4)
-            }
-            .buttonStyle(.plain)
-            .disabled(vm.isBulkLoading)
-            .opacity(vm.isBulkLoading ? 0.6 : 1.0)
-        }
-        .padding(.horizontal, 16)
-        .padding(.top, 10)
     }
 
     private var rangeSummary: some View {

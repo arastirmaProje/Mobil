@@ -1,3 +1,10 @@
+//
+//  PersonnelEditView.swift
+//  personelim
+//
+//  Created by Yusuf Kaan USTA on 25.12.2025.
+//
+
 import SwiftUI
 
 struct PersonnelEditView: View {
@@ -24,7 +31,6 @@ struct PersonnelEditView: View {
         self.onDeleted = onDeleted
 
         let repo = BusinessMemberRepositoryImpl(network: NetworkManager())
-
         let updateUC = UpdateBusinessMemberUseCase(repo: repo)
         let deleteUC = DeleteBusinessMemberUseCase(repo: repo)
 
@@ -35,62 +41,68 @@ struct PersonnelEditView: View {
     }
 
     var body: some View {
-        VStack(spacing: 0) {
+        NavigationStack {
+            VStack(spacing: 16) {
 
-            topBar
+                Text("Personel Düzenle")
+                    .font(.title2.weight(.semibold))
+                    .frame(maxWidth: .infinity, alignment: .leading)
 
-            ScrollView(showsIndicators: false) {
-                VStack(alignment: .leading, spacing: 16) {
+                // MARK: - Fields
+                field(title: "Ünvan", text: $vm.position)
+                field(title: "Gelir", text: $vm.salaryText, keyboard: .numberPad)
 
-                    Text("Personel düzenle")
-                        .font(.title2.weight(.semibold))
-                        .padding(.top, 8)
+                if vm.isLoading { ProgressView() }
 
-                    field(title: "Ünvan", text: $vm.position)
-                    field(title: "Gelir", text: $vm.salaryText, keyboard: .numberPad)
 
-                    if vm.isLoading {
-                        ProgressView().padding(.top, 6)
-                    }
-
-                    if let err = vm.errorMessage {
-                        Text(err).foregroundColor(.red)
-                    }
-
-                    Button {
-                        showDeleteConfirm = true
-                    } label: {
-                        Text("Personeli Sil")
-                            .font(.system(size: 15, weight: .semibold))
-                            .frame(maxWidth: .infinity)
-                            .padding(.vertical, 12)
-                            .foregroundColor(.red)
-                            .background(Color(UIColor.systemGray6))
-                            .clipShape(RoundedRectangle(cornerRadius: 12))
-                    }
-                    .padding(.top, 8)
-
-                    Spacer().frame(height: 30)
+                // MARK: - Delete Button
+                Button {
+                    showDeleteConfirm = true
+                } label: {
+                    Text("Personeli Sil")
+                        .font(.system(size: 15, weight: .semibold))
+                        .frame(maxWidth: .infinity)
+                        .padding(.vertical, 12)
+                        .foregroundColor(.red)
+                        .background(Color(UIColor.systemGray6))
+                        .clipShape(RoundedRectangle(cornerRadius: 12))
                 }
-                .padding(.horizontal, 16)
+
+                Spacer()
+            }
+            .padding(16)
+            .navigationTitle("")
+            .navigationBarTitleDisplayMode(.inline)
+            .toolbar {
+                // MARK: - Back Button
+                ToolbarItem(placement: .navigationBarLeading) {
+                    Button { dismiss() } label: {
+                        Image(systemName: "chevron.left")
+                    }
+                }
+
+                // MARK: - Save Button
+                ToolbarItem(placement: .navigationBarTrailing) {
+                    Button {
+                        Task { await vm.save(memberId: memberId, original: originalMember) }
+                    } label: {
+                        Image(systemName: "checkmark")
+                    }
+                    .disabled(vm.isLoading)
+                }
             }
         }
-        .navigationBarHidden(true)
         .onAppear { vm.prefill(from: originalMember) }
-
-
         .onChange(of: vm.updatedMember?.id) { _, newValue in
             guard newValue != nil else { return }
             onSaved()
             dismiss()
         }
-
         .onChange(of: vm.didDelete) { _, newValue in
             guard newValue else { return }
             onDeleted()
             dismiss()
         }
-
         .alert("Personeli silmek istiyor musun?", isPresented: $showDeleteConfirm) {
             Button("İptal", role: .cancel) { }
             Button("Sil", role: .destructive) {
@@ -101,48 +113,7 @@ struct PersonnelEditView: View {
         }
     }
 
-    private var topBar: some View {
-        HStack(spacing: 12) {
-
-            Button { dismiss() } label: {
-                Image(systemName: "chevron.left")
-                    .font(.system(size: 16, weight: .semibold))
-                    .foregroundStyle(.primary)
-                    .frame(width: 36, height: 36)
-                    .background(.ultraThinMaterial)
-                    .clipShape(Circle())
-                    .overlay(
-                        Circle().strokeBorder(.white.opacity(0.25), lineWidth: 1)
-                    )
-                    .shadow(color: .black.opacity(0.10), radius: 10, x: 0, y: 4)
-            }
-            .buttonStyle(.plain)
-
-            Spacer()
-
-            Button {
-                Task { await vm.save(memberId: memberId, original: originalMember) }
-            } label: {
-                Image(systemName: "checkmark")
-                    .font(.system(size: 15, weight: .semibold))
-                    .foregroundStyle(.primary)
-                    .frame(width: 36, height: 36)
-                    .background(.ultraThinMaterial)
-                    .clipShape(Circle())
-                    .overlay(
-                        Circle().strokeBorder(.white.opacity(0.25), lineWidth: 1)
-                    )
-                    .shadow(color: .black.opacity(0.10), radius: 10, x: 0, y: 4)
-            }
-            .buttonStyle(.plain)
-            .disabled(vm.isLoading)
-            .opacity(vm.isLoading ? 0.55 : 1.0)
-        }
-        .padding(.horizontal, 16)
-        .padding(.top, 10)
-    }
-
-
+    // MARK: - Field helper
     private func field(title: String, text: Binding<String>, keyboard: UIKeyboardType = .default) -> some View {
         VStack(alignment: .leading, spacing: 6) {
             Text(title)

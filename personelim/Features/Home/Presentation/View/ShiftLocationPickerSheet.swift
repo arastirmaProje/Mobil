@@ -17,38 +17,43 @@ struct ShiftLocationPickerSheet: View {
     @State private var selected: ShiftStartOption = .home
 
     var body: some View {
-        VStack(spacing: 24) {
+        NavigationStack {
+            VStack(spacing: 24) {
 
-            Text(ConstantStrings.shiftLocationTitle)
-                .font(.system(size: 18, weight: .semibold))
-                .padding(.top, 24)
+                Text(ConstantStrings.shiftLocationTitle)
+                    .font(.system(size: 18, weight: .semibold))
+                    .padding(.top, 24)
 
-            Image("Some")
-                .resizable()
-                .scaledToFit()
-                .frame(maxHeight: 240)
+                Image("Some")
+                    .resizable()
+                    .scaledToFit()
+                    .frame(maxHeight: 240)
 
-            locationRow
+                locationRow
 
-            Button {
-                onPick(selected)
-                dismiss()
-            } label: {
-                Text(ConstantStrings.start)
-                    .font(.system(size: 16, weight: .semibold))
-                    .foregroundColor(.primary)
-                    .frame(maxWidth: .infinity)
-                    .padding(.vertical, 14)
-                    .background(Color(.systemGray5))
-                    .clipShape(RoundedRectangle(cornerRadius: 14))
+                Spacer(minLength: 16)
             }
-            .buttonStyle(.plain)
-            .padding(.top, 8)
+            .padding(.horizontal, 16)
+            .presentationDetents([.large])
+            .toolbar {
+                ToolbarItem(placement: .topBarLeading) {
+                    Button { dismiss() } label: {
+                        Image(systemName: "chevron.left")
+                    }
+                }
 
-            Spacer(minLength: 16)
+                ToolbarItem(placement: .topBarTrailing) {
+                    Button {
+                        onPick(selected)
+                        dismiss()
+                    } label: {
+                        Text(ConstantStrings.start)
+                            .font(.system(size: 16, weight: .semibold))
+                    }
+                    .buttonStyle(.plain)
+                }
+            }
         }
-        .padding(.horizontal, 16)
-        .presentationDetents([.large])
     }
 
     // MARK: - Row

@@ -7,6 +7,7 @@
 
 import SwiftUI
 
+@available(iOS 17.0, *)
 struct PerformanceQueryView: View {
 
     @Environment(\.dismiss) private var dismiss
@@ -17,7 +18,8 @@ struct PerformanceQueryView: View {
 
     @StateObject private var vm: PerformanceQueryViewModel
 
-    @State private var visibleMonth: Date = Date()
+    @State private var startDate: Date?
+    @State private var endDate: Date?
 
     init(
         businessId: String,
@@ -34,114 +36,100 @@ struct PerformanceQueryView: View {
     }
 
     var body: some View {
-        VStack(spacing: 0) {
+        NavigationStack {
+            ScrollView {
+                VStack(spacing: 24) {
 
-            topBar
+                    VStack(alignment: .leading, spacing: 6) {
+                        Text("Sorgu")
+                            .font(.title.bold())
+                        Text("Takvimden bir tarih aralığı seçin.")
+                            .font(.subheadline)
+                            .foregroundColor(.secondary)
+                    }
+                    .frame(maxWidth: .infinity, alignment: .leading)
+                    .padding(.horizontal)
 
-            ScrollView(showsIndicators: false) {
-                VStack(alignment: .leading, spacing: 16) {
-
-                    Text("Sorgu")
-                        .font(.system(size: 24, weight: .semibold))
-
-                    Text("Takvimden bir tarih aralığı seçin.")
-                        .font(.system(size: 14))
-                        .foregroundColor(.gray)
-
-                    rangeSummary
-
-                    RangeCalendarView(
-                        visibleMonth: $visibleMonth,
-                        startDate: $vm.startDate,
-                        endDate: $vm.endDate
+                    RangeCalendarCard(
+                        startDate: $startDate,
+                        endDate: $endDate
                     )
+
+                    HStack(spacing: 24) {
+                        VStack(alignment: .leading) {
+                            Text("Başlangıç")
+                                .font(.caption)
+                                .foregroundColor(.secondary)
+                            Text(startDate?.trShortDate() ?? "-")
+                                .font(.body.bold())
+                        }
+
+                        VStack(alignment: .leading) {
+                            Text("Bitiş")
+                                .font(.caption)
+                                .foregroundColor(.secondary)
+                            Text(endDate?.trShortDate() ?? "-")
+                                .font(.body.bold())
+                        }
+                    }
+                    .padding(.horizontal)
 
                     if let err = vm.errorMessage {
                         Text(err)
                             .foregroundColor(.red)
                             .font(.system(size: 13))
+                            .padding(.horizontal)
                     }
 
-                    Spacer().frame(height: 18)
+                    Spacer(minLength: 32)
                 }
-                .padding(.horizontal, 16)
-                .padding(.top, 12)
+                .padding(.vertical, 16)
             }
-        }
-        .navigationBarHidden(true)
-        .onAppear {
-            visibleMonth = vm.startDate
-        }
-    }
-
-    // MARK: - Top bar (Liquid Glass)
-    private var topBar: some View {
-        HStack(spacing: 12) {
-
-            Button { dismiss() } label: {
-                Image(systemName: "chevron.left")
-                    .font(.system(size: 16, weight: .semibold))
-                    .foregroundStyle(.primary)
-                    .frame(width: 36, height: 36)
-                    .background(.ultraThinMaterial)
-                    .clipShape(Circle())
-                    .overlay(Circle().strokeBorder(.white.opacity(0.25), lineWidth: 1))
-                    .shadow(color: .black.opacity(0.10), radius: 10, x: 0, y: 4)
-            }
-            .buttonStyle(.plain)
-
-            Spacer()
-
-            Button {
-                dismiss()
-                Task {
-                    if let report = await vm.submit(businessId: businessId, employeeUserId: employeeUserId) {
-                        onCreated(report)
+            .navigationBarTitleDisplayMode(.inline)
+            .toolbar {
+                ToolbarItem(placement: .navigationBarLeading) {
+                    Button { dismiss() } label: {
+                        Image(systemName: "chevron.left")
+                            .font(.headline)
                     }
                 }
-            } label: {
-                Image(systemName: vm.isLoading ? "hourglass" : "checkmark")
-                    .font(.system(size: 14, weight: .semibold))
-                    .foregroundStyle(.primary)
-                    .frame(width: 36, height: 36)
-                    .background(.ultraThinMaterial)
-                    .clipShape(Circle())
-                    .overlay(Circle().strokeBorder(.white.opacity(0.25), lineWidth: 1))
-                    .shadow(color: .black.opacity(0.10), radius: 10, x: 0, y: 4)
+                ToolbarItem(placement: .navigationBarTrailing) {
+                    Button {
+                        Task {
+                            guard let s = startDate, let e = endDate else { return }
+                            vm.startDate = s
+                            vm.endDate = e
+                            if let report = await vm.submit(
+                                businessId: businessId,
+                                employeeUserId: employeeUserId
+                            ) {
+                                onCreated(report)
+                                dismiss()
+                            }
+                        }
+                    } label: {
+                        Image(systemName: "checkmark")
+                            .font(.headline)
+                    }
+                    .disabled(vm.isLoading || startDate == nil || endDate == nil)
+                }
             }
-            .buttonStyle(.plain)
-            .disabled(vm.isLoading)
-            .opacity(vm.isLoading ? 0.6 : 1.0)
         }
-        .padding(.horizontal, 16)
-        .padding(.top, 10)
-    }
-
-    private var rangeSummary: some View {
-        HStack( spacing: 6) {
-            Text("Başlangıç: \(vm.startDate.trShortDate())")
-                .font(.system(size: 13, weight: .medium))
-                .foregroundColor(.gray)
-
-            Text("Bitiş: \(vm.endDate.trShortDate())")
-                .font(.system(size: 13, weight: .medium))
-                .foregroundColor(.gray)
-        }
-        .padding(.top, 2)
     }
 }
 
-// MARK: - RangeCalendarView
+// MARK: - RangeCalendarCard (Leave görünümü birebir)
 
-private struct RangeCalendarView: View {
+@available(iOS 17.0, *)
+private struct RangeCalendarCard: View {
 
-    @Binding var visibleMonth: Date
-    @Binding var startDate: Date
-    @Binding var endDate: Date
+    @Binding var startDate: Date?
+    @Binding var endDate: Date?
+
+    @State private var visibleMonth: Date = Date()
+    @State private var isSelectingEnd: Bool = false
 
     private let columns = Array(repeating: GridItem(.flexible(), spacing: 8), count: 7)
-
-    @State private var isSelectingEnd: Bool = false
 
     var body: some View {
         VStack(spacing: 12) {
@@ -156,7 +144,6 @@ private struct RangeCalendarView: View {
                         .background(Color(.systemGray6))
                         .clipShape(Circle())
                 }
-                .buttonStyle(.plain)
 
                 Spacer()
 
@@ -175,7 +162,6 @@ private struct RangeCalendarView: View {
                         .background(Color(.systemGray6))
                         .clipShape(Circle())
                 }
-                .buttonStyle(.plain)
             }
 
             LazyVGrid(columns: columns, spacing: 8) {
@@ -195,36 +181,40 @@ private struct RangeCalendarView: View {
                         start: startDate,
                         end: endDate
                     )
-                    .onTapGesture {
-                        handleTap(day)
-                    }
+                    .onTapGesture { handleTap(day) }
                 }
             }
             .padding(.top, 4)
         }
         .padding(12)
-        .background(Color(.systemGray6))
-        .clipShape(RoundedRectangle(cornerRadius: 16))
+        .background(Color(.systemBackground))
+        .cornerRadius(24)
+        .shadow(color: .black.opacity(0.05), radius: 10, y: 4)
+        .padding(.horizontal)
     }
 
     private func handleTap(_ day: Date) {
         let d = day.stripTime()
-        let s = startDate.stripTime()
-        let e = endDate.stripTime()
 
-        if !isSelectingEnd {
+        if startDate == nil || (!isSelectingEnd) {
             startDate = d
             endDate = d
             isSelectingEnd = true
             return
         }
 
+        guard let s = startDate else { return }
+
         if d < s {
             startDate = d
             endDate = s
-        } else {
+        } else if d > s {
             startDate = s
             endDate = d
+        } else {
+            startDate = nil
+            endDate = nil
+            isSelectingEnd = false
         }
 
         isSelectingEnd = false
@@ -256,20 +246,21 @@ private struct RangeCalendarView: View {
     private var weekdaysTR: [String] { ["Pzt","Sal","Çar","Per","Cum","Cmt","Paz"] }
 }
 
-// MARK: - DayCell (range highlight)
+// MARK: - DayCell
 
+@available(iOS 17.0, *)
 private struct DayCell: View {
 
     let day: Date
     let visibleMonth: Date
-    let start: Date
-    let end: Date
+    let start: Date?
+    let end: Date?
 
     var body: some View {
         let isInMonth = day.isSameMonth(as: visibleMonth)
-        let isStart = day.stripTime() == start.stripTime()
-        let isEnd = day.stripTime() == end.stripTime()
-        let inRange = day.isBetweenInclusive(start: start, end: end)
+        let isStart = start != nil && day.stripTime() == start!.stripTime()
+        let isEnd = end != nil && day.stripTime() == end!.stripTime()
+        let inRange = start != nil && end != nil && day.isBetweenInclusive(start: start!, end: end!)
         let isToday = day.stripTime() == Date().stripTime()
 
         ZStack {
@@ -298,18 +289,9 @@ private struct DayCell: View {
     }
 }
 
-// MARK: - Date helpers
+// MARK: - Date Helpers
 
 private extension Date {
-
-    static func isoToDate(_ iso: String) -> Date? {
-        let f = ISO8601DateFormatter()
-        f.formatOptions = [.withInternetDateTime, .withFractionalSeconds]
-        if let d = f.date(from: iso) { return d }
-        let f2 = ISO8601DateFormatter()
-        f2.formatOptions = [.withInternetDateTime]
-        return f2.date(from: iso)
-    }
 
     func stripTime() -> Date {
         Calendar.current.startOfDay(for: self)
@@ -324,14 +306,12 @@ private extension Date {
     func isSameMonth(as other: Date) -> Bool {
         let cal = Calendar.current
         return cal.component(.year, from: self) == cal.component(.year, from: other)
-        && cal.component(.month, from: self) == cal.component(.month, from: other)
+            && cal.component(.month, from: self) == cal.component(.month, from: other)
     }
 
     func isBetweenInclusive(start: Date, end: Date) -> Bool {
         let d = self.stripTime()
-        let s = start.stripTime()
-        let e = end.stripTime()
-        return d >= min(s, e) && d <= max(s, e)
+        return d >= min(start, end) && d <= max(start, end)
     }
 
     func trShortDate() -> String {

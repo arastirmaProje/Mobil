@@ -48,60 +48,45 @@ struct TaskDetailView: View {
 
     // MARK: - Body
     var body: some View {
-        ScrollView {
-            VStack(spacing: 24) {
+        NavigationStack {
+            ScrollView {
+                VStack(spacing: 24) {
 
-                topBar
-                headerSection
-                dateSection
-                descriptionSection
-                statusSection
-                footerSection
+                    headerSection
+                    dateSection
+                    descriptionSection
+                    statusSection
+                    footerSection
 
-                Spacer(minLength: 40)
-            }
-            .padding(.bottom, 32)
-        }
-        .navigationBarBackButtonHidden(true)
-        .navigationDestination(isPresented: $navigateToFeedback) {
-            TaskFeedbackView(task: task)
-        }
-    }
-}
-
-private extension TaskDetailView {
-
-    var topBar: some View {
-        HStack {
-            Button { dismiss() } label: {
-                Image(systemName: "chevron.left")
-                    .foregroundStyle(.primary)
-                    .frame(width: 44, height: 44)
-                    .background(Color(.systemGray5))
-                    .clipShape(Circle())
-            }
-
-            Spacer()
-
-            Button {
-                if selectedStatus == .completed {
-                    navigateToFeedback = true
+                    Spacer(minLength: 40)
                 }
-            } label: {
-                Image(systemName: "checkmark")
-                    .foregroundStyle(
-                        selectedStatus == .completed
-                        ? .primary
-                        : .secondary
-                    )
-                    .frame(width: 44, height: 44)
-                    .background(Color(.systemGray5))
-                    .clipShape(Circle())
+                .padding(.bottom, 32)
             }
-            .disabled(selectedStatus != .completed)
+            .navigationBarBackButtonHidden(true)
+            .navigationDestination(isPresented: $navigateToFeedback) {
+                TaskFeedbackView(task: task)
+            }
+            .toolbar {
+                ToolbarItem(placement: .topBarLeading) {
+                    Button { dismiss() } label: { Image(systemName: "chevron.left") }
+                }
+
+                ToolbarItem(placement: .topBarTrailing) {
+                    Button {
+                        if selectedStatus == .completed {
+                            navigateToFeedback = true
+                        }
+                    } label: {
+                        Image(systemName: "checkmark")
+                            .foregroundStyle(
+                                selectedStatus == .completed ? .primary : .secondary
+                            )
+                            .font(.headline)
+                    }
+                    .disabled(selectedStatus != .completed)
+                }
+            }
         }
-        .padding(.horizontal)
-        .padding(.top, 12)
     }
 }
 
@@ -132,9 +117,6 @@ private extension TaskDetailView {
         .frame(maxWidth: .infinity, alignment: .leading)
         .padding(.horizontal)
     }
-}
-
-private extension TaskDetailView {
 
     var dateSection: some View {
         VStack(alignment: .leading, spacing: 12) {
@@ -169,9 +151,6 @@ private extension TaskDetailView {
         .cornerRadius(16)
         .padding(.horizontal)
     }
-}
-
-private extension TaskDetailView {
 
     var descriptionSection: some View {
         VStack(alignment: .leading, spacing: 8) {
@@ -189,9 +168,6 @@ private extension TaskDetailView {
         .cornerRadius(16)
         .padding(.horizontal)
     }
-}
-
-private extension TaskDetailView {
 
     var statusSection: some View {
         VStack(alignment: .leading, spacing: 8) {
@@ -254,9 +230,6 @@ private extension TaskDetailView {
         }
         .padding(.horizontal)
     }
-}
-
-private extension TaskDetailView {
 
     var footerSection: some View {
         VStack(spacing: 12) {

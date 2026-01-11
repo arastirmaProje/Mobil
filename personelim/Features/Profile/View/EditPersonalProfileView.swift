@@ -1,3 +1,10 @@
+//
+//  EditPersonalProfileView.swift
+//  personelim
+//
+//  Created by Yusuf Kaan USTA on 25.12.2025.
+//
+
 import SwiftUI
 import PhotosUI
 import UniformTypeIdentifiers
@@ -10,7 +17,6 @@ struct EditPersonalProfileView: View {
     @State private var showIDScanner = false
     @State private var showCVPicker = false
     @State private var showDocPicker = false
-
     @State private var showDeleteAccountConfirm = false
 
     init(authRepo: AuthRepositoryProtocol) {
@@ -18,9 +24,7 @@ struct EditPersonalProfileView: View {
     }
 
     var body: some View {
-        VStack(spacing: 0) {
-            topBar
-
+        NavigationStack {
             ScrollView(showsIndicators: false) {
                 VStack(alignment: .leading, spacing: 18) {
 
@@ -51,14 +55,23 @@ struct EditPersonalProfileView: View {
                         TextField("", text: $vm.email)
                             .textInputAutocapitalization(.never)
                             .keyboardType(.emailAddress)
+                            .padding(12)
+                            .background(Color(UIColor.systemGray6))
+                            .clipShape(RoundedRectangle(cornerRadius: 12))
                     }
 
                     LabeledRoundedField(title: "İsim") {
                         TextField("", text: $vm.firstName)
+                            .padding(12)
+                            .background(Color(UIColor.systemGray6))
+                            .clipShape(RoundedRectangle(cornerRadius: 12))
                     }
 
                     LabeledRoundedField(title: "Soyisim") {
                         TextField("", text: $vm.lastName)
+                            .padding(12)
+                            .background(Color(UIColor.systemGray6))
+                            .clipShape(RoundedRectangle(cornerRadius: 12))
                     }
 
                     LabeledRoundedField(title: "Kimlik", trailingTitle: "Tara", trailingAction: {
@@ -66,6 +79,9 @@ struct EditPersonalProfileView: View {
                     }) {
                         TextField("", text: $vm.tcIdentityNumber)
                             .keyboardType(.numberPad)
+                            .padding(12)
+                            .background(Color(UIColor.systemGray6))
+                            .clipShape(RoundedRectangle(cornerRadius: 12))
                     }
 
                     LabeledRoundedField(title: "CV", trailingTitle: "Ekle", trailingAction: {
@@ -76,6 +92,9 @@ struct EditPersonalProfileView: View {
                             set: { _ in }
                         ))
                         .disabled(true)
+                        .padding(12)
+                        .background(Color(UIColor.systemGray6))
+                        .clipShape(RoundedRectangle(cornerRadius: 12))
                     }
 
                     if !vm.existingCVs.isEmpty {
@@ -98,7 +117,7 @@ struct EditPersonalProfileView: View {
                                     .disabled(vm.isDeletingDoc || vm.isLoading)
                                 }
                                 .padding()
-                                .background(Color(.systemGray6))
+                                .background(Color(UIColor.systemGray6))
                                 .cornerRadius(10)
                             }
                         }
@@ -112,6 +131,9 @@ struct EditPersonalProfileView: View {
                             set: { _ in }
                         ))
                         .disabled(true)
+                        .padding(12)
+                        .background(Color(UIColor.systemGray6))
+                        .clipShape(RoundedRectangle(cornerRadius: 12))
                     }
 
                     if !vm.existingDocuments.isEmpty {
@@ -134,7 +156,7 @@ struct EditPersonalProfileView: View {
                                     .disabled(vm.isDeletingDoc || vm.isLoading)
                                 }
                                 .padding()
-                                .background(Color(.systemGray6))
+                                .background(Color(UIColor.systemGray6))
                                 .cornerRadius(10)
                             }
                         }
@@ -160,15 +182,39 @@ struct EditPersonalProfileView: View {
                     }
                     .disabled(vm.isLoading)
 
-                    Spacer().frame(height: 24)
+                    Spacer().frame(height: 12)
                 }
                 .padding(.horizontal, 20)
             }
-        }
-        .background(Color.white)
-        .navigationBarHidden(true)
-        .task { await vm.load() }
+            .navigationTitle("")
+            .navigationBarTitleDisplayMode(.inline)
+            .toolbar {
+                // MARK: - Back Button
+                ToolbarItem(placement: .navigationBarLeading) {
+                    Button { dismiss() } label: {
+                        Image(systemName: "chevron.left")
+                    }
+                }
 
+                // MARK: - Save Button
+                ToolbarItem(placement: .navigationBarTrailing) {
+                    Button {
+                        Task {
+                            do {
+                                try await vm.save()
+                                dismiss()
+                            } catch {
+                                vm.errorMessage = error.localizedDescription
+                            }
+                        }
+                    } label: {
+                        Image(systemName: "checkmark")
+                    }
+                    .disabled(vm.isLoading)
+                }
+            }
+        }
+        .task { await vm.load() }
         .fileImporter(
             isPresented: $showCVPicker,
             allowedContentTypes: [UTType.pdf],
@@ -183,7 +229,6 @@ struct EditPersonalProfileView: View {
                 vm.errorMessage = error.localizedDescription
             }
         }
-
         .fileImporter(
             isPresented: $showDocPicker,
             allowedContentTypes: [UTType.pdf],
@@ -198,23 +243,19 @@ struct EditPersonalProfileView: View {
                 vm.errorMessage = error.localizedDescription
             }
         }
-
         .sheet(isPresented: $showIDScanner) {
             IDNumberScannerView(
                 onFound: { tc in
                     vm.setTC(tc)
                     showIDScanner = false
                 },
-                onCancel: {
-                    showIDScanner = false
-                },
+                onCancel: { showIDScanner = false },
                 onError: { msg in
-                    vm.errorMessage = msg   
+                    vm.errorMessage = msg
                     showIDScanner = false
                 }
             )
         }
-
         .confirmationDialog(
             "Hesabınızı silmek istiyor musunuz?",
             isPresented: $showDeleteAccountConfirm,
@@ -232,58 +273,7 @@ struct EditPersonalProfileView: View {
         }
     }
 
-    // MARK: - Top Bar (geri + check)
-    private var topBar: some View {
-        HStack(spacing: 12) {
-
-            Button { dismiss() } label: {
-                Image(systemName: "chevron.left")
-                    .font(.system(size: 16, weight: .semibold))
-                    .foregroundStyle(.primary)
-                    .frame(width: 36, height: 36)
-                    .background(.ultraThinMaterial)
-                    .clipShape(Circle())
-                    .overlay(
-                        Circle().strokeBorder(.white.opacity(0.25), lineWidth: 1)
-                    )
-                    .shadow(color: .black.opacity(0.10), radius: 10, x: 0, y: 4)
-            }
-            .buttonStyle(.plain)
-
-            Spacer()
-
-            Button {
-                Task {
-                    do {
-                        try await vm.save()
-                        dismiss()
-                    } catch {
-                        vm.errorMessage = error.localizedDescription
-                    }
-                }
-            } label: {
-                Image(systemName: "checkmark")
-                    .font(.system(size: 15, weight: .semibold))
-                    .foregroundStyle(.primary)
-                    .frame(width: 36, height: 36)
-                    .background(.ultraThinMaterial)
-                    .clipShape(Circle())
-                    .overlay(
-                        Circle().strokeBorder(.white.opacity(0.25), lineWidth: 1)
-                    )
-                    .shadow(color: .black.opacity(0.10), radius: 10, x: 0, y: 4)
-            }
-            .buttonStyle(.plain)
-            .disabled(vm.isLoading)
-            .opacity(vm.isLoading ? 0.55 : 1.0)
-        }
-        .padding(.horizontal, 20)
-        .padding(.top, 16)
-        .padding(.bottom, 10)
-    }
-
-
-    // MARK: - Foto preview 
+    // MARK: - Foto preview
     private func profileImage(size: CGFloat) -> some View {
         Group {
             if let data = vm.photoData, let ui = UIImage(data: data) {
@@ -295,10 +285,8 @@ struct EditPersonalProfileView: View {
                     switch phase {
                     case .success(let img):
                         img.resizable().scaledToFill()
-                    case .failure:
+                    case .failure, .empty:
                         Circle().fill(Color.gray.opacity(0.25))
-                    case .empty:
-                        ProgressView()
                     @unknown default:
                         Circle().fill(Color.gray.opacity(0.25))
                     }
@@ -340,13 +328,10 @@ private struct LabeledRoundedField<Content: View>: View {
             }
 
             content()
-                .padding(.vertical, 12)
-                .padding(.horizontal, 12)
-                .background(Color.white)
-                .overlay(
-                    RoundedRectangle(cornerRadius: 12)
-                        .stroke(Color(.systemGray4), lineWidth: 1)
-                )
+                .padding(.vertical, 8)
+                .padding(.horizontal, 8)
+                .background(Color(UIColor.systemGray6))
+                .clipShape(RoundedRectangle(cornerRadius: 12))
         }
     }
 }

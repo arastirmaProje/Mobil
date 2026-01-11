@@ -1,3 +1,10 @@
+//
+//  EditCompanyView.swift
+//  personelim
+//
+//  Created by Yusuf Kaan USTA on 25.12.2025.
+//
+
 import SwiftUI
 import PhotosUI
 import UniformTypeIdentifiers
@@ -14,10 +21,7 @@ struct EditCompanyView: View {
     }
 
     var body: some View {
-        VStack(spacing: 0) {
-
-            topBar
-
+        NavigationStack {
             ScrollView(showsIndicators: false) {
                 VStack(alignment: .leading, spacing: 18) {
 
@@ -46,16 +50,25 @@ struct EditCompanyView: View {
 
                     LabeledRoundedField(title: ConstantStrings.companyNameLabel) {
                         TextField("", text: $vm.companyName)
+                            .padding(12)
+                            .background(Color(UIColor.systemGray6))
+                            .clipShape(RoundedRectangle(cornerRadius: 12))
                     }
 
                     LabeledRoundedField(title: ConstantStrings.companyEmailLabel) {
                         TextField("", text: $vm.companyEmail)
                             .textInputAutocapitalization(.never)
                             .keyboardType(.emailAddress)
+                            .padding(12)
+                            .background(Color(UIColor.systemGray6))
+                            .clipShape(RoundedRectangle(cornerRadius: 12))
                     }
 
                     LabeledRoundedField(title: ConstantStrings.companyDescriptionLabel) {
                         TextField("", text: $vm.description)
+                            .padding(12)
+                            .background(Color(UIColor.systemGray6))
+                            .clipShape(RoundedRectangle(cornerRadius: 12))
                     }
 
                     LabeledRoundedField(title: ConstantStrings.documentsLabel, trailingTitle: ConstantStrings.addButton, trailingAction: {
@@ -66,6 +79,9 @@ struct EditCompanyView: View {
                             set: { _ in }
                         ))
                         .disabled(true)
+                        .padding(12)
+                        .background(Color(UIColor.systemGray6))
+                        .clipShape(RoundedRectangle(cornerRadius: 12))
                     }
 
                     officeSection
@@ -78,11 +94,17 @@ struct EditCompanyView: View {
 
                     LabeledRoundedField(title: "Adres") {
                         TextField("", text: $vm.detailedAddress)
+                            .padding(12)
+                            .background(Color(UIColor.systemGray6))
+                            .clipShape(RoundedRectangle(cornerRadius: 12))
                     }
 
                     LabeledRoundedField(title: "Telefon") {
                         TextField("", text: $vm.phone)
                             .keyboardType(.phonePad)
+                            .padding(12)
+                            .background(Color(UIColor.systemGray6))
+                            .clipShape(RoundedRectangle(cornerRadius: 12))
                     }
 
                     if let err = vm.errorMessage {
@@ -96,11 +118,35 @@ struct EditCompanyView: View {
                 }
                 .padding(.horizontal, 20)
             }
-        }
-        .background(Color.white)
-        .navigationBarHidden(true)
-        .task { await vm.load() }
+            .navigationTitle("")
+            .navigationBarTitleDisplayMode(.inline)
+            .toolbar {
+                // MARK: - Back Button
+                ToolbarItem(placement: .navigationBarLeading) {
+                    Button { dismiss() } label: {
+                        Image(systemName: "chevron.left")
+                    }
+                }
 
+                // MARK: - Save Button
+                ToolbarItem(placement: .navigationBarTrailing) {
+                    Button {
+                        Task {
+                            do {
+                                try await vm.save()
+                                dismiss()
+                            } catch {
+                                vm.errorMessage = error.localizedDescription
+                            }
+                        }
+                    } label: {
+                        Image(systemName: "checkmark")
+                    }
+                    .disabled(vm.isLoading)
+                }
+            }
+        }
+        .task { await vm.load() }
         .fileImporter(
             isPresented: $showDocPicker,
             allowedContentTypes: [UTType.pdf],
@@ -113,13 +159,11 @@ struct EditCompanyView: View {
                 vm.errorMessage = error.localizedDescription
             }
         }
-
         .sheet(isPresented: $vm.showMapPicker) {
             MapPickerView { result in
                 vm.setLocation(result.coordinate)
             }
         }
-
         .alert(
             vm.errorMessage ?? "",
             isPresented: Binding(
@@ -130,57 +174,6 @@ struct EditCompanyView: View {
             Button(ConstantStrings.okButton) { vm.errorMessage = nil }
         }
     }
-
-    // MARK: - Top Bar
-    private var topBar: some View {
-        HStack(spacing: 12) {
-
-            Button { dismiss() } label: {
-                Image(systemName: "chevron.left")
-                    .font(.system(size: 16, weight: .semibold))
-                    .foregroundStyle(.primary)
-                    .frame(width: 36, height: 36)
-                    .background(.ultraThinMaterial)
-                    .clipShape(Circle())
-                    .overlay(
-                        Circle().strokeBorder(.white.opacity(0.25), lineWidth: 1)
-                    )
-                    .shadow(color: .black.opacity(0.10), radius: 10, x: 0, y: 4)
-            }
-            .buttonStyle(.plain)
-
-            Spacer()
-
-            Button {
-                Task {
-                    do {
-                        try await vm.save()
-                        dismiss()
-                    } catch {
-                        vm.errorMessage = error.localizedDescription
-                    }
-                }
-            } label: {
-                Image(systemName: "checkmark")
-                    .font(.system(size: 15, weight: .semibold))
-                    .foregroundStyle(.primary)
-                    .frame(width: 36, height: 36)
-                    .background(.ultraThinMaterial)
-                    .clipShape(Circle())
-                    .overlay(
-                        Circle().strokeBorder(.white.opacity(0.25), lineWidth: 1)
-                    )
-                    .shadow(color: .black.opacity(0.10), radius: 10, x: 0, y: 4)
-            }
-            .buttonStyle(.plain)
-            .disabled(vm.isLoading)
-            .opacity(vm.isLoading ? 0.55 : 1.0)
-        }
-        .padding(.horizontal, 20)
-        .padding(.top, 16)
-        .padding(.bottom, 10)
-    }
-
 
     private func profileImage(size: CGFloat) -> some View {
         Group {
@@ -228,11 +221,9 @@ private extension EditCompanyView {
                     }
 
                     TextField(ConstantStrings.officeNamePlaceholder, text: $office.name)
-                        .padding()
-                        .overlay(
-                            RoundedRectangle(cornerRadius: 8)
-                                .stroke(.gray.opacity(0.4))
-                        )
+                        .padding(12)
+                        .background(Color(UIColor.systemGray6))
+                        .clipShape(RoundedRectangle(cornerRadius: 12))
 
                     Button(ConstantStrings.pickFromMap) {
                         vm.beginPickLocation(for: office.id)
@@ -281,10 +272,8 @@ private extension EditCompanyView {
             .pickerStyle(.menu)
             .frame(maxWidth: .infinity, minHeight: 52, alignment: .leading)
             .padding(.horizontal, 12)
-            .overlay(
-                RoundedRectangle(cornerRadius: 8)
-                    .stroke(.gray.opacity(0.4))
-            )
+            .background(Color(UIColor.systemGray6))
+            .clipShape(RoundedRectangle(cornerRadius: 12))
         }
     }
 
@@ -305,10 +294,8 @@ private extension EditCompanyView {
             .pickerStyle(.menu)
             .frame(maxWidth: .infinity, minHeight: 52, alignment: .leading)
             .padding(.horizontal, 12)
-            .overlay(
-                RoundedRectangle(cornerRadius: 8)
-                    .stroke(.gray.opacity(0.4))
-            )
+            .background(Color(UIColor.systemGray6))
+            .clipShape(RoundedRectangle(cornerRadius: 12))
         }
     }
 }
@@ -333,13 +320,6 @@ private struct LabeledRoundedField<Content: View>: View {
             }
 
             content()
-                .padding(.vertical, 12)
-                .padding(.horizontal, 12)
-                .background(Color.white)
-                .overlay(
-                    RoundedRectangle(cornerRadius: 12)
-                        .stroke(Color(.systemGray4), lineWidth: 1)
-                )
         }
     }
 }

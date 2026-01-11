@@ -18,6 +18,8 @@ struct ProfileView: View {
     @State private var selectedReportId: String?
     @State private var previewDoc: DocumentToPreview?
     @State private var avatarRefreshToken = UUID()
+    
+    @State private var isInitialLoad = true 
 
     // MARK: - Repos
     private var authRepo: AuthRepositoryProtocol {
@@ -49,7 +51,7 @@ struct ProfileView: View {
         ScrollView(showsIndicators: false) {
             VStack(spacing: 18) {
 
-                if vm.isLoading {
+                if vm.isLoading && isInitialLoad {
                     ProgressView()
                         .padding(.top, 28)
                 }
@@ -76,6 +78,7 @@ struct ProfileView: View {
         .task {
             await vm.loadIfNeeded(appState: appState)
             await loadReportsIfPossible()
+            isInitialLoad = false
         }
         .refreshable {
             await vm.reload(appState: appState)
@@ -168,13 +171,11 @@ struct ProfileView: View {
                         .foregroundStyle(.blue)
                         .padding(.horizontal, 12)
                         .padding(.vertical, 7)
-                        .background(.ultraThinMaterial)
+                        .background(Color(.systemGray6))
                         .clipShape(Capsule())
-                        .overlay(Capsule().strokeBorder(.blue.opacity(0.35), lineWidth: 1))
-                        .shadow(color: .black.opacity(0.10), radius: 10, x: 0, y: 4)
                 }
+                .buttonStyle(.plain)
             }
-        
             .headerStyle()
             
             infoSection(title: "Kimlik", value: p.tcIdentityNumber ?? "-")
@@ -194,10 +195,7 @@ struct ProfileView: View {
                 onCreateQuery: { showQuery = true },
                 onSelectReport: { selectedReportId = $0 }
             )
-
-        
         }
-   
     }
 
     // MARK: - Manager Profile
@@ -245,11 +243,11 @@ struct ProfileView: View {
                     .foregroundStyle(.blue)
                     .padding(.horizontal, 12)
                     .padding(.vertical, 7)
-                    .background(.ultraThinMaterial)
+                    .background(Color(.systemGray6))
                     .clipShape(Capsule())
-                    .overlay(Capsule().strokeBorder(.blue.opacity(0.35), lineWidth: 1))
-                    .shadow(color: .black.opacity(0.10), radius: 10, x: 0, y: 4)
             }
+            .buttonStyle(.plain)
+
         }
         .headerStyle()
     }
@@ -309,8 +307,11 @@ struct ProfileView: View {
                             }
                             .padding(12)
                             .frame(maxWidth: .infinity, alignment: .leading)
-                            .background(Color(.systemGray6))
-                            .cornerRadius(12)
+                            .background(
+                                RoundedRectangle(cornerRadius: 12)
+                                    .fill(Color(.systemBackground))
+                                    .shadow(color: .black.opacity(0.04), radius: 8, y: 4)
+                            )
                         }
                         .buttonStyle(.plain)
                         .disabled(!o.hasCoordinate)
@@ -332,8 +333,11 @@ struct ProfileView: View {
                 .foregroundColor(.primary)
                 .padding(compact ? 12 : 14)
                 .frame(maxWidth: .infinity, alignment: .leading)
-                .background(Color(.systemGray6))
-                .cornerRadius(12)
+                .background(
+                    RoundedRectangle(cornerRadius: 12)
+                        .fill(Color(.systemBackground))
+                        .shadow(color: .black.opacity(0.04), radius: 8, y: 4)
+                )
         }
     }
 
@@ -354,8 +358,11 @@ struct ProfileView: View {
                 }
                 .padding(12)
                 .frame(maxWidth: .infinity, alignment: .leading)
-                .background(Color(.systemGray6))
-                .cornerRadius(12)
+                .background(
+                    RoundedRectangle(cornerRadius: 12)
+                        .fill(Color(.systemBackground))
+                        .shadow(color: .black.opacity(0.04), radius: 8, y: 4)
+                )
             }
         }
         .buttonStyle(.plain)
@@ -390,8 +397,11 @@ struct ProfileView: View {
                             }
                             .padding(12)
                             .frame(maxWidth: .infinity, alignment: .leading)
-                            .background(Color(.systemGray6))
-                            .cornerRadius(12)
+                            .background(
+                                RoundedRectangle(cornerRadius: 12)
+                                    .fill(Color(.systemBackground))
+                                    .shadow(color: .black.opacity(0.04), radius: 8, y: 4)
+                            )
                         }
                         .buttonStyle(.plain)
                     }
@@ -406,8 +416,11 @@ struct ProfileView: View {
             .foregroundColor(.secondary)
             .padding(14)
             .frame(maxWidth: .infinity, alignment: .leading)
-            .background(Color(.systemGray6))
-            .cornerRadius(12)
+            .background(
+                RoundedRectangle(cornerRadius: 12)
+                    .fill(Color(.systemBackground))
+                    .shadow(color: .black.opacity(0.04), radius: 8, y: 4)
+            )
     }
 
     private func trimmedOrNil(_ s: String?) -> String? {
@@ -453,6 +466,5 @@ private extension View {
     func headerStyle() -> some View {
         self
             .background(Color.white)
-            
     }
 }

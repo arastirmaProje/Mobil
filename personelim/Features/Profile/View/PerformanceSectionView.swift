@@ -1,10 +1,3 @@
-//
-//  PerformanceSectionView.swift
-//  personelim
-//
-//  Created by Yusuf Kaan USTA on 28.12.2025.
-//
-
 import SwiftUI
 
 struct PerformanceSectionView: View {
@@ -26,30 +19,25 @@ struct PerformanceSectionView: View {
                 Spacer()
 
                 Button(action: onCreateQuery) {
-                    HStack(spacing: 6) {
+                    HStack(spacing: 8) {
                         Image(systemName: "magnifyingglass")
-                            .font(.system(size: 12, weight: .semibold))
+                            .font(.system(size: 14, weight: .semibold))
                         Text("Sorgu")
-                            .font(.system(size: 13, weight: .semibold))
+                            .font(.system(size: 14, weight: .semibold))
                     }
                     .foregroundStyle(.blue)
                     .padding(.horizontal, 12)
                     .padding(.vertical, 7)
-                    .background(.ultraThinMaterial)
+                    .background(Color(.systemGray6))
                     .clipShape(Capsule())
-                    .overlay(Capsule().strokeBorder(.blue.opacity(0.35), lineWidth: 1))
-                    .shadow(color: .black.opacity(0.10), radius: 10, x: 0, y: 4)
                 }
                 .buttonStyle(.plain)
             }
             .padding(.top, 6)
 
+
             if isLoading {
                 ProgressView().padding(.top, 8)
-            }
-
-            if let error {
-                Text(error).foregroundColor(.red)
             }
 
             if reports.isEmpty && !isLoading {
@@ -92,29 +80,36 @@ struct PerformanceSectionView: View {
     }
 }
 
-// MARK: - Internal Cards
+// MARK: - Performance Report Card (DETAIL İLE BİREBİR)
+
 private struct PerformanceReportCard: View {
     let report: PerformanceReportDTO
     let onTap: () -> Void
 
     var body: some View {
-        Button(action: onTap) {
+        Button {
+            onTap()
+        } label: {
             RoundedRectangle(cornerRadius: 12)
-                .fill(Color(UIColor.systemGray6))
-                .frame(height: 74)
+                .fill(Color(.systemBackground))
+                .shadow(color: .black.opacity(0.04), radius: 8, y: 4)
+                .frame(height: 82)
                 .overlay(
-                    HStack(spacing: 12) {
+                    HStack(spacing: 14) {
 
-                        ScoreMini(score: report.score ?? 0)
+                        ScoreMiniGauge(score: report.score ?? 0)
 
                         VStack(alignment: .leading, spacing: 4) {
-                            Text((report.createdByName ?? "—") + " tarafından")
-                                .font(.system(size: 14, weight: .semibold))
-                                .foregroundStyle(.primary)
+                            Text("Sorgu Aralığı")
+                                .font(.system(size: 11, weight: .medium))
+                                .foregroundColor(.secondary)
 
                             Text(ISODate.shortRange(start: report.startDate, end: report.endDate))
-                                .font(.system(size: 12))
-                                .foregroundColor(.gray)
+                                .font(.system(size: 13, weight: .semibold))
+
+                            Text(scoreLevel(report.score ?? 0))
+                                .font(.system(size: 11, weight: .semibold))
+                                .foregroundColor(scoreColor(report.score ?? 0))
                         }
 
                         Spacer()
@@ -123,24 +118,54 @@ private struct PerformanceReportCard: View {
                             .font(.system(size: 13, weight: .semibold))
                             .foregroundColor(.gray)
                     }
-                    .padding(.horizontal, 12)
+                    .padding(.horizontal, 14)
                 )
         }
         .buttonStyle(.plain)
     }
 }
 
-private struct ScoreMini: View {
+// MARK: - Mini Radial Gauge (DETAIL İLE BİREBİR)
+
+private struct ScoreMiniGauge: View {
     let score: Int
 
     var body: some View {
         ZStack {
             Circle()
-                .fill(Color(UIColor.systemGray5))
-                .frame(width: 44, height: 44)
+                .stroke(Color.gray.opacity(0.15), lineWidth: 6)
+
+            Circle()
+                .trim(from: 0, to: CGFloat(score) / 100)
+                .stroke(
+                    scoreColor(score),
+                    style: StrokeStyle(lineWidth: 6, lineCap: .round)
+                )
+                .rotationEffect(.degrees(-90))
 
             Text("\(score)")
-                .font(.system(size: 14, weight: .semibold))
+                .font(.system(size: 12, weight: .bold))
         }
+        .frame(width: 44, height: 44)
+    }
+}
+
+// MARK: - Score Helpers
+
+private func scoreLevel(_ s: Int) -> String {
+    switch s {
+    case 0..<40: return "Zayıf"
+    case 40..<70: return "Orta"
+    case 70..<85: return "İyi"
+    default: return "Mükemmel"
+    }
+}
+
+private func scoreColor(_ s: Int) -> Color {
+    switch s {
+    case 0..<40: return .red
+    case 40..<70: return .orange
+    case 70..<85: return .blue
+    default: return .green
     }
 }

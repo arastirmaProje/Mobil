@@ -13,7 +13,6 @@ struct TaskFeedbackView: View {
     @StateObject private var vm: TaskFeedbackViewModel
 
     @Environment(\.dismiss) private var dismiss
-    @Environment(\.presentationMode) private var presentationMode
 
     // MARK: - Init
     init(task: TaskEntity) {
@@ -28,71 +27,71 @@ struct TaskFeedbackView: View {
 
     // MARK: - Body
     var body: some View {
-        ScrollView {
-            VStack(spacing: 24) {
+        NavigationStack {
+            ScrollView {
+                VStack(spacing: 24) {
 
-                topBar
-                headerSection
-                feedbackSection
-                difficultySection
+                    headerSection
+                    feedbackSection
+                    difficultySection
 
-                Spacer(minLength: 40)
+                    Spacer(minLength: 40)
+                }
+                .padding(.bottom, 32)
             }
-            .padding(.bottom, 32)
-        }
-        .navigationBarBackButtonHidden(true)
-        .alert(
-            "Hata",
-            isPresented: Binding(
-                get: { vm.errorMessage != nil },
-                set: { _ in vm.errorMessage = nil }
-            )
-        ) {
-            Button("Tamam", role: .cancel) {}
-        } message: {
-            Text(vm.errorMessage ?? "")
-        }
-    }
-}
-
-private extension TaskFeedbackView {
-
-    var topBar: some View {
-        HStack {
-            Button { dismiss() } label: {
-                Image(systemName: "chevron.left")
-                    .frame(width: 44, height: 44)
-                    .background(Color(.systemGray5))
-                    .clipShape(Circle())
-            }
-
-            Spacer()
-
-            Button {
-                Task {
-                    let success = await vm.submit()
-                    if success {
-                        presentationMode.wrappedValue.dismiss()
-                        presentationMode.wrappedValue.dismiss()
+            .navigationBarBackButtonHidden(true)
+            .toolbar {
+                ToolbarItem(placement: .topBarLeading) {
+                    Button { dismiss() } label: {
+                        Image(systemName: "chevron.left")
                     }
                 }
-            } label: {
-                Image(systemName: "checkmark")
-                    .foregroundStyle(
-                        vm.isValid ? .primary : .secondary
-                    )
-                    .frame(width: 44, height: 44)
-                    .background(Color(.systemGray5))
-                    .clipShape(Circle())
+
+                ToolbarItem(placement: .topBarTrailing) {
+                    Button {
+                        Task {
+                            let success = await vm.submit()
+                            if success {
+                                dismiss()
+                            }
+                        }
+                    } label: {
+                        Image(systemName: "checkmark")
+                            .foregroundStyle(vm.isValid ? .primary : .secondary)
+                            .font(.headline)
+                    }
+                    .disabled(!vm.isValid || vm.isSaving)
+                }
             }
-            .disabled(!vm.isValid || vm.isSaving)
+            .alert(
+                "Hata",
+                isPresented: Binding(
+                    get: { vm.errorMessage != nil },
+                    set: { _ in vm.errorMessage = nil }
+                )
+            ) {
+                Button("Tamam", role: .cancel) {}
+            } message: {
+                Text(vm.errorMessage ?? "")
+            }
         }
-        .padding(.horizontal)
-        .padding(.top, 12)
     }
 }
 
 private extension TaskFeedbackView {
+
+    var headerSection: some View {
+        VStack(alignment: .leading, spacing: 6) {
+            Text("Görev Geri Bildirimi")
+                .font(.title.bold())
+
+            Text("Bu görevle ilgili deneyimini paylaş")
+                .font(.subheadline)
+                .foregroundColor(.secondary)
+        }
+        .frame(maxWidth: .infinity, alignment: .leading)
+        .padding(.horizontal)
+    }
 
     var feedbackSection: some View {
         VStack(alignment: .leading, spacing: 8) {
@@ -107,9 +106,6 @@ private extension TaskFeedbackView {
         }
         .padding(.horizontal)
     }
-}
-
-private extension TaskFeedbackView {
 
     var difficultySection: some View {
         VStack(alignment: .leading, spacing: 8) {
@@ -133,22 +129,6 @@ private extension TaskFeedbackView {
             .font(.caption)
             .foregroundColor(.secondary)
         }
-        .padding(.horizontal)
-    }
-}
-
-private extension TaskFeedbackView {
-
-    var headerSection: some View {
-        VStack(alignment: .leading, spacing: 6) {
-            Text("Görev Geri Bildirimi")
-                .font(.title.bold())
-
-            Text("Bu görevle ilgili deneyimini paylaş")
-                .font(.subheadline)
-                .foregroundColor(.secondary)
-        }
-        .frame(maxWidth: .infinity, alignment: .leading)
         .padding(.horizontal)
     }
 }

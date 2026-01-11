@@ -27,66 +27,53 @@ struct CreateLeaveView: View {
 
     // MARK: - Body
     var body: some View {
-        ScrollView {
-            VStack(spacing: 24) {
+        NavigationStack {
+            ScrollView {
+                VStack(spacing: 24) {
 
-                topBar
-                titleSection
-                calendarSection
-                leaveTitleSection
-                leaveDetailSection
+                    titleSection
+                    calendarSection
+                    leaveTitleSection
+                    leaveDetailSection
 
-                Spacer(minLength: 32)
+                    Spacer(minLength: 32)
+                }
+                .padding(.bottom, 40)
             }
-            .padding(.bottom, 40)
-        }
-        .navigationBarBackButtonHidden(true)
-        .alert(ConstantStrings.leaveErrorTitle, isPresented: Binding(
-                get: { vm.errorMessage != nil },
-                set: { _ in vm.errorMessage = nil }
-            )
-        ) {
-            Button(ConstantStrings.okButton, role: .cancel) {}
-        } message: {
-            Text(vm.errorMessage ?? "")
-        }
-    }
-}
-
-private extension CreateLeaveView {
-
-    var topBar: some View {
-        HStack {
-            Button { dismiss() } label: {
-                Image(systemName: "chevron.left")
-                    .foregroundStyle(.primary)
-                    .frame(width: 44, height: 44)
-                    .background(Color(.systemGray5))
-                    .clipShape(Circle())
-            }
-
-            Spacer()
-
-            Button {
-                Task {
-                    let success = await vm.createLeave()
-                    if success {
-                        dismiss()
+            .navigationTitle("İzin oluştur")
+            .navigationBarTitleDisplayMode(.inline)
+            .toolbar {
+                ToolbarItem(placement: .navigationBarLeading) {
+                    Button { dismiss() } label: {
+                        Image(systemName: "chevron.left")
+                            .font(.headline)
                     }
                 }
-            } label: {
-                Image(systemName: "checkmark")
-                    .foregroundStyle(
-                        vm.isFormValid ? .primary : .secondary
-                    )
-                    .frame(width: 44, height: 44)
-                    .background(Color(.systemGray5))
-                    .clipShape(Circle())
+                ToolbarItem(placement: .navigationBarTrailing) {
+                    Button {
+                        Task {
+                            let success = await vm.createLeave()
+                            if success {
+                                dismiss()
+                            }
+                        }
+                    } label: {
+                        Image(systemName: "checkmark")
+                            .font(.headline)
+                    }
+                    .disabled(!vm.isFormValid || vm.isLoading)
+                }
             }
-            .disabled(!vm.isFormValid || vm.isLoading)
+            .alert(ConstantStrings.leaveErrorTitle, isPresented: Binding(
+                    get: { vm.errorMessage != nil },
+                    set: { _ in vm.errorMessage = nil }
+                )
+            ) {
+                Button(ConstantStrings.okButton, role: .cancel) {}
+            } message: {
+                Text(vm.errorMessage ?? "")
+            }
         }
-        .padding(.horizontal)
-        .padding(.top, 12)
     }
 }
 
