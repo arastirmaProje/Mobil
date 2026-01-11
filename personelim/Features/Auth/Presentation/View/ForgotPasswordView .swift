@@ -14,17 +14,17 @@ struct ForgotPasswordView: View {
     var body: some View {
         VStack(spacing: 0) {
             
-            Text("Şifremi unuttum")
+            Text(ConstantStrings.forgotPasswordTitle)
                 .font(.title2.weight(.semibold))
                 .padding(.top, 24)
             
             VStack(alignment: .leading, spacing: 24) {
                 
                 VStack(alignment: .leading, spacing: 6) {
-                    Text("Email")
+                    Text(ConstantStrings.emailLabel)
                         .font(.system(size: 14, weight: .medium))
                     
-                    TextField("ornek@gmail.com", text: $vm.email)
+                    TextField(ConstantStrings.emailPlaceholder, text: $vm.email)
                         .keyboardType(.emailAddress)
                         .padding()
                         .background(Color.white)
@@ -36,7 +36,7 @@ struct ForgotPasswordView: View {
                 
                 if vm.codeSent {
                     VStack(alignment: .leading, spacing: 6) {
-                        Text("Kodu Gir")
+                        Text(ConstantStrings.enterCode)
                             .font(.system(size: 14, weight: .medium))
 
                         OTPInputView(code: $vm.code) { otp in
@@ -51,7 +51,7 @@ struct ForgotPasswordView: View {
             
             Spacer()
             
-            Button(vm.codeSent ? "Tekrar Gönder" : "Kod Gönder") {
+            Button(vm.codeSent ? ConstantStrings.resendCode : ConstantStrings.sendCode) {
                 Task { await vm.sendCode() }
             }
             .buttonStyle(OnboardingButtonStyle())

@@ -7,6 +7,10 @@
 
 import Foundation
 
+extension String {
+    static let empty = ""
+}
+
 final class AuthRepositoryImpl: AuthRepositoryProtocol {
 
     // MARK: - Dependencies
@@ -27,17 +31,15 @@ final class AuthRepositoryImpl: AuthRepositoryProtocol {
            )
 
            guard let data = response.data else {
-               throw RepositoryError.api(message: response.message ?? "Login failed")
+               throw RepositoryError.api(message: response.message ?? ConstantStrings.failText)
            }
-
-          
 
            return AuthUserEntity(
                userId: data.userId,
-               email: data.email ?? "",
-               fullName: data.fullName ?? "\(data.firstName ?? "") \(data.lastName ?? "")".trimmingCharacters(in: .whitespaces),
-               token: data.token ?? "",
-               expiresAt: data.expiresAt ?? "",
+               email: data.email ?? .empty,
+               fullName: data.fullName ?? "\(data.firstName ?? "") \(data.lastName ?? .empty)".trimmingCharacters(in: .whitespaces),
+               token: data.token ?? .empty,
+               expiresAt: data.expiresAt ?? .empty,
                role: data.role ?? .default
            )
        }
@@ -59,15 +61,15 @@ final class AuthRepositoryImpl: AuthRepositoryProtocol {
         )
 
         guard let data = response.data else {
-            throw RepositoryError.api(message: response.message ?? "Register failed")
+            throw RepositoryError.api(message: response.message ?? ConstantStrings.registerFail)
         }
 
         return AuthUserEntity(
             userId: data.userId,
-            email: data.email ?? "",
-            fullName: data.fullName ?? "",
-            token: data.token ?? "",
-            expiresAt: data.expiresAt ?? "",
+            email: data.email ?? .empty,
+            fullName: data.fullName ?? .empty,
+            token: data.token ?? .empty,
+            expiresAt: data.expiresAt ?? .empty,
             role: data.role ?? .default
         )
     }
@@ -84,12 +86,12 @@ final class AuthRepositoryImpl: AuthRepositoryProtocol {
         )
 
         guard let data = response.data else {
-            throw RepositoryError.api(message: response.message ?? "Failed to send reset code")
+            throw RepositoryError.api(message: response.message ?? ConstantStrings.sendResetFail)
         }
 
         return ForgotPasswordResponseEntity(
-            email: data.email ?? "",
-            expiresAt: data.expiresAt ?? "",
+            email: data.email ?? .empty,
+            expiresAt: data.expiresAt ?? .empty,
             expiresInMinutes: data.expiresInMinutes ?? 0
         )
     }
@@ -109,7 +111,7 @@ final class AuthRepositoryImpl: AuthRepositoryProtocol {
             return response.data ?? false
         }
 
-        throw RepositoryError.api(message: response.message ?? "Unknown error")
+        throw RepositoryError.api(message: response.message ?? ConstantStrings.unknownError)
     }
     
     // MARK: - RESET PASSWORD
@@ -144,7 +146,7 @@ final class AuthRepositoryImpl: AuthRepositoryProtocol {
         )
 
         guard let data = response.data else {
-            throw RepositoryError.api(message: response.message ?? "Profile alınamadı")
+            throw RepositoryError.api(message: response.message ?? ConstantStrings.profileNotRetrivied)
         }
 
         return data
@@ -153,11 +155,7 @@ final class AuthRepositoryImpl: AuthRepositoryProtocol {
 
     func updateProfile(email: String, firstName: String, lastName: String, imageData: Data?) async throws -> UserProfileDTO {
 
-        let fields: [String: String] = [
-            "Email": email,
-            "FirstName": firstName,
-            "LastName": lastName
-        ]
+        let fields: [String: String] = ["Email": email, "FirstName": firstName, "LastName": lastName]
 
         var files: [MultipartFile] = []
         if let imageData {
@@ -179,7 +177,7 @@ final class AuthRepositoryImpl: AuthRepositoryProtocol {
         )
 
         guard let data = response.data else {
-            throw RepositoryError.api(message: response.message ?? "Profil güncellenemedi")
+            throw RepositoryError.api(message: response.message ?? ConstantStrings.profileUpdateFail)
         }
 
         return data
@@ -194,7 +192,7 @@ final class AuthRepositoryImpl: AuthRepositoryProtocol {
             )
 
             guard res.success else {
-                throw RepositoryError.api(message: res.message ?? "Hesap silinemedi")
+                throw RepositoryError.api(message: res.message ?? ConstantStrings.deleteAccountFail)
             }
         }
     

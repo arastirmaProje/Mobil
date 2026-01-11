@@ -23,28 +23,36 @@ struct ResetPasswordView: View {
     var body: some View {
         VStack(spacing: 0) {
 
-            Text("Şifremi unuttum")
+            Text(ConstantStrings.resetPasswordTitle)
                 .font(.title2.weight(.semibold))
                 .padding(.top, 24)
 
             VStack(alignment: .leading, spacing: 16) {
 
-                Text("Yeni Şifre")
-                SecureField("Yeni şifre", text: $vm.newPassword)
-                    .padding()
-                    .overlay(RoundedRectangle(cornerRadius: 8).stroke(Color.gray.opacity(0.4)))
+                Text(ConstantStrings.newPasswordLabel)
 
-                Text("Yeni Şifre Tekrar")
-                SecureField("Tekrar yeni şifre", text: $vm.confirmPassword)
-                    .padding()
-                    .overlay(RoundedRectangle(cornerRadius: 8).stroke(Color.gray.opacity(0.4)))
+                SecureField(
+                    ConstantStrings.newPasswordPlaceholder, text: $vm.newPassword
+                )
+                .padding()
+                .overlay( RoundedRectangle(cornerRadius: 8) .stroke(Color.gray.opacity(0.4))
+                )
+
+                Text(ConstantStrings.confirmPasswordLabel)
+
+                SecureField(
+                    ConstantStrings.confirmPasswordPlaceholder, text: $vm.confirmPassword
+                )
+                .padding()
+                .overlay(RoundedRectangle(cornerRadius: 8) .stroke(Color.gray.opacity(0.4))
+                )
             }
             .padding(.horizontal, 20)
             .padding(.top, 20)
 
             Spacer()
 
-            Button("Onayla") {
+            Button(ConstantStrings.confirmButton) {
                 Task { await vm.resetPassword() }
             }
             .buttonStyle(OnboardingButtonStyle())
@@ -53,9 +61,9 @@ struct ResetPasswordView: View {
         }
         .alert(isPresented: $vm.showError) {
             Alert(
-                title: Text("Hata"),
+                title: Text(ConstantStrings.leaveErrorTitle),
                 message: Text(vm.errorMessage),
-                dismissButton: .default(Text("Tamam"))
+                dismissButton: .default(Text(ConstantStrings.okButton))
             )
         }
         .ignoresSafeArea(edges: .bottom)

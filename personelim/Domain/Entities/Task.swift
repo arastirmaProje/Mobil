@@ -25,3 +25,17 @@ extension TaskEntity {
     }
 }
 
+extension TaskEntity {
+    static func test(id: String,status: String) -> TaskEntity {
+        TaskEntity(id: id, title: "Test",
+                   description: nil,
+                   assignedToName: nil,
+                   assignedByName: nil,
+                   startDate: Date(),
+                   endDate: Date(),
+                   status: status,
+                   isOverdue: false)
+    }
+}
+
+

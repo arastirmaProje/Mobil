@@ -16,18 +16,22 @@ final class PerformanceRepositoryImpl: PerformanceRepositoryProtocol {
         )
 
         guard let data = res.data else {
-            throw NSError(
-                domain: "performance",
-                code: -1,
-                userInfo: [NSLocalizedDescriptionKey: res.message ?? "Rapor oluşturulamadı (data nil)."]
-            )
+            throw RepositoryError.api( message: res.message ?? ConstantStrings.performanceReportCreateFail )
         }
+
         return data
     }
 
-    func getReports(businessId: String, employeeUserId: String) async throws -> [PerformanceReportDTO] {
+    func getReports(
+        businessId: String,
+        employeeUserId: String
+    ) async throws -> [PerformanceReportDTO] {
+
         let res: ServiceResponse<[PerformanceReportDTO]> = try await network.request(
-            endpoint: .performanceReports(businessId: businessId, employeeUserId: employeeUserId),
+            endpoint: .performanceReports(
+                businessId: businessId,
+                employeeUserId: employeeUserId
+            ),
             method: .get,
             body: nil
         )
@@ -35,7 +39,10 @@ final class PerformanceRepositoryImpl: PerformanceRepositoryProtocol {
         return res.data ?? []
     }
 
-    func getReportDetail(reportId: String) async throws -> PerformanceReportDTO {
+    func getReportDetail(
+        reportId: String
+    ) async throws -> PerformanceReportDTO {
+
         let res: ServiceResponse<PerformanceReportDTO> = try await network.request(
             endpoint: .performanceReportDetail(reportId: reportId),
             method: .get,
@@ -43,12 +50,11 @@ final class PerformanceRepositoryImpl: PerformanceRepositoryProtocol {
         )
 
         guard let data = res.data else {
-            throw NSError(
-                domain: "performance",
-                code: -2,
-                userInfo: [NSLocalizedDescriptionKey: res.message ?? "Rapor detayı alınamadı (data nil)."]
+            throw RepositoryError.api(
+                message: res.message ?? ConstantStrings.performanceReportDetailFail
             )
         }
+
         return data
     }
     
@@ -59,14 +65,15 @@ final class PerformanceRepositoryImpl: PerformanceRepositoryProtocol {
         print("startDate:", request.startDate)
         print("endDate:", request.endDate)
 
-        let res: ServiceResponse<PerformanceBulkScoreResponseDTO> = try await network.request(
-            endpoint: .performanceQueryBulkScores,
-            method: .post,
-            body: request
-        )
+        let res: ServiceResponse<PerformanceBulkScoreResponseDTO> =
+            try await network.request(
+                endpoint: .performanceQueryBulkScores,
+                method: .post,
+                body: request
+            )
 
         print("BULK QUERY RESPONSE success:", res.success)
-        print("BULK QUERY message:", res.message ?? "nil")
+        print("BULK QUERY message:", res.message ?? .empty)
 
         if let data = res.data {
             print("BULK totalEmployees:", data.totalEmployees ?? -1)
@@ -75,7 +82,7 @@ final class PerformanceRepositoryImpl: PerformanceRepositoryProtocol {
             for s in data.scores {
                 print(
                     "   ➤ uid:",
-                    s.userId ?? "nil",
+                    s.userId ?? .empty,
                     "| score:",
                     s.score ?? -1
                 )
@@ -87,6 +94,4 @@ final class PerformanceRepositoryImpl: PerformanceRepositoryProtocol {
         print("BULK QUERY END")
         return res
     }
-
-
 }

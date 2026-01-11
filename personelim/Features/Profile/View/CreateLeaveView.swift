@@ -41,14 +41,12 @@ struct CreateLeaveView: View {
             .padding(.bottom, 40)
         }
         .navigationBarBackButtonHidden(true)
-        .alert(
-            "Hata",
-            isPresented: Binding(
+        .alert(ConstantStrings.leaveErrorTitle, isPresented: Binding(
                 get: { vm.errorMessage != nil },
                 set: { _ in vm.errorMessage = nil }
             )
         ) {
-            Button("Tamam", role: .cancel) {}
+            Button(ConstantStrings.okButton, role: .cancel) {}
         } message: {
             Text(vm.errorMessage ?? "")
         }
@@ -96,10 +94,10 @@ private extension CreateLeaveView {
 
     var titleSection: some View {
         VStack(alignment: .leading, spacing: 6) {
-            Text("İzin oluştur")
+            Text(ConstantStrings.createLeaveTitle)
                 .font(.title.bold())
 
-            Text("Bir tarih aralığı seçin")
+            Text(ConstantStrings.createLeaveSubtitle)
                 .font(.subheadline)
                 .foregroundColor(.secondary)
         }
@@ -113,7 +111,7 @@ private extension CreateLeaveView {
     var calendarSection: some View {
         VStack(alignment: .leading, spacing: 12) {
             MultiDatePicker(
-                "Tarih aralığı",
+                ConstantStrings.dateRangeLabel,
                 selection: $vm.selectedDates
             )
             .labelsHidden()
@@ -135,10 +133,10 @@ private extension CreateLeaveView {
 
     var leaveTitleSection: some View {
         VStack(alignment: .leading, spacing: 8) {
-            Text("İzin başlığı")
+            Text(ConstantStrings.leaveTitleLabel)
                 .font(.headline)
 
-            TextField("Başlık girin", text: $vm.title)
+            TextField(ConstantStrings.leaveTitlePlaceholder, text: $vm.title)
                 .padding()
                 .background(Color(.systemGray6))
                 .cornerRadius(12)
@@ -151,7 +149,7 @@ private extension CreateLeaveView {
 
     var leaveDetailSection: some View {
         VStack(alignment: .leading, spacing: 8) {
-            Text("İzin açıklaması")
+            Text(ConstantStrings.leaveDescriptionLabel)
                 .font(.headline)
 
             TextEditor(text: $vm.description)

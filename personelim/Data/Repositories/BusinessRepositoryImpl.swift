@@ -21,7 +21,9 @@ final class BusinessRepositoryImpl: BusinessRepositoryProtocol {
         )
 
         guard response.success, let id = response.data?.id else {
-            throw RepositoryError.api(message: response.message ?? "Şirket oluşturulamadı")
+            throw RepositoryError.api(
+                message: response.message ?? ConstantStrings.businessCreateFail
+            )
         }
 
         return id
@@ -47,7 +49,9 @@ final class BusinessRepositoryImpl: BusinessRepositoryProtocol {
         )
 
         guard let data = response.data else {
-            throw RepositoryError.api(message: response.message ?? "Şirket bilgisi alınamadı")
+            throw RepositoryError.api(
+                message: response.message ?? ConstantStrings.businessFetchFail
+            )
         }
 
         return data
@@ -61,7 +65,9 @@ final class BusinessRepositoryImpl: BusinessRepositoryProtocol {
         )
 
         guard response.success, let data = response.data else {
-            throw RepositoryError.api(message: response.message ?? "Şirketler alınamadı")
+            throw RepositoryError.api(
+                message: response.message ?? ConstantStrings.businessesFetchFail
+            )
         }
 
         return data
@@ -71,13 +77,18 @@ final class BusinessRepositoryImpl: BusinessRepositoryProtocol {
         let list = try await getBusinesses()
 
         guard let first = list.first else {
-            throw RepositoryError.api(message: "Şirket bulunamadı")
+            throw RepositoryError.api(
+                message: ConstantStrings.businessNotFound
+            )
         }
 
         return first
     }
 
-    func updateBusiness(businessId: String, request: UpdateBusinessRequestDTO) async throws -> EmptyResponse {
+    func updateBusiness(
+        businessId: String,
+        request: UpdateBusinessRequestDTO
+    ) async throws -> EmptyResponse {
 
         var fields: [String: String] = [:]
 
@@ -133,15 +144,18 @@ final class BusinessRepositoryImpl: BusinessRepositoryProtocol {
             data: fileData
         )
 
-        let res: ServiceResponse<BusinessMemberDocumentDTO> = try await networkManager.uploadMultipart(
-            endpoint: .uploadBusinessDocument(businessId: businessId), 
-            method: .post,
-            fields: fields,
-            files: [file]
-        )
+        let res: ServiceResponse<BusinessMemberDocumentDTO> =
+            try await networkManager.uploadMultipart(
+                endpoint: .uploadBusinessDocument(businessId: businessId),
+                method: .post,
+                fields: fields,
+                files: [file]
+            )
 
         guard res.success, let data = res.data else {
-            throw RepositoryError.api(message: res.message ?? "Şirket belgesi yüklenemedi")
+            throw RepositoryError.api(
+                message: res.message ?? ConstantStrings.businessDocumentUploadFail
+            )
         }
 
         return data
@@ -155,7 +169,9 @@ final class BusinessRepositoryImpl: BusinessRepositoryProtocol {
         )
 
         guard res.success else {
-            throw RepositoryError.api(message: res.message ?? "Şirket belgesi silinemedi")
+            throw RepositoryError.api(
+                message: res.message ?? ConstantStrings.businessDocumentDeleteFail
+            )
         }
     }
 }

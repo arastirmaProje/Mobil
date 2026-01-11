@@ -17,10 +17,10 @@ struct EmailVerifyView: View {
     var body: some View {
         VStack(spacing: 24) {
 
-            Text("Email Doğrulama")
+            Text(ConstantStrings.emailVerificationTitle)
                 .font(.title2.bold())
 
-            Text("\(email) adresine gönderilen kodu giriniz")
+            Text( String(format: ConstantStrings.emailVerificationDescriptionFormat, email))
                 .foregroundColor(.gray)
 
             OTPInputView(code: $code) { otp in

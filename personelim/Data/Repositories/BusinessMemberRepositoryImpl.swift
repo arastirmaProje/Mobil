@@ -16,7 +16,9 @@ final class BusinessMemberRepositoryImpl: BusinessMemberRepositoryProtocol {
         )
 
         guard let data = response.data else {
-            throw RepositoryError.api(message: response.message ?? "Üye listesi alınamadı")
+            throw RepositoryError.api(
+                message: response.message ?? ConstantStrings.membersFetchFail
+            )
         }
 
         return data
@@ -30,13 +32,19 @@ final class BusinessMemberRepositoryImpl: BusinessMemberRepositoryProtocol {
         )
 
         guard res.success, let data = res.data else {
-            throw RepositoryError.api(message: res.message ?? "Üye detayı alınamadı")
+            throw RepositoryError.api(
+                message: res.message ?? ConstantStrings.memberDetailFail
+            )
         }
 
         return data
     }
 
-    func updateMember(memberId: String, request: UpdateBusinessMemberRequestDTO) async throws {
+    func updateMember(
+        memberId: String,
+        request: UpdateBusinessMemberRequestDTO
+    ) async throws {
+
         let res: ServiceResponse<Bool> = try await network.request(
             endpoint: .updateBusinessMember(memberId: memberId),
             method: .put,
@@ -44,7 +52,9 @@ final class BusinessMemberRepositoryImpl: BusinessMemberRepositoryProtocol {
         )
 
         guard res.success else {
-            throw RepositoryError.api(message: res.message ?? "Üye güncellenemedi")
+            throw RepositoryError.api(
+                message: res.message ?? ConstantStrings.memberUpdateFail
+            )
         }
     }
 
@@ -66,15 +76,18 @@ final class BusinessMemberRepositoryImpl: BusinessMemberRepositoryProtocol {
             data: fileData
         )
 
-        let res: ServiceResponse<BusinessMemberDocumentDTO> = try await network.uploadMultipart(
-            endpoint: .uploadMemberDocuments(memberId: memberId),
-            method: .post,
-            fields: fields,
-            files: [file]
-        )
+        let res: ServiceResponse<BusinessMemberDocumentDTO> =
+            try await network.uploadMultipart(
+                endpoint: .uploadMemberDocuments(memberId: memberId),
+                method: .post,
+                fields: fields,
+                files: [file]
+            )
 
         guard res.success, let data = res.data else {
-            throw RepositoryError.api(message: res.message ?? "Belge yüklenemedi")
+            throw RepositoryError.api(
+                message: res.message ?? ConstantStrings.memberDocumentUploadFail
+            )
         }
 
         return data
@@ -88,10 +101,12 @@ final class BusinessMemberRepositoryImpl: BusinessMemberRepositoryProtocol {
         )
 
         guard res.success else {
-            throw RepositoryError.api(message: res.message ?? "Belge silinemedi")
+            throw RepositoryError.api(
+                message: res.message ?? ConstantStrings.memberDocumentDeleteFail
+            )
         }
     }
-    
+
     func deleteMember(memberId: String) async throws -> EmptyResponse {
         let res: EmptyResponse = try await network.request(
             endpoint: .deleteBusinessMember(memberId: memberId),
@@ -100,6 +115,7 @@ final class BusinessMemberRepositoryImpl: BusinessMemberRepositoryProtocol {
         )
         return res
     }
+}
 
 
     // üye belgesi güncellem eklenmesi lazım
@@ -120,4 +136,4 @@ final class BusinessMemberRepositoryImpl: BusinessMemberRepositoryProtocol {
 
     //   return data
     // }
-}
+

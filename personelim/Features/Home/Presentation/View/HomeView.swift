@@ -69,7 +69,7 @@ private extension HomeView {
     var headerSection: some View {
         HStack {
             VStack(alignment: .leading, spacing: 4) {
-                Text("Hoş geldin")
+                Text(ConstantStrings.welcome)
                     .font(.system(size: 14, weight: .regular))
                     .foregroundColor(.secondary)
 
@@ -91,7 +91,7 @@ private extension HomeView {
                 HStack(alignment: .top) {
 
                     VStack(alignment: .leading, spacing: 8) {
-                        Text("Mesai saatleri")
+                        Text(ConstantStrings.shiftHours)
                             .font(.system(size: 18, weight: .regular))
                             .foregroundColor(.primary)
 
@@ -110,10 +110,10 @@ private extension HomeView {
                                 await vm.loadMonthlyShifts(businessId: bid, month: Date())
                             }
                         } else {
-                            shiftVM.errorMessage = "BusinessId bulunamadı."
+                            shiftVM.errorMessage = ConstantStrings.businessIdNotFound
                         }
                     } label: {
-                        Text("Günü sonlandır")
+                        Text(ConstantStrings.endDay)
                             .font(.system(size: 16, weight: .semibold))
                             .foregroundColor(.primary)
                             .padding(.horizontal, 18)
@@ -164,15 +164,15 @@ private extension HomeView {
     }
 
     var primaryTimerButtonTitle: String {
-        if !shiftVM.isRunning { return "Başlat" }
-        if shiftVM.isPaused { return "Devam et" }
-        return "Duraklat"
+        if !shiftVM.isRunning { return ConstantStrings.start }
+        if shiftVM.isPaused { return ConstantStrings.resume }
+        return ConstantStrings.pause
     }
 
     var activeDayTableSection: some View {
         VStack(alignment: .leading, spacing: 12) {
 
-            Text("Aktif gün tablosu")
+            Text(ConstantStrings.activeDayTable)
                 .font(.headline)
                 .padding(.horizontal)
 
@@ -188,7 +188,7 @@ private extension HomeView {
             Button {
                 showAllTables = true
             } label: {
-                Text("Detayları gör")
+                Text(ConstantStrings.seeDetails)
                     .font(.headline)
                     .foregroundColor(.primary)
                     .frame(maxWidth: .infinity)
@@ -204,7 +204,7 @@ private extension HomeView {
     var activeTasksSection: some View {
         VStack(alignment: .leading, spacing: 12) {
 
-            Text("Aktif görevler")
+            Text(ConstantStrings.activeTasks)
                 .font(.headline)
                 .padding(.horizontal)
 
@@ -217,7 +217,7 @@ private extension HomeView {
             }
 
             if vm.activeTasks.isEmpty && !vm.isLoading {
-                Text("Aktif görevin yok 🎉")
+                Text(ConstantStrings.noActiveTasks)
                     .font(.subheadline)
                     .foregroundColor(.secondary)
                     .padding(.horizontal)
@@ -226,7 +226,7 @@ private extension HomeView {
             Button {
                 showTaskList = true
             } label: {
-                Text("Tüm görevleri gör")
+                Text(ConstantStrings.seeAllTasks)
                     .font(.headline)
                     .foregroundColor(.primary)
                     .frame(maxWidth: .infinity)

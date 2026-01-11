@@ -21,20 +21,20 @@ struct EditCompanyView: View {
             ScrollView(showsIndicators: false) {
                 VStack(alignment: .leading, spacing: 18) {
 
-                    Text("Şirket düzenle")
+                    Text(ConstantStrings.editCompanyTitle)
                         .font(.title2.bold())
                         .padding(.top, 8)
 
                     HStack(spacing: 12) {
                         profileImage(size: 44)
 
-                        Text("Profil Resmi")
+                        Text(ConstantStrings.profileImageLabel)
                             .font(.body)
 
                         Spacer()
 
                         PhotosPicker(selection: $vm.photoItem, matching: .images) {
-                            Text("Ekle")
+                            Text(ConstantStrings.addButton)
                                 .font(.body)
                                 .foregroundColor(.blue)
                         }
@@ -44,21 +44,21 @@ struct EditCompanyView: View {
                     }
                     .padding(.vertical, 6)
 
-                    LabeledRoundedField(title: "Şirket İsmi") {
+                    LabeledRoundedField(title: ConstantStrings.companyNameLabel) {
                         TextField("", text: $vm.companyName)
                     }
 
-                    LabeledRoundedField(title: "Email") {
+                    LabeledRoundedField(title: ConstantStrings.companyEmailLabel) {
                         TextField("", text: $vm.companyEmail)
                             .textInputAutocapitalization(.never)
                             .keyboardType(.emailAddress)
                     }
 
-                    LabeledRoundedField(title: "Açıklama") {
+                    LabeledRoundedField(title: ConstantStrings.companyDescriptionLabel) {
                         TextField("", text: $vm.description)
                     }
 
-                    LabeledRoundedField(title: "Belgeler", trailingTitle: "Ekle", trailingAction: {
+                    LabeledRoundedField(title: ConstantStrings.documentsLabel, trailingTitle: ConstantStrings.addButton, trailingAction: {
                         showDocPicker = true
                     }) {
                         TextField("", text: Binding(
@@ -127,7 +127,7 @@ struct EditCompanyView: View {
                 set: { newValue in if !newValue { vm.errorMessage = nil } }
             )
         ) {
-            Button("Tamam") { vm.errorMessage = nil }
+            Button(ConstantStrings.okButton) { vm.errorMessage = nil }
         }
     }
 
@@ -203,10 +203,10 @@ private extension EditCompanyView {
         VStack(alignment: .leading, spacing: 12) {
 
             HStack {
-                Text("Ofisler")
+                Text(ConstantStrings.officesTitle)
                     .font(.system(size: 14, weight: .medium))
                 Spacer()
-                Button("Ekle") { vm.addOffice() }
+                Button(ConstantStrings.addButton) { vm.addOffice() }
                     .foregroundColor(.blue)
             }
 
@@ -214,7 +214,7 @@ private extension EditCompanyView {
                 VStack(alignment: .leading, spacing: 10) {
 
                     HStack {
-                        Text("Ofis \(office.index)")
+                        Text("\(ConstantStrings.officePrefix) \(office.index)")
                             .font(.system(size: 14, weight: .medium))
                         Spacer()
 
@@ -227,24 +227,24 @@ private extension EditCompanyView {
                         }
                     }
 
-                    TextField("Ofis adı (örn: Ofis 1)", text: $office.name)
+                    TextField(ConstantStrings.officeNamePlaceholder, text: $office.name)
                         .padding()
                         .overlay(
                             RoundedRectangle(cornerRadius: 8)
                                 .stroke(.gray.opacity(0.4))
                         )
 
-                    Button("Haritadan seç") {
+                    Button(ConstantStrings.pickFromMap) {
                         vm.beginPickLocation(for: office.id)
                     }
                     .foregroundColor(.blue)
 
                     if let lat = office.latitude, let lng = office.longitude {
-                        Text("Seçilen Konum: \(lat), \(lng)")
+                        Text("\(ConstantStrings.selectedLocation): \(lat), \(lng)")
                             .font(.system(size: 12))
                             .foregroundColor(.gray)
                     } else {
-                        Text("Konum seçilmedi")
+                        Text(ConstantStrings.locationNotSelected)
                             .font(.system(size: 12))
                             .foregroundColor(.gray.opacity(0.8))
                     }
@@ -258,7 +258,7 @@ private extension EditCompanyView {
 private extension EditCompanyView {
     var provincePicker: some View {
         VStack(alignment: .leading, spacing: 6) {
-            Text("İl")
+            Text(ConstantStrings.provinceLabel)
                 .font(.system(size: 14, weight: .medium))
 
             Picker("İl seç", selection: Binding<Int?>(

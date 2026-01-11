@@ -19,7 +19,7 @@ struct ShiftLocationPickerSheet: View {
     var body: some View {
         VStack(spacing: 24) {
 
-            Text("Hangi konumda çalışacaksın?")
+            Text(ConstantStrings.shiftLocationTitle)
                 .font(.system(size: 18, weight: .semibold))
                 .padding(.top, 24)
 
@@ -34,7 +34,7 @@ struct ShiftLocationPickerSheet: View {
                 onPick(selected)
                 dismiss()
             } label: {
-                Text("Başlat")
+                Text(ConstantStrings.start)
                     .font(.system(size: 16, weight: .semibold))
                     .foregroundColor(.primary)
                     .frame(maxWidth: .infinity)
@@ -55,13 +55,13 @@ struct ShiftLocationPickerSheet: View {
     private var locationRow: some View {
         VStack(alignment: .leading, spacing: 8) {
 
-            Text("Lokasyon")
+            Text(ConstantStrings.locationLabel)
                 .font(.system(size: 14, weight: .medium))
                 .foregroundColor(.secondary)
 
             Menu {
-                Picker("Lokasyon", selection: $selected) {
-                    Text("Ev").tag(ShiftStartOption.home)
+                Picker(ConstantStrings.locationLabel, selection: $selected) {
+                    Text(ConstantStrings.homeLocation).tag(ShiftStartOption.home)
 
                     ForEach(officeOptions) { opt in
                         Text(opt.title).tag(opt)
@@ -70,7 +70,7 @@ struct ShiftLocationPickerSheet: View {
             } label: {
                 HStack(spacing: 10) {
 
-                    Text("Lokasyon")
+                    Text(ConstantStrings.locationLabel)
                         .font(.system(size: 16, weight: .regular))
                         .foregroundColor(.primary)
 

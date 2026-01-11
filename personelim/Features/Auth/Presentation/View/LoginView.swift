@@ -37,17 +37,17 @@ struct LoginView: View {
                 .padding(.top, 12)
 
                 // MARK: - Title
-                Text("Giriş Yapalım")
+                Text(ConstantStrings.loginTitle)
                     .font(.title2.weight(.semibold))
                     .padding(.top, 24)
 
                 VStack(alignment: .leading, spacing: 16) {
 
                     VStack(alignment: .leading, spacing: 6) {
-                        Text("Email")
+                        Text(ConstantStrings.emailLabel)
                             .font(.system(size: 14, weight: .medium))
 
-                        TextField("ornek@gmail.com", text: $vm.email)
+                        TextField(ConstantStrings.emailPlaceholder, text: $vm.email)
                             .textInputAutocapitalization(.never)
                             .keyboardType(.emailAddress)
                             .padding()
@@ -59,7 +59,7 @@ struct LoginView: View {
                     }
 
                     VStack(alignment: .leading, spacing: 6) {
-                        Text("Şifre")
+                        Text(ConstantStrings.passwordLabel)
                             .font(.system(size: 14, weight: .medium))
 
                         SecureField("123...", text: $vm.password)
@@ -79,11 +79,11 @@ struct LoginView: View {
                                 .foregroundColor(.gray)
                         }
 
-                        Text("Beni hatırla")
+                        Text(ConstantStrings.rememberMe)
                             .font(.system(size: 14))
                     }
 
-                    Button("Şifremi unuttum") {
+                    Button(ConstantStrings.forgotPasswordTitle) {
                         goToResetPassword = true
                     }
                     .font(.system(size: 14))
@@ -103,7 +103,7 @@ struct LoginView: View {
                 Button {
                     Task { await vm.login(appState: appState) }
                 } label: {
-                    Text("Giriş Yap")
+                    Text(ConstantStrings.loginButton)
                 }
                 .disabled(vm.isLoading)
                 .buttonStyle(OnboardingButtonStyle())

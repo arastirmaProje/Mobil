@@ -17,10 +17,18 @@ final class AppState: ObservableObject {
 
     // MARK: - Derived Properties
     var displayName: String {
-        let f = userDTO?.firstName?.trimmingCharacters(in: .whitespacesAndNewlines) ?? ""
-        let l = userDTO?.lastName?.trimmingCharacters(in: .whitespacesAndNewlines) ?? ""
-        let full = [f, l].filter { !$0.isEmpty }.joined(separator: " ")
-        return full.isEmpty ? "—" : full
+        let f = userDTO?.firstName?
+            .trimmingCharacters(in: .whitespacesAndNewlines) ?? .empty
+        let l = userDTO?.lastName?
+            .trimmingCharacters(in: .whitespacesAndNewlines) ?? .empty
+
+        let full = [f, l]
+            .filter { !$0.isEmpty }
+            .joined(separator: .empty)
+
+        return full.isEmpty
+            ? ConstantStrings.dashPlaceholder
+            : full
     }
 
     var businessId: String? { companyDTO?.id }
@@ -56,6 +64,7 @@ final class AppState: ObservableObject {
         businessRepository: BusinessRepositoryProtocol,
         businessMemberRepository: BusinessMemberRepositoryProtocol
     ) async {
+
         bootstrapError = nil
 
         guard TokenStore.shared.hasValidToken() else {
@@ -81,10 +90,14 @@ final class AppState: ObservableObject {
             self.companyDTO = firstBusiness
             TokenStore.shared.selectedBusinessId = firstBusiness.id
 
-            let members = try await businessMemberRepository.getMembers(businessId: firstBusiness.id)
+            let members = try await businessMemberRepository
+                .getMembers(businessId: firstBusiness.id)
+
             businessMembers = members.filter { $0.isActive ?? false }
 
-            if let me = businessMembers.first(where: { $0.userId.lowercased() == profile.id.lowercased() }) {
+            if let me = businessMembers.first(
+                where: { $0.userId.lowercased() == profile.id.lowercased() }
+            ) {
                 role = me.role
             } else {
                 role = .default
@@ -97,23 +110,38 @@ final class AppState: ObservableObject {
     }
 
     // MARK: - MEMBERS
-    func loadBusinessMembersIfNeeded(repository: BusinessMemberRepositoryProtocol) async {
-        guard let businessId = companyDTO?.id, businessMembers.isEmpty else { return }
+    func loadBusinessMembersIfNeeded(
+        repository: BusinessMemberRepositoryProtocol
+    ) async {
+
+        guard let businessId = companyDTO?.id,
+              businessMembers.isEmpty else { return }
+
         do {
             let members = try await repository.getMembers(businessId: businessId)
             businessMembers = members.filter { $0.isActive ?? false }
         } catch {
-            print("Members load failed:", error.localizedDescription)
+            print(
+                ConstantStrings.membersLoadFailed,
+                error.localizedDescription
+            )
         }
     }
 
-    func refreshBusinessMembers(repository: BusinessMemberRepositoryProtocol) async {
+    func refreshBusinessMembers(
+        repository: BusinessMemberRepositoryProtocol
+    ) async {
+
         guard let businessId = companyDTO?.id else { return }
+
         do {
             let members = try await repository.getMembers(businessId: businessId)
             businessMembers = members.filter { $0.isActive ?? false }
         } catch {
-            print("refreshBusinessMembers failed:", error.localizedDescription)
+            print(
+                ConstantStrings.refreshMembersFailed,
+                error.localizedDescription
+            )
         }
     }
 }

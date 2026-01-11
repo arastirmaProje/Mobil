@@ -17,6 +17,7 @@ struct SignupView: View {
         ZStack {
             VStack(spacing: 0) {
 
+                // MARK: - Back Button
                 HStack {
                     Button {
                         dismiss()
@@ -32,17 +33,19 @@ struct SignupView: View {
                 .padding(.horizontal, 20)
                 .padding(.top, 12)
 
+                // MARK: - Content
                 ScrollView(showsIndicators: false) {
                     VStack(spacing: 24) {
-                        Text("Kayıt olun")
+
+                        Text(ConstantStrings.signupTitle)
                             .font(.title2.weight(.semibold))
                             .padding(.top, 8)
 
                         VStack(alignment: .leading, spacing: 18) {
 
-                            Text("Ad")
+                            Text(ConstantStrings.firstNameLabel)
                                 .font(.system(size: 14, weight: .medium))
-                            TextField("Adınız", text: $vm.firstName)
+                            TextField(ConstantStrings.firstNamePlaceholder, text: $vm.firstName)
                                 .padding()
                                 .background(Color.white)
                                 .overlay(
@@ -50,9 +53,9 @@ struct SignupView: View {
                                         .stroke(Color(UIColor.systemGray4), lineWidth: 1)
                                 )
 
-                            Text("Soyad")
+                            Text(ConstantStrings.lastNameLabel)
                                 .font(.system(size: 14, weight: .medium))
-                            TextField("Soyadınız", text: $vm.lastName)
+                            TextField(ConstantStrings.lastNamePlaceholder, text: $vm.lastName)
                                 .padding()
                                 .background(Color.white)
                                 .overlay(
@@ -60,9 +63,9 @@ struct SignupView: View {
                                         .stroke(Color(UIColor.systemGray4), lineWidth: 1)
                                 )
 
-                            Text("Email")
+                            Text(ConstantStrings.emailLabel)
                                 .font(.system(size: 14, weight: .medium))
-                            TextField("ornek@gmail.com", text: $vm.email)
+                            TextField(ConstantStrings.emailPlaceholder, text: $vm.email)
                                 .keyboardType(.emailAddress)
                                 .textInputAutocapitalization(.never)
                                 .autocorrectionDisabled(true)
@@ -73,9 +76,9 @@ struct SignupView: View {
                                         .stroke(Color(UIColor.systemGray4), lineWidth: 1)
                                 )
 
-                            Text("Şifre")
+                            Text(ConstantStrings.passwordLabel)
                                 .font(.system(size: 14, weight: .medium))
-                            SecureField("••••••", text: $vm.password)
+                            SecureField(ConstantStrings.passwordPlaceholderSignup, text: $vm.password)
                                 .padding()
                                 .background(Color.white)
                                 .overlay(
@@ -88,12 +91,13 @@ struct SignupView: View {
                     .padding(.bottom, 140)
                 }
 
+                // MARK: - Bottom Button
                 VStack {
                     Spacer()
                     Button {
                         Task { await vm.register() }
                     } label: {
-                        Text("Devam et")
+                        Text(ConstantStrings.continueButton)
                             .frame(maxWidth: .infinity, minHeight: 52)
                     }
                     .disabled(vm.isLoading)
@@ -106,6 +110,7 @@ struct SignupView: View {
         }
         .navigationBarBackButtonHidden(true)
 
+        // MARK: - Navigation
         .navigationDestination(isPresented: $vm.goToCreateCompany) {
             CreateCompanyView {
                 if let u = vm.createdUser {
@@ -130,11 +135,11 @@ struct SignupView: View {
             }
         }
 
-        .alert("Hata", isPresented: $vm.showError) {
-            Button("Tamam", role: .cancel) {}
+        // MARK: - Error Alert
+        .alert(ConstantStrings.errorTitle, isPresented: $vm.showError) {
+            Button(ConstantStrings.okButton, role: .cancel) {}
         } message: {
             Text(vm.errorMessage)
         }
     }
 }
-

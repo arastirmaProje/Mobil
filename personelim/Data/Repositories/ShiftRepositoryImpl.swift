@@ -24,8 +24,7 @@ final class ShiftRepositoryImpl: ShiftRepositoryProtocol {
 
         if res.success == false {
             throw NSError(domain: "shift", code: -1, userInfo: [
-                NSLocalizedDescriptionKey: res.message ?? "Mesai kaydı oluşturulamadı."
-            ])
+                NSLocalizedDescriptionKey: res.message ?? ConstantStrings.createShiftFail] )
         }
     }
 

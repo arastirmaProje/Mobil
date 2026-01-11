@@ -18,13 +18,13 @@ struct ShiftDayDetailSheet: View {
                 .font(.system(size: 18, weight: .semibold))
                 .padding(.top, 24)
 
-            Text("Toplam çalışma: \(detail.totalHoursText)")
+            Text("\(ConstantStrings.totalWorkPrefix): \(detail.totalHoursText)")
                 .font(.system(size: 16, weight: .medium))
                 .foregroundColor(.secondary)
                 .padding(.top, 2)
 
             if detail.shifts.isEmpty {
-                Text("Bu güne ait mesai kaydı yok.")
+                Text(ConstantStrings.noShiftForDay)
                     .foregroundColor(.secondary)
                     .padding(.top, 8)
             } else {
@@ -36,7 +36,7 @@ struct ShiftDayDetailSheet: View {
                                 VStack(alignment: .leading, spacing: 4) {
                                     Text(s.timeRangeText)
                                         .font(.system(size: 15, weight: .semibold))
-                                    Text("Süre: \(s.durationText)")
+                                    Text("\(ConstantStrings.durationPrefix): \(s.durationText)")
                                         .font(.system(size: 13))
                                         .foregroundColor(.secondary)
                                 }

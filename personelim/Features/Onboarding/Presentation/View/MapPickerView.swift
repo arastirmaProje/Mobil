@@ -18,7 +18,7 @@ struct MapPickerView: View {
     @State private var showResults: Bool = false
     @FocusState private var isSearchFocused: Bool
     @State private var selectedCoordinate: CLLocationCoordinate2D?
-    @State private var selectedTitle: String = "Seçilen Konum"
+    @State private var selectedTitle: String = ConstantStrings.selectedLocation
     @State private var selectedAddress: String?
     @State private var camera: MapCameraPosition = .automatic
     @StateObject private var locationManager = LocationPermissionManager()
@@ -37,7 +37,7 @@ struct MapPickerView: View {
                     .contentShape(Rectangle())
                     .onTapGesture { point in
                         guard let coord = proxy.convert(point, from: .local) else { return }
-                        selectCoordinate(coord, title: "Haritadan seçildi", address: nil)
+                        selectCoordinate(coord, title: ConstantStrings.pickedFromMapTitle, address: nil)
                         Task { await reverseGeocode(coord) }
 
                         isSearchFocused = false
@@ -51,7 +51,7 @@ struct MapPickerView: View {
                             Image(systemName: "magnifyingglass")
                                 .foregroundColor(.gray)
 
-                            TextField("Yer ara (örn: Kadıköy)", text: $query)
+                            TextField(ConstantStrings.searchPlaceholder, text: $query)
                                 .textInputAutocapitalization(.never)
                                 .autocorrectionDisabled()
                                 .focused($isSearchFocused)
@@ -74,7 +74,7 @@ struct MapPickerView: View {
                         .background(.regularMaterial)
                         .clipShape(RoundedRectangle(cornerRadius: 14, style: .continuous))
 
-                        Button("Ara") {
+                        Button(ConstantStrings.searchButton) {
                             Task { await search() }
                         }
                         .font(.system(size: 15, weight: .semibold))
@@ -114,14 +114,14 @@ struct MapPickerView: View {
                     }
                 }
             }
-            .navigationTitle("Konum Seç")
+            .navigationTitle(ConstantStrings.mapPickerTitle)
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {
                 ToolbarItem(placement: .topBarLeading) {
-                    Button("Kapat") { dismiss() }
+                    Button(ConstantStrings.closeButton) { dismiss() }
                 }
                 ToolbarItem(placement: .topBarTrailing) {
-                    Button("Kaydet") {
+                    Button(ConstantStrings.saveButton) {
                         guard let coord = selectedCoordinate else { return }
                         onSelect(MapPickResult(coordinate: coord, address: selectedAddress))
                         dismiss()
@@ -145,7 +145,7 @@ struct MapPickerView: View {
         VStack(spacing: 0) {
             if results.isEmpty {
                 HStack {
-                    Text(query.isEmpty ? "Arama yapabilirsiniz." : "Sonuç bulunamadı.")
+                    Text( query.isEmpty ? ConstantStrings.searchEmptyHint: ConstantStrings.searchNoResult)
                         .foregroundColor(.secondary)
                         .padding()
                     Spacer()
@@ -216,7 +216,7 @@ struct MapPickerView: View {
     private func selectMapItem(_ item: MKMapItem) {
         guard let coord = item.placemark.location?.coordinate else { return }
         let address = formattedAddress(item.placemark)
-        selectCoordinate(coord, title: item.name ?? "Seçilen Konum", address: address)
+        selectCoordinate(coord, title: item.name ?? ConstantStrings.selectedLocation, address: address)
     }
 
     private func selectCoordinate(_ coord: CLLocationCoordinate2D, title: String, address: String?) {
@@ -236,7 +236,7 @@ struct MapPickerView: View {
     private func goToMyLocation() {
         if let loc = locationManager.lastLocation {
             let coord = loc.coordinate
-            selectCoordinate(coord, title: "Mevcut Konum", address: nil)
+            selectCoordinate(coord, title: ConstantStrings.currentLocationTitle, address: nil)
             Task { await reverseGeocode(coord) }
         } else {
             locationManager.startUpdates()

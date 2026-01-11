@@ -14,7 +14,7 @@ struct CreateCompanyView: View {
             ScrollView {
                 VStack(alignment: .leading, spacing: 20) {
 
-                    Text("Şirket oluştur")
+                    Text(ConstantStrings.createCompanyTitle)
                         .font(.title2.bold())
                         .padding(.top, 12)
 
@@ -28,9 +28,11 @@ struct CreateCompanyView: View {
                         districtPicker
                     }
 
-                    field("Detaylı Adres", "Adres gir", $vm.detailedAddress)
-                    field("Telefon", "555 555 55 55", $vm.phone)
-                    field("Açıklama", "Açıklama gir", $vm.description)
+                    field( ConstantStrings.detailedAddressLabel, ConstantStrings.detailedAddressPlaceholder, $vm.detailedAddress )
+
+                    field( ConstantStrings.phoneLabel, ConstantStrings.phonePlaceholder, $vm.phone )
+
+                    field( ConstantStrings.descriptionLabel, ConstantStrings.descriptionPlaceholder, $vm.description )
 
                     Spacer().frame(height: 12)
                 }
@@ -40,7 +42,7 @@ struct CreateCompanyView: View {
             Button {
                 Task { await vm.createCompany(appState: appState) }
             } label: {
-                Text("Oluştur")
+                Text(ConstantStrings.createCompanyButton)
             }
             .disabled(vm.isLoading)
             .buttonStyle(OnboardingButtonStyle())
@@ -79,7 +81,9 @@ struct CreateCompanyView: View {
                 set: { newValue in if !newValue { vm.errorMessage = nil } }
             )
         ) {
-            Button("Tamam") { vm.errorMessage = nil }
+            Button(ConstantStrings.okButton) {
+                vm.errorMessage = nil
+            }
         }
     }
 }
@@ -107,10 +111,10 @@ private extension CreateCompanyView {
         VStack(alignment: .leading, spacing: 12) {
 
             HStack {
-                Text("Lokasyon ekle")
+                Text(ConstantStrings.addLocation)
                     .font(.system(size: 14, weight: .medium))
                 Spacer()
-                Button("Ekle") { vm.addOffice() }
+                Button(ConstantStrings.addButton) { vm.addOffice() }
                     .foregroundColor(.blue)
             }
 
@@ -118,7 +122,7 @@ private extension CreateCompanyView {
                 VStack(alignment: .leading, spacing: 10) {
 
                     HStack {
-                        Text("Ofis \(office.index)")
+                        Text("\(ConstantStrings.officePrefix) \(office.index)")
                             .font(.system(size: 14, weight: .medium))
                         Spacer()
 
@@ -130,27 +134,27 @@ private extension CreateCompanyView {
                         }
                     }
 
-                    TextField("Ofis adı (örn: Ofis 1)", text: $office.name)
+                    TextField(ConstantStrings.officeNamePlaceholder, text: $office.name)
                         .padding()
                         .overlay(
                             RoundedRectangle(cornerRadius: 8)
                                 .stroke(.gray.opacity(0.4))
                         )
 
-                    TextField("Adres", text: $office.address)
+                    TextField(ConstantStrings.addressPlaceholder, text: $office.address)
                         .padding()
                         .overlay(
                             RoundedRectangle(cornerRadius: 8)
                                 .stroke(.gray.opacity(0.4))
                         )
 
-                    Button("Haritadan seç") {
+                    Button(ConstantStrings.pickFromMap) {
                         vm.beginPickLocation(for: office.id)
                     }
                     .foregroundColor(.blue)
 
                     if let lat = office.latitude, let lng = office.longitude {
-                        Text("Seçilen Konum: \(lat), \(lng)")
+                        Text("\(ConstantStrings.selectedLocation): \(lat), \(lng)")
                             .font(.system(size: 12))
                             .foregroundColor(.gray)
                     }
@@ -164,10 +168,10 @@ private extension CreateCompanyView {
 private extension CreateCompanyView {
     var provincePicker: some View {
         VStack(alignment: .leading, spacing: 6) {
-            Text("İl")
+            Text(ConstantStrings.provinceLabel)
                 .font(.system(size: 14, weight: .medium))
 
-            Picker("İl seç", selection: Binding<Int?>(
+            Picker(ConstantStrings.provincePickerPlaceholder, selection: Binding<Int?>(
                 get: { vm.selectedProvinceId },
                 set: { newId in
                     guard let newId else {
@@ -179,7 +183,7 @@ private extension CreateCompanyView {
                     Task { await vm.selectProvince(newId) }
                 }
             )) {
-                Text("Seçiniz").tag(Int?.none)
+                Text(ConstantStrings.pickerSelect).tag(Int?.none)
                 ForEach(vm.provinces) { p in
                     Text(p.name).tag(Int?.some(p.id))
                 }
@@ -199,14 +203,14 @@ private extension CreateCompanyView {
 private extension CreateCompanyView {
     var districtPicker: some View {
         VStack(alignment: .leading, spacing: 6) {
-            Text("İlçe")
+            Text(ConstantStrings.districtLabel)
                 .font(.system(size: 14, weight: .medium))
 
-            Picker("İlçe seç", selection: Binding<Int?>(
+            Picker(ConstantStrings.provincePickerPlaceholder, selection: Binding<Int?>(
                 get: { vm.selectedDistrictId },
                 set: { vm.selectedDistrictId = $0 }
             )) {
-                Text("Seçiniz").tag(Int?.none)
+                Text(ConstantStrings.pickerSelect).tag(Int?.none)
                 ForEach(vm.districts) { d in
                     Text(d.name).tag(Int?.some(d.id))
                 }

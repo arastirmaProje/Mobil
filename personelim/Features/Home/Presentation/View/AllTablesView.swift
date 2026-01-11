@@ -31,7 +31,7 @@ struct AllTablesView: View {
 
                 topBar
 
-                Text("Tüm tablolar")
+                Text(ConstantStrings.allTablesTitle)
                     .font(.system(size: 22, weight: .semibold))
                     .padding(.horizontal, 16)
 
@@ -131,7 +131,7 @@ struct AllTablesView: View {
             Spacer()
 
             Menu {
-                Picker("Sıralama", selection: $sort) {
+                Picker(ConstantStrings.sortTitle, selection: $sort) {
                     ForEach(MonthSort.allCases) { opt in
                         Text(opt.rawValue).tag(opt)
                     }
