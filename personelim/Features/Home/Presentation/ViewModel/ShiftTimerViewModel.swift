@@ -290,3 +290,7 @@ final class ShiftTimerViewModel: ObservableObject {
     }
 
 }
+
+protocol LocationManaging {
+    func requestCoordinate() async throws -> CLLocationCoordinate2D
+}

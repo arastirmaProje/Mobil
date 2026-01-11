@@ -2,7 +2,7 @@ import Foundation
 import SwiftUI
 
 @MainActor
-final class AppState: ObservableObject {
+ class AppState: ObservableObject {
 
     // MARK: - Auth / App Status
     @Published private(set) var isLoggedIn: Bool = false

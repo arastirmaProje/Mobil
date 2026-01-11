@@ -8,7 +8,7 @@
 import CoreLocation
 
 @MainActor
-final class OneShotLocationManager: NSObject, ObservableObject, CLLocationManagerDelegate {
+final class OneShotLocationManager: NSObject, ObservableObject, CLLocationManagerDelegate, LocationManaging{
 
     private let manager = CLLocationManager()
     private var continuation: CheckedContinuation<CLLocationCoordinate2D, Error>?

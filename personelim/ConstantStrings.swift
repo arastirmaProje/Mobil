@@ -169,4 +169,13 @@ public enum ConstantStrings {
     static let detailedAddressPlaceholder = "Adres gir"
     static let descriptionLabel = "Açıklama"
     static let descriptionPlaceholder = "Açıklama gir"
+    
+    // MARK: - Tasks
+    static let activeTasksTitle = "Aktif Görevler"
+    static let pastTasksTitle = "Geçmiş Görevler"
+    static let createTaskButton = "Yeni görev oluştur"
+
+    static let emptyTasksTitle = "Henüz görev yok"
+    static let emptyTasksDescription = "Sana atanmış veya tamamladığın bir görev bulunmuyor."
+    static let tasksNoDownload = "Görevler yüklenemedi"
 }

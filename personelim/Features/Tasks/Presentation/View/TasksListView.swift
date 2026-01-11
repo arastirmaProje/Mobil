@@ -32,14 +32,14 @@ struct TasksListView: View {
 
                 if !vm.activeTasks.isEmpty {
                     section(
-                        title: "Aktif Görevler",
+                        title: ConstantStrings.activeTasksTitle,
                         tasks: vm.activeTasks
                     )
                 }
 
                 if !vm.pastTasks.isEmpty {
                     section(
-                        title: "Geçmiş Görevler",
+                        title: ConstantStrings.pastTasksTitle,
                         tasks: vm.pastTasks
                     )
                 }
@@ -50,7 +50,7 @@ struct TasksListView: View {
             Button {
                 showCreateTask = true
             } label: {
-                Text("Yeni görev oluştur")
+                Text(ConstantStrings.createTaskButton)
                     .font(.headline)
                     .foregroundColor(.primary)
                     .frame(maxWidth: .infinity)
@@ -112,10 +112,10 @@ struct TasksListView: View {
                 .font(.system(size: 40))
                 .foregroundColor(.secondary)
 
-            Text("Henüz görev yok")
+            Text(ConstantStrings.emptyTasksTitle)
                 .font(.headline)
 
-            Text("Sana atanmış veya tamamladığın bir görev bulunmuyor.")
+            Text(ConstantStrings.emptyTasksDescription)
                 .font(.subheadline)
                 .foregroundColor(.secondary)
                 .multilineTextAlignment(.center)

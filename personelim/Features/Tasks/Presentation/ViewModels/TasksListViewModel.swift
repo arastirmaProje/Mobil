@@ -50,7 +50,7 @@ final class TasksListViewModel: ObservableObject {
             mapTasks(tasks)
             isLoading = false
         } catch {
-            errorMessage = "Görevler yüklenemedi"
+            errorMessage = ConstantStrings.tasksNoDownload
             isLoading = false
         }
     }
