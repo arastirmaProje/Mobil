@@ -1,21 +1,15 @@
-//
-//  TaskFeedbackView.swift
-//  personelim
-//
-//  Created by Tuğberk Acabey on 19.12.2025.
-//
-
 import SwiftUI
 
 struct TaskFeedbackView: View {
 
-    // MARK: - State
-    @StateObject private var vm: TaskFeedbackViewModel
+    let onSaved: () -> Void
 
+    @StateObject private var vm: TaskFeedbackViewModel
     @Environment(\.dismiss) private var dismiss
 
-    // MARK: - Init
-    init(task: TaskEntity) {
+    init(task: TaskEntity, onSaved: @escaping () -> Void) {
+        self.onSaved = onSaved
+
         let repo = TaskRepositoryImpl(network: NetworkManager())
         _vm = StateObject(
             wrappedValue: TaskFeedbackViewModel(
@@ -25,19 +19,15 @@ struct TaskFeedbackView: View {
         )
     }
 
-    // MARK: - Body
     var body: some View {
         NavigationStack {
             ScrollView {
                 VStack(spacing: 24) {
-
                     headerSection
                     feedbackSection
                     difficultySection
-
-                    Spacer(minLength: 40)
                 }
-                .padding(.bottom, 32)
+                .padding(.bottom, 40)
             }
             .navigationBarBackButtonHidden(true)
             .toolbar {
@@ -52,27 +42,16 @@ struct TaskFeedbackView: View {
                         Task {
                             let success = await vm.submit()
                             if success {
+                                onSaved()
                                 dismiss()
                             }
                         }
                     } label: {
                         Image(systemName: "checkmark")
                             .foregroundStyle(vm.isValid ? .primary : .secondary)
-                            .font(.headline)
                     }
                     .disabled(!vm.isValid || vm.isSaving)
                 }
-            }
-            .alert(
-                "Hata",
-                isPresented: Binding(
-                    get: { vm.errorMessage != nil },
-                    set: { _ in vm.errorMessage = nil }
-                )
-            ) {
-                Button("Tamam", role: .cancel) {}
-            } message: {
-                Text(vm.errorMessage ?? "")
             }
         }
     }

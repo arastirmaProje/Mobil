@@ -1,17 +1,11 @@
-//
-//  TaskDetailView.swift
-//  personelim
-//
-//  Created by Tuğberk Acabey on 19.12.2025.
-//
-
 import SwiftUI
 
 struct TaskDetailView: View {
 
-    // MARK: - Properties
+    // MARK: - Input
     let task: TaskEntity
     let currentUserId: String?
+    let onTaskUpdated: () -> Void
 
     @Environment(\.dismiss) private var dismiss
 
@@ -51,24 +45,29 @@ struct TaskDetailView: View {
         NavigationStack {
             ScrollView {
                 VStack(spacing: 24) {
-
                     headerSection
                     dateSection
                     descriptionSection
                     statusSection
                     footerSection
-
-                    Spacer(minLength: 40)
                 }
-                .padding(.bottom, 32)
+                .padding(.bottom, 40)
             }
             .navigationBarBackButtonHidden(true)
             .navigationDestination(isPresented: $navigateToFeedback) {
-                TaskFeedbackView(task: task)
+                TaskFeedbackView(
+                    task: task,
+                    onSaved: {
+                        onTaskUpdated()
+                        dismiss()
+                    }
+                )
             }
             .toolbar {
                 ToolbarItem(placement: .topBarLeading) {
-                    Button { dismiss() } label: { Image(systemName: "chevron.left") }
+                    Button { dismiss() } label: {
+                        Image(systemName: "chevron.left")
+                    }
                 }
 
                 ToolbarItem(placement: .topBarTrailing) {
@@ -90,11 +89,11 @@ struct TaskDetailView: View {
     }
 }
 
+// MARK: - UI Sections
 private extension TaskDetailView {
 
     var headerSection: some View {
         VStack(alignment: .leading, spacing: 12) {
-
             Text(task.title)
                 .font(.title2.bold())
 
@@ -120,7 +119,6 @@ private extension TaskDetailView {
 
     var dateSection: some View {
         VStack(alignment: .leading, spacing: 12) {
-
             Text("Tarih aralığı")
                 .font(.headline)
 
@@ -162,6 +160,7 @@ private extension TaskDetailView {
                 .font(.body)
                 .foregroundColor(.secondary)
                 .frame(maxWidth: .infinity, alignment: .leading)
+                .multilineTextAlignment(.leading)
         }
         .padding()
         .background(Color(.systemGray6))
@@ -169,25 +168,19 @@ private extension TaskDetailView {
         .padding(.horizontal)
     }
 
+
     var statusSection: some View {
         VStack(alignment: .leading, spacing: 8) {
-
             Text("Durumu seçiniz")
                 .font(.headline)
 
             Button {
-                withAnimation {
-                    showStatusPicker.toggle()
-                }
+                withAnimation { showStatusPicker.toggle() }
             } label: {
                 HStack {
                     Text(selectedStatus?.rawValue ?? "Seçiniz")
-                        .foregroundColor(
-                            selectedStatus == nil ? .secondary : .primary
-                        )
-
+                        .foregroundColor(selectedStatus == nil ? .secondary : .primary)
                     Spacer()
-
                     Image(systemName: "chevron.down")
                         .foregroundColor(.secondary)
                 }
@@ -204,7 +197,6 @@ private extension TaskDetailView {
                     } label: {
                         HStack {
                             Text("Tamamlandı")
-                                .foregroundColor(.black)
                             Spacer()
                         }
                         .padding()
@@ -218,7 +210,6 @@ private extension TaskDetailView {
                     } label: {
                         HStack {
                             Text("Tamamlanmadı")
-                                .foregroundColor(.black)
                             Spacer()
                         }
                         .padding()
@@ -232,8 +223,7 @@ private extension TaskDetailView {
     }
 
     var footerSection: some View {
-        VStack(spacing: 12) {
-
+        VStack {
             if isCompleted {
                 Label("Bu görev tamamlandı", systemImage: "checkmark.circle.fill")
                     .foregroundColor(.green)

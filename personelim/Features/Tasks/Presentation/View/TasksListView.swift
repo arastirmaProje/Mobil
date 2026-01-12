@@ -1,10 +1,3 @@
-//
-//  TasksListView.swift
-//  personelim
-//
-//  Created by Tuğberk Acabey on 19.12.2025.
-//
-
 import SwiftUI
 
 struct TasksListView: View {
@@ -31,17 +24,11 @@ struct TasksListView: View {
                 }
 
                 if !vm.activeTasks.isEmpty {
-                    section(
-                        title: ConstantStrings.activeTasksTitle,
-                        tasks: vm.activeTasks
-                    )
+                    section(title: ConstantStrings.activeTasksTitle, tasks: vm.activeTasks)
                 }
 
                 if !vm.pastTasks.isEmpty {
-                    section(
-                        title: ConstantStrings.pastTasksTitle,
-                        tasks: vm.pastTasks
-                    )
+                    section(title: ConstantStrings.pastTasksTitle, tasks: vm.pastTasks)
                 }
             }
             .padding(.top)
@@ -62,6 +49,7 @@ struct TasksListView: View {
             .padding(.vertical, 12)
             .background(.ultraThinMaterial)
         }
+
         .task {
             await vm.loadIfNeeded()
         }
@@ -69,18 +57,12 @@ struct TasksListView: View {
             CreateTaskView()
                 .environmentObject(appState)
                 .onDisappear {
-                    Task {
-                        await vm.refresh()
-                    }
+                    Task { await vm.refresh() }
                 }
-
         }
     }
 
-    private func section(
-        title: String,
-        tasks: [TaskEntity]
-    ) -> some View {
+    private func section(title: String, tasks: [TaskEntity]) -> some View {
         VStack(alignment: .leading, spacing: 12) {
 
             Text(title)
@@ -91,7 +73,10 @@ struct TasksListView: View {
                 NavigationLink {
                     TaskDetailView(
                         task: task,
-                        currentUserId: appState.userId
+                        currentUserId: appState.userId,
+                        onTaskUpdated: {
+                            Task { await vm.refresh() }
+                        }
                     )
                 } label: {
                     TaskCardView(
@@ -107,7 +92,6 @@ struct TasksListView: View {
 
     private var emptyState: some View {
         VStack(spacing: 12) {
-
             Image(systemName: "tray")
                 .font(.system(size: 40))
                 .foregroundColor(.secondary)
