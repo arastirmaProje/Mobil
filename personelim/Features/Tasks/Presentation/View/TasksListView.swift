@@ -1,10 +1,16 @@
+//
+//  TasksListView.swift
+//  personelim
+//
+//  Created by Tuğberk Acabey on 19.12.2025.
+//
+
 import SwiftUI
 
 struct TasksListView: View {
 
     @EnvironmentObject private var appState: AppState
     @StateObject private var vm = TasksListViewModel()
-
     @State private var showCreateTask = false
 
     var body: some View {
@@ -17,18 +23,22 @@ struct TasksListView: View {
                         .padding(.top, 40)
                 }
 
-                if !vm.isLoading &&
-                    vm.activeTasks.isEmpty &&
-                    vm.pastTasks.isEmpty {
+                if !vm.isLoading && vm.activeTasks.isEmpty && vm.pastTasks.isEmpty {
                     emptyState
                 }
 
                 if !vm.activeTasks.isEmpty {
-                    section(title: ConstantStrings.activeTasksTitle, tasks: vm.activeTasks)
+                    section(
+                        title: ConstantStrings.activeTasksTitle,
+                        tasks: vm.activeTasks
+                    )
                 }
 
                 if !vm.pastTasks.isEmpty {
-                    section(title: ConstantStrings.pastTasksTitle, tasks: vm.pastTasks)
+                    section(
+                        title: ConstantStrings.pastTasksTitle,
+                        tasks: vm.pastTasks
+                    )
                 }
             }
             .padding(.top)
@@ -49,7 +59,6 @@ struct TasksListView: View {
             .padding(.vertical, 12)
             .background(.ultraThinMaterial)
         }
-
         .task {
             await vm.loadIfNeeded()
         }
@@ -57,14 +66,20 @@ struct TasksListView: View {
             CreateTaskView()
                 .environmentObject(appState)
                 .onDisappear {
-                    Task { await vm.refresh() }
+                    Task {
+                        await vm.refresh()
+                    }
                 }
         }
     }
 
-    private func section(title: String, tasks: [TaskEntity]) -> some View {
-        VStack(alignment: .leading, spacing: 12) {
+    // MARK: - Section
 
+    private func section(
+        title: String,
+        tasks: [TaskEntity]
+    ) -> some View {
+        VStack(alignment: .leading, spacing: 12) {
             Text(title)
                 .font(.headline)
                 .padding(.horizontal)
@@ -73,10 +88,7 @@ struct TasksListView: View {
                 NavigationLink {
                     TaskDetailView(
                         task: task,
-                        currentUserId: appState.userId,
-                        onTaskUpdated: {
-                            Task { await vm.refresh() }
-                        }
+                        currentUserId: appState.userId
                     )
                 } label: {
                     TaskCardView(
@@ -89,6 +101,8 @@ struct TasksListView: View {
             }
         }
     }
+
+    // MARK: - Empty State
 
     private var emptyState: some View {
         VStack(spacing: 12) {

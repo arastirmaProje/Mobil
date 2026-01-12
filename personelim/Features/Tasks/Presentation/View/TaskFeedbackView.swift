@@ -1,15 +1,20 @@
+//
+//  TaskFeedbackView.swift
+//  personelim
+//
+//  Created by Tuğberk Acabey on 19.12.2025.
+//
+
 import SwiftUI
 
 struct TaskFeedbackView: View {
 
-    let onSaved: () -> Void
-
+    // MARK: - State
     @StateObject private var vm: TaskFeedbackViewModel
     @Environment(\.dismiss) private var dismiss
 
-    init(task: TaskEntity, onSaved: @escaping () -> Void) {
-        self.onSaved = onSaved
-
+    // MARK: - Init
+    init(task: TaskEntity) {
         let repo = TaskRepositoryImpl(network: NetworkManager())
         _vm = StateObject(
             wrappedValue: TaskFeedbackViewModel(
@@ -19,6 +24,7 @@ struct TaskFeedbackView: View {
         )
     }
 
+    // MARK: - Body
     var body: some View {
         NavigationStack {
             ScrollView {
@@ -26,13 +32,17 @@ struct TaskFeedbackView: View {
                     headerSection
                     feedbackSection
                     difficultySection
+
+                    Spacer(minLength: 40)
                 }
-                .padding(.bottom, 40)
+                .padding(.bottom, 32)
             }
             .navigationBarBackButtonHidden(true)
             .toolbar {
                 ToolbarItem(placement: .topBarLeading) {
-                    Button { dismiss() } label: {
+                    Button {
+                        dismiss()
+                    } label: {
                         Image(systemName: "chevron.left")
                     }
                 }
@@ -42,21 +52,33 @@ struct TaskFeedbackView: View {
                         Task {
                             let success = await vm.submit()
                             if success {
-                                onSaved()
                                 dismiss()
                             }
                         }
                     } label: {
                         Image(systemName: "checkmark")
                             .foregroundStyle(vm.isValid ? .primary : .secondary)
+                            .font(.headline)
                     }
                     .disabled(!vm.isValid || vm.isSaving)
                 }
             }
         }
+        .alert(
+            "Hata",
+            isPresented: Binding(
+                get: { vm.errorMessage != nil },
+                set: { _ in vm.errorMessage = nil }
+            )
+        ) {
+            Button("Tamam", role: .cancel) { }
+        } message: {
+            Text(vm.errorMessage ?? "")
+        }
     }
 }
 
+// MARK: - Sections
 private extension TaskFeedbackView {
 
     var headerSection: some View {
