@@ -6,8 +6,19 @@
 	objectVersion = 77;
 	objects = {
 
+/* Begin PBXContainerItemProxy section */
+		6CA305042F13019A00B963D0 /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = 6CB7F0542ED1E07800429602 /* Project object */;
+			proxyType = 1;
+			remoteGlobalIDString = 6CB7F05B2ED1E07800429602;
+			remoteInfo = personelim;
+		};
+/* End PBXContainerItemProxy section */
+
 /* Begin PBXFileReference section */
-		6CB7F05C2ED1E07800429602 /* personelim.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = personelim.app; sourceTree = BUILT_PRODUCTS_DIR; };
+		6C0C45DD2F14E3BD00C068B5 /* personelim.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = personelim.app; sourceTree = BUILT_PRODUCTS_DIR; };
+		6C0C45DE2F14E3BD00C068B5 /* personelimTests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = personelimTests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
 /* End PBXFileReference section */
 
 /* Begin PBXFileSystemSynchronizedBuildFileExceptionSet section */
@@ -21,6 +32,11 @@
 /* End PBXFileSystemSynchronizedBuildFileExceptionSet section */
 
 /* Begin PBXFileSystemSynchronizedRootGroup section */
+		6CA305012F13019A00B963D0 /* personelimTests */ = {
+			isa = PBXFileSystemSynchronizedRootGroup;
+			path = personelimTests;
+			sourceTree = "<group>";
+		};
 		6CB7F05E2ED1E07800429602 /* personelim */ = {
 			isa = PBXFileSystemSynchronizedRootGroup;
 			exceptions = (
@@ -32,6 +48,13 @@
 /* End PBXFileSystemSynchronizedRootGroup section */
 
 /* Begin PBXFrameworksBuildPhase section */
+		6CA304FD2F13019A00B963D0 /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
 		6CB7F0592ED1E07800429602 /* Frameworks */ = {
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
@@ -46,21 +69,38 @@
 			isa = PBXGroup;
 			children = (
 				6CB7F05E2ED1E07800429602 /* personelim */,
-				6CB7F05D2ED1E07800429602 /* Products */,
+				6CA305012F13019A00B963D0 /* personelimTests */,
+				6C0C45DD2F14E3BD00C068B5 /* personelim.app */,
+				6C0C45DE2F14E3BD00C068B5 /* personelimTests.xctest */,
 			);
-			sourceTree = "<group>";
-		};
-		6CB7F05D2ED1E07800429602 /* Products */ = {
-			isa = PBXGroup;
-			children = (
-				6CB7F05C2ED1E07800429602 /* personelim.app */,
-			);
-			name = Products;
 			sourceTree = "<group>";
 		};
 /* End PBXGroup section */
 
 /* Begin PBXNativeTarget section */
+		6CA304FF2F13019A00B963D0 /* personelimTests */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = 6CA305082F13019A00B963D0 /* Build configuration list for PBXNativeTarget "personelimTests" */;
+			buildPhases = (
+				6CA304FC2F13019A00B963D0 /* Sources */,
+				6CA304FD2F13019A00B963D0 /* Frameworks */,
+				6CA304FE2F13019A00B963D0 /* Resources */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+				6CA305052F13019A00B963D0 /* PBXTargetDependency */,
+			);
+			fileSystemSynchronizedGroups = (
+				6CA305012F13019A00B963D0 /* personelimTests */,
+			);
+			name = personelimTests;
+			packageProductDependencies = (
+			);
+			productName = personelimTests;
+			productReference = 6C0C45DE2F14E3BD00C068B5 /* personelimTests.xctest */;
+			productType = "com.apple.product-type.bundle.unit-test";
+		};
 		6CB7F05B2ED1E07800429602 /* personelim */ = {
 			isa = PBXNativeTarget;
 			buildConfigurationList = 6CB7F06A2ED1E07A00429602 /* Build configuration list for PBXNativeTarget "personelim" */;
@@ -80,7 +120,7 @@
 			packageProductDependencies = (
 			);
 			productName = personelim;
-			productReference = 6CB7F05C2ED1E07800429602 /* personelim.app */;
+			productReference = 6C0C45DD2F14E3BD00C068B5 /* personelim.app */;
 			productType = "com.apple.product-type.application";
 		};
 /* End PBXNativeTarget section */
@@ -90,9 +130,13 @@
 			isa = PBXProject;
 			attributes = {
 				BuildIndependentTargetsInParallel = 1;
-				LastSwiftUpdateCheck = 1620;
+				LastSwiftUpdateCheck = 2610;
 				LastUpgradeCheck = 1620;
 				TargetAttributes = {
+					6CA304FF2F13019A00B963D0 = {
+						CreatedOnToolsVersion = 26.1.1;
+						TestTargetID = 6CB7F05B2ED1E07800429602;
+					};
 					6CB7F05B2ED1E07800429602 = {
 						CreatedOnToolsVersion = 16.2;
 					};
@@ -108,16 +152,24 @@
 			mainGroup = 6CB7F0532ED1E07800429602;
 			minimizedProjectReferenceProxies = 1;
 			preferredProjectObjectVersion = 77;
-			productRefGroup = 6CB7F05D2ED1E07800429602 /* Products */;
+			productRefGroup = 6CB7F0532ED1E07800429602;
 			projectDirPath = "";
 			projectRoot = "";
 			targets = (
 				6CB7F05B2ED1E07800429602 /* personelim */,
+				6CA304FF2F13019A00B963D0 /* personelimTests */,
 			);
 		};
 /* End PBXProject section */
 
 /* Begin PBXResourcesBuildPhase section */
+		6CA304FE2F13019A00B963D0 /* Resources */ = {
+			isa = PBXResourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
 		6CB7F05A2ED1E07800429602 /* Resources */ = {
 			isa = PBXResourcesBuildPhase;
 			buildActionMask = 2147483647;
@@ -128,6 +180,13 @@
 /* End PBXResourcesBuildPhase section */
 
 /* Begin PBXSourcesBuildPhase section */
+		6CA304FC2F13019A00B963D0 /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
 		6CB7F0582ED1E07800429602 /* Sources */ = {
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
@@ -137,7 +196,59 @@
 		};
 /* End PBXSourcesBuildPhase section */
 
+/* Begin PBXTargetDependency section */
+		6CA305052F13019A00B963D0 /* PBXTargetDependency */ = {
+			isa = PBXTargetDependency;
+			target = 6CB7F05B2ED1E07800429602 /* personelim */;
+			targetProxy = 6CA305042F13019A00B963D0 /* PBXContainerItemProxy */;
+		};
+/* End PBXTargetDependency section */
+
 /* Begin XCBuildConfiguration section */
+		6CA305062F13019A00B963D0 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				BUNDLE_LOADER = "$(TEST_HOST)";
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 1;
+				DEVELOPMENT_TEAM = 327M37XF2W;
+				GENERATE_INFOPLIST_FILE = YES;
+				IPHONEOS_DEPLOYMENT_TARGET = 26.1;
+				MARKETING_VERSION = 1.0;
+				PRODUCT_BUNDLE_IDENTIFIER = "com.tug-berkacabey.personelimTests";
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				STRING_CATALOG_GENERATE_SYMBOLS = NO;
+				SWIFT_APPROACHABLE_CONCURRENCY = YES;
+				SWIFT_EMIT_LOC_STRINGS = NO;
+				SWIFT_UPCOMING_FEATURE_MEMBER_IMPORT_VISIBILITY = YES;
+				SWIFT_VERSION = 5.0;
+				TARGETED_DEVICE_FAMILY = "1,2";
+				TEST_HOST = "$(BUILT_PRODUCTS_DIR)/personelim.app/$(BUNDLE_EXECUTABLE_FOLDER_PATH)/personelim";
+			};
+			name = Debug;
+		};
+		6CA305072F13019A00B963D0 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				BUNDLE_LOADER = "$(TEST_HOST)";
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 1;
+				DEVELOPMENT_TEAM = 327M37XF2W;
+				GENERATE_INFOPLIST_FILE = YES;
+				IPHONEOS_DEPLOYMENT_TARGET = 26.1;
+				MARKETING_VERSION = 1.0;
+				PRODUCT_BUNDLE_IDENTIFIER = "com.tug-berkacabey.personelimTests";
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				STRING_CATALOG_GENERATE_SYMBOLS = NO;
+				SWIFT_APPROACHABLE_CONCURRENCY = YES;
+				SWIFT_EMIT_LOC_STRINGS = NO;
+				SWIFT_UPCOMING_FEATURE_MEMBER_IMPORT_VISIBILITY = YES;
+				SWIFT_VERSION = 5.0;
+				TARGETED_DEVICE_FAMILY = "1,2";
+				TEST_HOST = "$(BUILT_PRODUCTS_DIR)/personelim.app/$(BUNDLE_EXECUTABLE_FOLDER_PATH)/personelim";
+			};
+			name = Release;
+		};
 		6CB7F0682ED1E07A00429602 /* Debug */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
@@ -328,6 +439,15 @@
 /* End XCBuildConfiguration section */
 
 /* Begin XCConfigurationList section */
+		6CA305082F13019A00B963D0 /* Build configuration list for PBXNativeTarget "personelimTests" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				6CA305062F13019A00B963D0 /* Debug */,
+				6CA305072F13019A00B963D0 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
 		6CB7F0572ED1E07800429602 /* Build configuration list for PBXProject "personelim" */ = {
 			isa = XCConfigurationList;
 			buildConfigurations = (

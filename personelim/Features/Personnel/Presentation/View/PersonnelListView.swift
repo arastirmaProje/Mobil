@@ -44,11 +44,12 @@ struct PersonnelListView: View {
         NavigationStack {
             VStack(spacing: 12) {
 
+                // MARK: - Search + Sort + Add
                 HStack(spacing: 10) {
+
                     HStack(spacing: 8) {
                         Image(systemName: "magnifyingglass")
                             .font(.system(size: 14, weight: .semibold))
-                            .symbolRenderingMode(.hierarchical)
                             .foregroundStyle(.secondary)
 
                         TextField("Ara", text: $vm.query)
@@ -56,14 +57,9 @@ struct PersonnelListView: View {
                             .foregroundStyle(.primary)
                     }
                     .padding(.horizontal, 12)
-                    .padding(.vertical, 10)
-                    .background(.ultraThinMaterial)
-                    .clipShape(RoundedRectangle(cornerRadius: 14, style: .continuous))
-                    .overlay(
-                        RoundedRectangle(cornerRadius: 14, style: .continuous)
-                            .strokeBorder(.white.opacity(0.25), lineWidth: 1)
-                    )
-                    .shadow(color: .black.opacity(0.08), radius: 10, x: 0, y: 4)
+                    .padding(.vertical, 8)
+                    .background(Color(.systemGray6))
+                    .clipShape(RoundedRectangle(cornerRadius: 14))
 
                     Menu {
                         Picker("Sırala", selection: $sortOption) {
@@ -74,13 +70,10 @@ struct PersonnelListView: View {
                     } label: {
                         Image(systemName: "line.3.horizontal.decrease")
                             .font(.system(size: 18, weight: .semibold))
-                            .symbolRenderingMode(.hierarchical)
                             .foregroundStyle(.primary)
                             .frame(width: 36, height: 36)
-                            .background(.ultraThinMaterial)
+                            .background(Color(.systemGray6))
                             .clipShape(Circle())
-                            .overlay(Circle().strokeBorder(.white.opacity(0.25), lineWidth: 1))
-                            .shadow(color: .black.opacity(0.10), radius: 10, x: 0, y: 4)
                     }
                     .buttonStyle(.plain)
 
@@ -90,16 +83,15 @@ struct PersonnelListView: View {
                             .foregroundStyle(.blue)
                             .padding(.horizontal, 12)
                             .padding(.vertical, 7)
-                            .background(.ultraThinMaterial)
+                            .background(Color(.systemGray6))
                             .clipShape(Capsule())
-                            .overlay(Capsule().strokeBorder(.blue.opacity(0.35), lineWidth: 1))
-                            .shadow(color: .black.opacity(0.10), radius: 10, x: 0, y: 4)
                     }
                     .buttonStyle(.plain)
                 }
                 .padding(.horizontal, 16)
                 .padding(.top, 10)
 
+                // MARK: - Header + Bulk Query
                 HStack {
                     Text("Personellerim")
                         .font(.title3.weight(.semibold))
@@ -121,14 +113,12 @@ struct PersonnelListView: View {
                         .foregroundStyle(.blue)
                         .padding(.horizontal, 12)
                         .padding(.vertical, 7)
-                        .background(.ultraThinMaterial)
+                        .background(Color(.systemGray6))
                         .clipShape(Capsule())
-                        .overlay(Capsule().strokeBorder(.blue.opacity(0.35), lineWidth: 1))
-                        .shadow(color: .black.opacity(0.10), radius: 10, x: 0, y: 4)
+                        .opacity((vm.isBulkLoading || appState.businessId == nil) ? 0.55 : 1.0)
                     }
                     .buttonStyle(.plain)
                     .disabled(vm.isBulkLoading || appState.businessId == nil)
-                    .opacity((vm.isBulkLoading || appState.businessId == nil) ? 0.55 : 1.0)
                 }
                 .padding(.horizontal, 16)
 
@@ -148,6 +138,7 @@ struct PersonnelListView: View {
                         .padding(.horizontal, 16)
                 }
 
+                // MARK: - List
                 List {
                     let base = vm.filtered(appState.businessMembers)
                     let sorted = sortMembers(base, by: sortOption)
@@ -174,17 +165,14 @@ struct PersonnelListView: View {
                 }
             }
             .navigationBarHidden(true)
-
             .task {
                 vm.isLoading = true
                 defer { vm.isLoading = false }
                 await appState.loadBusinessMembersIfNeeded(repository: memberRepo)
             }
-
             .sheet(isPresented: $showAddEmployee) {
                 AddEmployeeView()
             }
-
             .sheet(isPresented: $showBulkQuerySheet) {
                 if let bid = appState.businessId {
                     NavigationStack {
@@ -238,7 +226,7 @@ struct PersonnelListView: View {
     }
 }
 
-// MARK: - Row (same)
+// MARK: - Row with Modern Pill & Mini Gauge
 
 private struct PersonnelRow: View {
     let member: BusinessMemberDTO
@@ -247,37 +235,32 @@ private struct PersonnelRow: View {
     var body: some View {
         HStack(spacing: 12) {
 
-            Circle()
-                .fill(Color(UIColor.systemGray5))
-                .frame(width: 44, height: 44)
-                .overlay(
-                    Image(systemName: "person.fill")
-                        .font(.system(size: 16, weight: .semibold))
-                        .symbolRenderingMode(.hierarchical)
-                        .foregroundStyle(.secondary)
-                )
+            if let score = scoreText.flatMap({ Int($0) }) {
+                ScoreMiniGauge(score: score)
+            } else {
+                Circle()
+                    .fill(Color(UIColor.systemGray5))
+                    .frame(width: 44, height: 44)
+                    .overlay(
+                        Image(systemName: "person.fill")
+                            .font(.system(size: 16, weight: .semibold))
+                            .foregroundStyle(.secondary)
+                    )
+            }
 
             VStack(alignment: .leading, spacing: 6) {
 
-                HStack(spacing: 8) {
-                    Text(member.fullName)
-                        .font(.system(size: 16, weight: .semibold))
-                        .foregroundStyle(.primary)
-                        .lineLimit(1)
-
-                    if let scoreText {
-                        scorePill(scoreText)
-                    }
-
-                    Spacer(minLength: 0)
-                }
+                Text(member.fullName)
+                    .font(.system(size: 16, weight: .semibold))
+                    .foregroundStyle(.primary)
+                    .lineLimit(1)
 
                 HStack(spacing: 8) {
                     if let p = member.position, !p.isEmpty {
-                        pill(text: p, systemImage: "briefcase.fill")
+                        DetailPill(text: p, systemImage: "briefcase.fill", color: .blue)
                     }
                     if let s = member.salary {
-                        pill(text: "\(Int(s)) TL", systemImage: "turkishlirasign")
+                        DetailPill(text: "\(Int(s)) TL", systemImage: "turkishlirasign", color: .green)
                     }
                 }
             }
@@ -287,35 +270,60 @@ private struct PersonnelRow: View {
         .padding(.vertical, 8)
     }
 
-    private func scorePill(_ text: String) -> some View {
-        HStack(spacing: 6) {
-            Image(systemName: "gauge.with.dots.needle.67percent")
-                .font(.system(size: 11, weight: .semibold))
-                .symbolRenderingMode(.hierarchical)
-            Text(text)
-                .font(.system(size: 12, weight: .semibold))
-                .lineLimit(1)
+    // MARK: - Modern Pill Tasarımı
+    private struct DetailPill: View {
+        let text: String
+        let systemImage: String
+        let color: Color
+
+        var body: some View {
+            HStack(spacing: 6) {
+                Image(systemName: systemImage)
+                    .font(.system(size: 12, weight: .semibold))
+                Text(text)
+                    .font(.system(size: 13, weight: .medium))
+            }
+            .foregroundStyle(color)
+            .padding(.horizontal, 10)
+            .padding(.vertical, 6)
+            .background(
+                RoundedRectangle(cornerRadius: 12)
+                    .fill(color.opacity(0.15))
+            )
         }
-        .foregroundStyle(.secondary)
-        .padding(.horizontal, 10)
-        .padding(.vertical, 6)
-        .background(Color(UIColor.systemGray6).opacity(0.65))
-        .clipShape(Capsule())
+    }
+}
+
+// MARK: - Mini Radial Gauge
+
+private struct ScoreMiniGauge: View {
+    let score: Int
+
+    var body: some View {
+        ZStack {
+            Circle()
+                .stroke(Color.gray.opacity(0.15), lineWidth: 6)
+
+            Circle()
+                .trim(from: 0, to: CGFloat(score) / 100)
+                .stroke(
+                    scoreColor(score),
+                    style: StrokeStyle(lineWidth: 6, lineCap: .round)
+                )
+                .rotationEffect(.degrees(-90))
+
+            Text("\(score)")
+                .font(.system(size: 12, weight: .bold))
+        }
+        .frame(width: 44, height: 44)
     }
 
-    private func pill(text: String, systemImage: String) -> some View {
-        HStack(spacing: 6) {
-            Image(systemName: systemImage)
-                .font(.system(size: 11, weight: .semibold))
-                .symbolRenderingMode(.hierarchical)
-            Text(text)
-                .font(.system(size: 12, weight: .medium))
-                .lineLimit(1)
+    private func scoreColor(_ s: Int) -> Color {
+        switch s {
+        case 0..<40: return .red
+        case 40..<70: return .orange
+        case 70..<85: return .blue
+        default: return .green
         }
-        .foregroundStyle(.secondary)
-        .padding(.horizontal, 10)
-        .padding(.vertical, 6)
-        .background(Color(UIColor.systemGray6).opacity(0.65))
-        .clipShape(Capsule())
     }
 }

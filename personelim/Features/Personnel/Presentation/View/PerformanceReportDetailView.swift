@@ -24,19 +24,12 @@ struct PerformanceReportDetailView: View {
     }
 
     var body: some View {
-        VStack(spacing: 0) {
-
-            topBar
-
+        NavigationStack {
             ScrollView(showsIndicators: false) {
-                VStack(alignment: .leading, spacing: 16) {
-
-                    Text("Sorgu Detay")
-                        .font(.system(size: 24, weight: .semibold))
-                        .padding(.top, 6)
+                VStack(alignment: .leading, spacing: 20) {
 
                     if vm.isLoading {
-                        ProgressView().padding(.top, 12)
+                        ProgressView().padding(.top, 40)
                     }
 
                     if let err = vm.errorMessage {
@@ -44,15 +37,14 @@ struct PerformanceReportDetailView: View {
                     }
 
                     if let r = vm.report {
-                        donutRow(r)
 
-                    
+                        scoreHeader(r)
+
                         textCard(
                             title: "Özet",
                             text: (r.summaryText ?? "-").cleanedMarkdownAndRedactedIDs
                         )
 
-        
                         textCard(
                             title: "Detay",
                             text: (r.detailText ?? "-").cleanedMarkdownAndRedactedIDs
@@ -64,83 +56,103 @@ struct PerformanceReportDetailView: View {
                 .padding(.horizontal, 16)
                 .padding(.top, 12)
             }
-        }
-        .navigationBarHidden(true)
-        .task { await vm.load(reportId: reportId) }
-    }
-
-    private var topBar: some View {
-        HStack {
-            Button { dismiss() } label: {
-                Image(systemName: "chevron.left")
-                    .font(.system(size: 16, weight: .semibold))
-                    .frame(width: 36, height: 36)
-                    .background(.ultraThinMaterial)
-                    .clipShape(Circle())
+            .navigationTitle("")
+            .navigationBarBackButtonHidden(true)
+            .toolbar {
+                ToolbarItem(placement: .topBarLeading) {
+                    Button { dismiss() } label: {
+                        Image(systemName: "chevron.left")
+                    }
+                }
             }
-            .buttonStyle(.plain)
-
-            Spacer()
+            .task { await vm.load(reportId: reportId) }
         }
-        .padding(.horizontal, 16)
-        .padding(.top, 10)
     }
 
-    private func donutRow(_ r: PerformanceReportDTO) -> some View {
-        HStack(alignment: .center, spacing: 14) {
+    // MARK: - Score Header
 
-            ScoreDonut(score: r.score ?? 0)
-                .frame(width: 110, height: 110)
+    private func scoreHeader(_ r: PerformanceReportDTO) -> some View {
+        VStack(spacing: 18) {
 
-            VStack(alignment: .leading, spacing: 6) {
-                Text(r.createdByName ?? "— tarafından")
-                    .font(.system(size: 13, weight: .semibold))
+            ZStack {
+                Circle()
+                    .stroke(Color.gray.opacity(0.15), lineWidth: 20)
 
-                Text(ISODate.shortRange(start: r.startDate, end: r.endDate))
-                    .font(.system(size: 12))
-                    .foregroundColor(.gray)
+                Circle()
+                    .trim(from: 0, to: CGFloat(r.score ?? 0) / 100)
+                    .stroke(
+                        scoreColor(r.score ?? 0),
+                        style: StrokeStyle(lineWidth: 20, lineCap: .round)
+                    )
+                    .rotationEffect(.degrees(-90))
+                    .animation(.easeOut(duration: 1.2), value: r.score)
+
+                VStack(spacing: 4) {
+                    Text("\(r.score ?? 0)")
+                        .font(.system(size: 44, weight: .bold))
+
+                    Text(scoreLevel(r.score ?? 0))
+                        .font(.system(size: 14, weight: .medium))
+                        .foregroundColor(scoreColor(r.score ?? 0))
+                }
             }
+            .frame(width: 180, height: 180)
 
-            Spacer()
+            VStack(spacing: 4) {
+                Text("Performans Skoru")
+                    .font(.system(size: 14, weight: .medium))
+                    .foregroundColor(.secondary)
+            }
         }
-        .padding(.top, 6)
+        .frame(maxWidth: .infinity)
+        .padding(24)
+        .background(
+            RoundedRectangle(cornerRadius: 22)
+                .fill(Color(.systemBackground))
+                .shadow(color: .black.opacity(0.05), radius: 8, y: 4)
+        )
     }
+
+    // MARK: - Text Cards
 
     private func textCard(title: String, text: String) -> some View {
-        VStack(alignment: .leading, spacing: 10) {
+        VStack(alignment: .leading, spacing: 12) {
+
             Text(title)
-                .font(.system(size: 13, weight: .semibold))
+                .font(.system(size: 15, weight: .semibold))
                 .foregroundColor(.secondary)
 
             Text(text.isEmpty ? "-" : text)
-                .font(.system(size: 13))
+                .font(.system(size: 14))
                 .multilineTextAlignment(.leading)
                 .fixedSize(horizontal: false, vertical: true)
         }
         .padding(16)
         .background(
-            RoundedRectangle(cornerRadius: 14)
-                .fill(Color(UIColor.systemGray6))
+            RoundedRectangle(cornerRadius: 18)
+                .fill(Color(.systemBackground))
+                .shadow(color: .black.opacity(0.03), radius: 6, y: 3)
         )
     }
 }
 
-private struct ScoreDonut: View {
-    let score: Int
+// MARK: - Score Helpers
 
-    var body: some View {
-        ZStack {
-            Circle()
-                .stroke(Color(UIColor.systemGray5), lineWidth: 14)
+private func scoreLevel(_ s: Int) -> String {
+    switch s {
+    case 0..<40: return "Zayıf"
+    case 40..<70: return "Orta"
+    case 70..<85: return "İyi"
+    default: return "Mükemmel"
+    }
+}
 
-            Circle()
-                .trim(from: 0, to: CGFloat(max(0, min(100, score))) / 100.0)
-                .stroke(Color.blue, style: StrokeStyle(lineWidth: 14, lineCap: .round))
-                .rotationEffect(.degrees(-90))
-
-            Text("\(score)")
-                .font(.system(size: 22, weight: .semibold))
-        }
+private func scoreColor(_ s: Int) -> Color {
+    switch s {
+    case 0..<40: return .red
+    case 40..<70: return .orange
+    case 70..<85: return .blue
+    default: return .green
     }
 }
 
@@ -194,4 +206,3 @@ private extension String {
         return regex.stringByReplacingMatches(in: self, range: range, withTemplate: replacement)
     }
 }
-

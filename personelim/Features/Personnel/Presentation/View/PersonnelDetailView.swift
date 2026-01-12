@@ -37,10 +37,7 @@ struct PersonnelDetailView: View {
     }
 
     var body: some View {
-        VStack(spacing: 0) {
-
-            topBar
-
+        NavigationStack {
             ScrollView(showsIndicators: false) {
                 VStack(alignment: .leading, spacing: 16) {
 
@@ -64,66 +61,68 @@ struct PersonnelDetailView: View {
                 .padding(.horizontal, 16)
                 .padding(.top, 12)
             }
-        }
-        .navigationBarHidden(true)
-        .task {
-            await vm.load(memberId: memberId)
-            await loadReportsIfPossible()
-        }
-        .refreshable {
-            await vm.load(memberId: memberId)
-            await loadReportsIfPossible()
-        }
-        .navigationDestination(isPresented: Binding(
-            get: { selectedReportId != nil },
-            set: { if !$0 { selectedReportId = nil } }
-        )) {
-            if let rid = selectedReportId {
-                PerformanceReportDetailView(reportId: rid)
-            }
-        }
-        .sheet(isPresented: $showQuery) {
-            if let bid = appState.businessId,
-               let uid = vm.member?.userId {
-                PerformanceQueryView(
-                    businessId: bid,
-                    employeeUserId: uid,
-                    onCreated: { _ in
-                        Task { await vm.loadReports(businessId: bid, employeeUserId: uid) }
+            .navigationTitle("")
+            .navigationBarBackButtonHidden(true)
+            .toolbar {
+                ToolbarItem(placement: .topBarLeading) {
+                    Button { dismiss() } label: {
+                        Image(systemName: "chevron.left")
                     }
-                )
-                .presentationDetents([.large])
-            } else {
-                VStack(spacing: 12) {
-                    ProgressView()
-                    Text("Yükleniyor...")
-                        .foregroundColor(.gray)
                 }
-                .presentationDetents([.medium])
+                ToolbarItem(placement: .topBarTrailing) {
+                    Button {
+                        showEdit = true
+                    } label: {
+                        Image(systemName: "pencil")
+                    }
+                    .disabled(vm.member == nil)
+                }
             }
-        }
-        .sheet(isPresented: $showEdit) {
-            if let m = vm.member {
-                PersonnelEditView(
-                    memberId: memberId,
-                    originalMember: m,
-                    onSaved: {
-                        Task {
-                            await vm.load(memberId: memberId)
-                            await loadReportsIfPossible()
+            .task {
+                await vm.load(memberId: memberId)
+                await loadReportsIfPossible()
+            }
+            .refreshable {
+                await vm.load(memberId: memberId)
+                await loadReportsIfPossible()
+            }
+            .navigationDestination(isPresented: Binding(
+                get: { selectedReportId != nil },
+                set: { if !$0 { selectedReportId = nil } }
+            )) {
+                if let rid = selectedReportId {
+                    PerformanceReportDetailView(reportId: rid)
+                }
+            }
+            .sheet(isPresented: $showQuery) {
+                if let bid = appState.businessId,
+                   let uid = vm.member?.userId {
+                    PerformanceQueryView(
+                        businessId: bid,
+                        employeeUserId: uid,
+                        onCreated: { _ in
+                            Task { await vm.loadReports(businessId: bid, employeeUserId: uid) }
                         }
-                    },
-                    onDeleted: {
-                        dismiss()
-                    }
-                )
-            } else {
-                VStack(spacing: 12) {
-                    ProgressView()
-                    Text("Yükleniyor...")
-                        .foregroundColor(.gray)
+                    )
+                    .presentationDetents([.large])
                 }
-                .presentationDetents([.medium])
+            }
+            .sheet(isPresented: $showEdit) {
+                if let m = vm.member {
+                    PersonnelEditView(
+                        memberId: memberId,
+                        originalMember: m,
+                        onSaved: {
+                            Task {
+                                await vm.load(memberId: memberId)
+                                await loadReportsIfPossible()
+                            }
+                        },
+                        onDeleted: {
+                            dismiss()
+                        }
+                    )
+                }
             }
         }
     }
@@ -137,53 +136,6 @@ struct PersonnelDetailView: View {
     }
 
     // MARK: - UI Parts
-
-    private var topBar: some View {
-        HStack(spacing: 12) {
-
-            Button { dismiss() } label: {
-                Image(systemName: "chevron.left")
-                    .font(.system(size: 16, weight: .semibold))
-                    .foregroundStyle(.primary)
-                    .frame(width: 36, height: 36)
-                    .background(.ultraThinMaterial)
-                    .clipShape(Circle())
-                    .overlay(
-                        Circle().strokeBorder(.white.opacity(0.25), lineWidth: 1)
-                    )
-                    .shadow(color: .black.opacity(0.10), radius: 10, x: 0, y: 4)
-            }
-            .buttonStyle(.plain)
-
-            Spacer()
-
-            Button {
-                showEdit = true
-            } label: {
-                HStack(spacing: 8) {
-                    Image(systemName: "pencil")
-                        .font(.system(size: 13, weight: .semibold))
-                    Text("Düzenle")
-                        .font(.system(size: 14, weight: .semibold))
-                }
-                .foregroundStyle(.blue)
-                .padding(.horizontal, 14)
-                .padding(.vertical, 9)
-                .background(.ultraThinMaterial)
-                .clipShape(Capsule())
-                .overlay(
-                    Capsule().strokeBorder(.blue.opacity(0.35), lineWidth: 1)
-                )
-                .shadow(color: .black.opacity(0.10), radius: 10, x: 0, y: 4)
-            }
-            .buttonStyle(.plain)
-            .disabled(vm.member == nil)
-            .opacity(vm.member == nil ? 0.55 : 1.0)
-
-        }
-        .padding(.horizontal, 16)
-        .padding(.top, 10)
-    }
 
     private var header: some View {
         HStack(spacing: 12) {
@@ -212,12 +164,14 @@ struct PersonnelDetailView: View {
 
     private func detailFields(_ m: BusinessMemberDTO) -> some View {
         VStack(alignment: .leading, spacing: 12) {
-            LabeledCard(title: "Kimlik", value: m.tcIdentityNumber ?? "-")
-            LabeledCard(title: "CV", value: "Resume") // placeholder
-            LabeledCard(title: "Belgeler", value: (m.documents?.first?.fileName ?? "-"))
-            LabeledCard(title: "Kalan izin günü", value: "4") // placeholder
+            InfoCard(title: "Kimlik", value: m.tcIdentityNumber ?? "-")
+            InfoCard(title: "CV", value: "Resume")
+            InfoCard(title: "Belgeler", value: (m.documents?.first?.fileName ?? "-"))
+            InfoCard(title: "Kalan izin günü", value: "4")
         }
     }
+
+    // MARK: - Query Section (rapor kartları)
 
     private var querySection: some View {
         VStack(alignment: .leading, spacing: 10) {
@@ -228,24 +182,9 @@ struct PersonnelDetailView: View {
 
                 Spacer()
 
-                Button {
-                    showQuery = true
-                } label: {
-                    HStack(spacing: 6) {
-                        Image(systemName: "magnifyingglass")
-                            .font(.system(size: 12, weight: .semibold))
-                        Text("Sorgu")
-                            .font(.system(size: 13, weight: .semibold))
-                    }
-                    .foregroundStyle(.blue)
-                    .padding(.horizontal, 12)
-                    .padding(.vertical, 7)
-                    .background(.ultraThinMaterial)
-                    .clipShape(Capsule())
-                    .overlay(Capsule().strokeBorder(.blue.opacity(0.35), lineWidth: 1))
-                    .shadow(color: .black.opacity(0.10), radius: 10, x: 0, y: 4)
+                Button { showQuery = true } label: {
+                    Image(systemName: "magnifyingglass")
                 }
-                .buttonStyle(.plain)
             }
             .padding(.top, 6)
 
@@ -297,27 +236,7 @@ struct PersonnelDetailView: View {
     }
 }
 
-// MARK: - Small reusable card
-private struct LabeledCard: View {
-    let title: String
-    let value: String
-
-    var body: some View {
-        VStack(alignment: .leading, spacing: 6) {
-            Text(title)
-                .font(.system(size: 13, weight: .medium))
-                .foregroundColor(.gray)
-
-            Text(value)
-                .font(.system(size: 15))
-                .frame(maxWidth: .infinity, alignment: .leading)
-                .padding(.horizontal, 12)
-                .padding(.vertical, 12)
-                .background(Color(UIColor.systemGray6))
-                .clipShape(RoundedRectangle(cornerRadius: 12))
-        }
-    }
-}
+// MARK: - Performance Report Card
 
 private struct PerformanceReportCard: View {
     let report: PerformanceReportDTO
@@ -328,21 +247,25 @@ private struct PerformanceReportCard: View {
             onTap()
         } label: {
             RoundedRectangle(cornerRadius: 12)
-                .fill(Color(UIColor.systemGray6))
-                .frame(height: 74)
+                .fill(Color(.systemBackground))
+                .shadow(color: .black.opacity(0.04), radius: 8, y: 4)
+                .frame(height: 82)
                 .overlay(
-                    HStack(spacing: 12) {
+                    HStack(spacing: 14) {
 
-                        ScoreMini(score: report.score ?? 0)
+                        ScoreMiniGauge(score: report.score ?? 0)
 
                         VStack(alignment: .leading, spacing: 4) {
-                            Text((report.createdByName ?? "—") + " tarafından")
-                                .font(.system(size: 14, weight: .semibold))
-                                .foregroundStyle(.primary)
+                            Text("Sorgu Aralığı")
+                                .font(.system(size: 11, weight: .medium))
+                                .foregroundColor(.secondary)
 
                             Text(ISODate.shortRange(start: report.startDate, end: report.endDate))
-                                .font(.system(size: 12))
-                                .foregroundColor(.gray)
+                                .font(.system(size: 13, weight: .semibold))
+
+                            Text(scoreLevel(report.score ?? 0))
+                                .font(.system(size: 11, weight: .semibold))
+                                .foregroundColor(scoreColor(report.score ?? 0))
                         }
 
                         Spacer()
@@ -351,24 +274,80 @@ private struct PerformanceReportCard: View {
                             .font(.system(size: 13, weight: .semibold))
                             .foregroundColor(.gray)
                     }
-                    .padding(.horizontal, 12)
+                    .padding(.horizontal, 14)
                 )
         }
         .buttonStyle(.plain)
     }
 }
 
-private struct ScoreMini: View {
+// MARK: - Mini Radial Gauge
+
+private struct ScoreMiniGauge: View {
     let score: Int
 
     var body: some View {
         ZStack {
             Circle()
-                .fill(Color(UIColor.systemGray5))
-                .frame(width: 44, height: 44)
+                .stroke(Color.gray.opacity(0.15), lineWidth: 6)
+
+            Circle()
+                .trim(from: 0, to: CGFloat(score) / 100)
+                .stroke(
+                    scoreColor(score),
+                    style: StrokeStyle(lineWidth: 6, lineCap: .round)
+                )
+                .rotationEffect(.degrees(-90))
 
             Text("\(score)")
+                .font(.system(size: 12, weight: .bold))
+        }
+        .frame(width: 44, height: 44)
+    }
+}
+
+// MARK: - Score Helpers
+
+private func scoreLevel(_ s: Int) -> String {
+    switch s {
+    case 0..<40: return "Zayıf"
+    case 40..<70: return "Orta"
+    case 70..<85: return "İyi"
+    default: return "Mükemmel"
+    }
+}
+
+private func scoreColor(_ s: Int) -> Color {
+    switch s {
+    case 0..<40: return .red
+    case 40..<70: return .orange
+    case 70..<85: return .blue
+    default: return .green
+    }
+}
+
+// MARK: - Info Card
+
+private struct InfoCard: View {
+    let title: String
+    let value: String
+
+    var body: some View {
+        VStack(alignment: .leading, spacing: 6) {
+            Text(title)
                 .font(.system(size: 14, weight: .semibold))
+                .foregroundColor(.secondary)
+
+            Text(value)
+                .font(.system(size: 16))
+                .foregroundColor(.primary)
+                .padding(12)
+                .frame(maxWidth: .infinity, alignment: .leading)
+                .background(
+                    RoundedRectangle(cornerRadius: 12)
+                        .fill(Color(.systemBackground))
+                        .shadow(color: .black.opacity(0.04), radius: 8, y: 4)
+                )
         }
     }
 }
