@@ -17,8 +17,8 @@
 /* End PBXContainerItemProxy section */
 
 /* Begin PBXFileReference section */
-		6CA305002F13019A00B963D0 /* personelimTests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; name = personelimTests.xctest; path = "/Users/tugberkacabey/Desktop/personelim/build/Debug-iphoneos/personelim.app/PlugIns/personelimTests.xctest"; sourceTree = "<absolute>"; };
-		6CB7F05C2ED1E07800429602 /* personelim.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; name = personelim.app; path = "/Users/tugberkacabey/Desktop/personelim/build/Debug-iphoneos/personelim.app"; sourceTree = "<absolute>"; };
+		D2E106702F8CD2C800F4C87D /* personelim.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = personelim.app; sourceTree = BUILT_PRODUCTS_DIR; };
+		D2E106712F8CD2C800F4C87D /* personelimTests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = personelimTests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
 /* End PBXFileReference section */
 
 /* Begin PBXFileSystemSynchronizedBuildFileExceptionSet section */
@@ -80,6 +80,8 @@
 			children = (
 				6CB7F05E2ED1E07800429602 /* personelim */,
 				6CA305012F13019A00B963D0 /* personelimTests */,
+				D2E106702F8CD2C800F4C87D /* personelim.app */,
+				D2E106712F8CD2C800F4C87D /* personelimTests.xctest */,
 			);
 			sourceTree = "<group>";
 		};
@@ -106,7 +108,7 @@
 			packageProductDependencies = (
 			);
 			productName = personelimTests;
-			productReference = 6CA305002F13019A00B963D0 /* personelimTests.xctest */;
+			productReference = D2E106712F8CD2C800F4C87D /* personelimTests.xctest */;
 			productType = "com.apple.product-type.bundle.unit-test";
 		};
 		6CB7F05B2ED1E07800429602 /* personelim */ = {
@@ -128,7 +130,7 @@
 			packageProductDependencies = (
 			);
 			productName = personelim;
-			productReference = 6CB7F05C2ED1E07800429602 /* personelim.app */;
+			productReference = D2E106702F8CD2C800F4C87D /* personelim.app */;
 			productType = "com.apple.product-type.application";
 		};
 /* End PBXNativeTarget section */
@@ -391,7 +393,6 @@
 				INFOPLIST_KEY_NSCameraUsageDescription = "Kimlik doğrulama ve belge tarama işlemleri için kameraya erişim gereklidir.";
 				INFOPLIST_KEY_NSLocationWhenInUseUsageDescription = "Mesaiyi başlatmak ve bitirmek için konuma ihtiyaç var.";
 				INFOPLIST_KEY_UIApplicationSceneManifest_Generation = YES;
-				INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents = YES;
 				INFOPLIST_KEY_UILaunchScreen_Generation = YES;
 				INFOPLIST_KEY_UIStatusBarStyle = "";
 				INFOPLIST_KEY_UISupportedInterfaceOrientations_iPad = "UIInterfaceOrientationPortrait UIInterfaceOrientationPortraitUpsideDown UIInterfaceOrientationLandscapeLeft UIInterfaceOrientationLandscapeRight";
@@ -425,7 +426,6 @@
 				INFOPLIST_KEY_NSCameraUsageDescription = "Kimlik doğrulama ve belge tarama işlemleri için kameraya erişim gereklidir.";
 				INFOPLIST_KEY_NSLocationWhenInUseUsageDescription = "Mesaiyi başlatmak ve bitirmek için konuma ihtiyaç var.";
 				INFOPLIST_KEY_UIApplicationSceneManifest_Generation = YES;
-				INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents = YES;
 				INFOPLIST_KEY_UILaunchScreen_Generation = YES;
 				INFOPLIST_KEY_UIStatusBarStyle = "";
 				INFOPLIST_KEY_UISupportedInterfaceOrientations_iPad = "UIInterfaceOrientationPortrait UIInterfaceOrientationPortraitUpsideDown UIInterfaceOrientationLandscapeLeft UIInterfaceOrientationLandscapeRight";

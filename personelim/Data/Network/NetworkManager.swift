@@ -9,7 +9,7 @@ import Foundation
 
 final class NetworkManager: NetworkManagerProtocol {
 
-    private let baseURL = "https://personelimapi.onrender.com"
+    private let baseURL = "http://178.104.144.148:8080"
 
     // MARK: - NORMAL REQUEST (JSON)
     func request<T: Decodable>(

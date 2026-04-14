@@ -1,10 +1,3 @@
-//
-//  CreateTaskViewModel.swift
-//  personelim
-//
-//  Created by Tuğberk Acabey on 19.12.2025.
-//
-
 import Foundation
 
 @MainActor
@@ -13,11 +6,10 @@ final class CreateTaskViewModel: ObservableObject {
     @Published var title: String = ""
     @Published var detail: String = ""
     @Published var selectedDates: Set<DateComponents> = []
-    @Published var selectedAssignee: BusinessMemberDTO?
+    @Published var selectedAssignees: Set<String> = []
+
     @Published var isLoading: Bool = false
     @Published var errorMessage: String?
-
-    // MARK: - Navigation
     @Published var showAssigneePicker = false
 
     private let createTaskUseCase: CreateTaskUseCase
@@ -26,16 +18,13 @@ final class CreateTaskViewModel: ObservableObject {
         self.createTaskUseCase = createTaskUseCase
     }
 
-    // MARK: - Validation
     var isFormValid: Bool {
-        !title.isEmpty &&
+        !title.trimmingCharacters(in: .whitespaces).isEmpty &&
         !selectedDates.isEmpty &&
-        selectedAssignee != nil
+        !selectedAssignees.isEmpty
     }
 
-    // MARK: - Create Task
     func createTask(businessId: String) async -> Bool {
-        guard let assignee = selectedAssignee else { return false }
 
         let dates = selectedDates
             .compactMap { Calendar.current.date(from: $0) }
@@ -51,17 +40,22 @@ final class CreateTaskViewModel: ObservableObject {
         defer { isLoading = false }
 
         do {
-            try await createTaskUseCase.execute(
-                businessId: businessId,
-                title: title,
-                description: detail,
-                startDate: startDate,
-                endDate: endDate,
-                assignedToUserId: assignee.userId
-            )
+            for userId in selectedAssignees {
+
+                try await createTaskUseCase.execute(
+                    businessId: businessId,
+                    title: title,
+                    description: detail,
+                    startDate: startDate,
+                    endDate: endDate,
+                    assignedToUserId: userId
+                )
+            }
+
             return true
+
         } catch {
-            errorMessage = "Görev oluşturulamadı"
+            errorMessage = error.localizedDescription
             return false
         }
     }

@@ -1,10 +1,3 @@
-//
-//  TasksListView.swift
-//  personelim
-//
-//  Created by Tuğberk Acabey on 19.12.2025.
-//
-
 import SwiftUI
 
 struct TasksListView: View {
@@ -43,6 +36,8 @@ struct TasksListView: View {
             }
             .padding(.top)
         }
+
+        // MARK: - Bottom Button
         .safeAreaInset(edge: .bottom) {
             Button {
                 showCreateTask = true
@@ -59,17 +54,24 @@ struct TasksListView: View {
             .padding(.vertical, 12)
             .background(.ultraThinMaterial)
         }
+
+        // MARK: - Initial Load
         .task {
             await vm.loadIfNeeded()
         }
+
+        // MARK: - NAVIGATION FIX
         .navigationDestination(isPresented: $showCreateTask) {
             CreateTaskView()
                 .environmentObject(appState)
-                .onDisappear {
-                    Task {
-                        await vm.refresh()
-                    }
+        }
+
+        .onChange(of: showCreateTask) { isShown in
+            if isShown == false {
+                Task {
+                    await vm.refresh()
                 }
+            }
         }
     }
 

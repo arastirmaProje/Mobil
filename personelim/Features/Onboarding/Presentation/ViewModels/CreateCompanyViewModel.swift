@@ -55,8 +55,15 @@ final class CreateCompanyViewModel: ObservableObject {
 
     // MARK: - Loaders
     func loadProvinces() async {
-        do { provinces = try await getProvincesUseCase.execute() }
-        catch { errorMessage = error.localizedDescription }
+        print("DEBUG: loadProvinces çağırdım") // 1. Kontrol
+        do {
+            let result = try await getProvincesUseCase.execute()
+            print("DEBUG: Başarılı ve  il sayısı: \(result.count)") // 2. Kontrol
+            self.provinces = result
+        } catch {
+            print("DEBUG: İL YÜKLEME HATASI: \(error)") // 3. Kontrol
+            self.errorMessage = "İller yüklenemedi: \(error.localizedDescription)"
+        }
     }
 
     func selectProvince(_ provinceId: Int) async {
@@ -109,10 +116,11 @@ final class CreateCompanyViewModel: ObservableObject {
     // MARK: - Create Business
     func createCompany(appState: AppState) async {
 
-        let isFormValid =
-            !companyName.isEmpty &&
-            selectedProvinceId != nil &&
-            selectedDistrictId != nil
+       // let isFormValid =
+       //     !companyName.isEmpty &&
+       //     selectedProvinceId != nil &&     burası boş geldiği için böyle yaptım şimdilik zorunlu olmasın bakalım.
+       //     selectedDistrictId != nil
+        let isFormValid = !companyName.isEmpty 
 
         guard isFormValid else {
             errorMessage = "Şirket adı, il ve ilçe zorunludur."
@@ -125,8 +133,10 @@ final class CreateCompanyViewModel: ObservableObject {
         let request = CreateBusinessRequestDTO(
             businessName: companyName,
             phoneNumber: phone,
-            provinceId: selectedProvinceId ?? 0,
-            districtId: selectedDistrictId ?? 0,
+            provinceId: selectedProvinceId ?? 1, // Seçilmediyse zorla 1 gönder
+                districtId: selectedDistrictId ?? 1, // Seçilmediyse zorla 1 gönder
+           // provinceId: selectedProvinceId ?? 0,
+           // districtId: selectedDistrictId ?? 0,
             address: detailedAddress,
             description: description,
             offices: offices.map {

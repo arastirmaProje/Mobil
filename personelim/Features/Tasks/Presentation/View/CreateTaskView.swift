@@ -2,8 +2,6 @@
 //  CreateTaskView.swift
 //  personelim
 //
-//  Created by Tuğberk Acabey on 19.12.2025.
-//
 
 import SwiftUI
 
@@ -14,17 +12,16 @@ struct CreateTaskView: View {
     @EnvironmentObject private var appState: AppState
     @Environment(\.dismiss) private var dismiss
 
-    // MARK: - Init
     init() {
         let network = NetworkManager()
         let repo = TaskRepositoryImpl(network: network)
         let useCase = CreateTaskUseCase(repository: repo)
+
         _vm = StateObject(
             wrappedValue: CreateTaskViewModel(createTaskUseCase: useCase)
         )
     }
 
-    // MARK: - Body
     var body: some View {
         NavigationStack {
             ScrollView {
@@ -43,7 +40,9 @@ struct CreateTaskView: View {
             .navigationBarBackButtonHidden(true)
             .toolbar {
                 ToolbarItem(placement: .topBarLeading) {
-                    Button { dismiss() } label: {
+                    Button {
+                        dismiss()
+                    } label: {
                         Image(systemName: "chevron.left")
                     }
                 }
@@ -52,6 +51,7 @@ struct CreateTaskView: View {
                     Button {
                         Task {
                             guard let bid = appState.businessId else { return }
+
                             let success = await vm.createTask(businessId: bid)
                             if success {
                                 dismiss()
@@ -59,8 +59,8 @@ struct CreateTaskView: View {
                         }
                     } label: {
                         Image(systemName: "checkmark")
-                            .foregroundStyle(vm.isFormValid ? .primary : .secondary)
                             .font(.headline)
+                            .foregroundStyle(vm.isFormValid ? .primary : .secondary)
                     }
                     .disabled(!vm.isFormValid || vm.isLoading)
                 }
@@ -71,14 +71,20 @@ struct CreateTaskView: View {
                 )
                 await appState.loadBusinessMembersIfNeeded(repository: memberRepo)
             }
-            .navigationDestination(isPresented: $vm.showAssigneePicker) {
-                AssigneePickerView(
-                    members: appState.businessMembers,
-                    onSelect: { member in
-                        vm.selectedAssignee = member
-                    }
-                )
+
+            // ✅ FIX: navigationDestination yerine sheet
+            .sheet(isPresented: $vm.showAssigneePicker) {
+                NavigationStack {
+                    AssigneePickerView(
+                        members: appState.businessMembers,
+                        selectedAssignees: $vm.selectedAssignees,
+                        onDone: {
+                            vm.showAssigneePicker = false
+                        }
+                    )
+                }
             }
+
             .alert(
                 "Hata",
                 isPresented: Binding(
@@ -94,6 +100,7 @@ struct CreateTaskView: View {
     }
 }
 
+// MARK: - UI Sections
 private extension CreateTaskView {
 
     var titleSection: some View {
@@ -121,11 +128,7 @@ private extension CreateTaskView {
         .padding()
         .background(Color(.systemBackground))
         .cornerRadius(24)
-        .shadow(
-            color: .black.opacity(0.05),
-            radius: 10,
-            y: 4
-        )
+        .shadow(color: .black.opacity(0.05), radius: 10, y: 4)
         .padding(.horizontal)
     }
 
@@ -158,6 +161,7 @@ private extension CreateTaskView {
 
     var assignUserSection: some View {
         VStack(alignment: .leading, spacing: 8) {
+
             Text("Görevi ata")
                 .font(.headline)
 
@@ -165,15 +169,13 @@ private extension CreateTaskView {
                 vm.showAssigneePicker = true
             } label: {
                 HStack {
-                    Text(
-                        vm.selectedAssignee?.fullName
-                        ?? "Çalışan seçiniz"
-                    )
-                    .foregroundColor(
-                        vm.selectedAssignee == nil
-                        ? .secondary
-                        : .primary
-                    )
+
+                    Text(selectedNames)
+                        .foregroundColor(
+                            vm.selectedAssignees.isEmpty
+                            ? .secondary
+                            : .primary
+                        )
 
                     Spacer()
 
@@ -187,5 +189,13 @@ private extension CreateTaskView {
             .buttonStyle(.plain)
         }
         .padding(.horizontal)
+    }
+
+    var selectedNames: String {
+        let names = appState.businessMembers
+            .filter { vm.selectedAssignees.contains($0.userId) }
+            .map { $0.fullName }
+
+        return names.isEmpty ? "Çalışan seçiniz" : names.joined(separator: ", ")
     }
 }
