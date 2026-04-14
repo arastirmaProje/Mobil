@@ -65,7 +65,7 @@ enum Endpoint {
         case .getBusiness(let businessId): return "/api/Business/\(businessId)"
         case .provinces: return "/api/Location/provinces"
         case .districts(let provinceId): return "/api/Location/provinces/\(provinceId)/districts"
-        case .profileUpdate: return "/api/Auth/profile"
+        case .profileUpdate: return "/api/profile"
         case .business: return "/api/Business"
         case .businessList: return "/api/Business"
         case .uploadMemberDocuments(let memberId): return "/api/BusinessMember/\(memberId)/documents"
