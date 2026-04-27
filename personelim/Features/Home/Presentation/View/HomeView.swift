@@ -37,9 +37,13 @@ struct HomeView: View {
             .task(id: appState.businessId) {
                 guard let bid = appState.businessId else { return }
 
-                await vm.loadActiveTasks()
+                await vm.loadActiveTasks(businessId: bid)
                 await vm.loadOfficeOptions(selectedBusinessId: bid)
                 await vm.loadMonthlyShifts(businessId: bid, month: Date())
+            }
+            .task(id: appState.activitiesChangeToken) {
+                guard let bid = appState.businessId else { return }
+                await vm.loadActiveTasks(businessId: bid)
             }
 
             .navigationDestination(isPresented: $showTaskList) {

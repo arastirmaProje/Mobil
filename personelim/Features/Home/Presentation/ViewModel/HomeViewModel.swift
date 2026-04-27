@@ -17,27 +17,35 @@ final class HomeViewModel: ObservableObject {
     @Published var currentMonthSummaries: [ShiftDaySummary] = []
     @Published var selectedDayDetail: ShiftDayDetail?
 
-    private let taskRepo: TaskRepositoryProtocol
+    private let getActivitiesUseCase: GetActivitiesUseCase
     private let businessRepo: BusinessRepositoryProtocol
     let shiftRepo: ShiftRepositoryProtocol
 
     init(
         taskRepo: TaskRepositoryProtocol = TaskRepositoryImpl(network: NetworkManager()),
+        scheduleRepo: ScheduleRepositoryProtocol = ScheduleRepositoryImpl(network: NetworkManager()),
         shiftRepo: ShiftRepositoryProtocol = ShiftRepositoryImpl(network: NetworkManager()),
         businessRepo: BusinessRepositoryProtocol = BusinessRepositoryImpl(networkManager: NetworkManager())
     ) {
-        self.taskRepo = taskRepo
+        self.getActivitiesUseCase = GetActivitiesUseCase(
+            taskRepository: taskRepo,
+            scheduleRepository: scheduleRepo
+        )
         self.businessRepo = businessRepo
         self.shiftRepo = shiftRepo
     }
 
-    func loadActiveTasks() async {
+    func loadActiveTasks(businessId: String) async {
         isLoading = true
         defer { isLoading = false }
 
         do {
-            let tasks = try await taskRepo.getMyTasks()
-            activeTasks = tasks.filter { $0.status == "Beklemede" }
+            let tasks = try await getActivitiesUseCase.execute(businessId: businessId)
+            let now = Date()
+            activeTasks = tasks.filter {
+                $0.statusEnum == .beklemede &&
+                $0.endDate >= now
+            }
         } catch {
             print(" Home task load error:", error)
         }

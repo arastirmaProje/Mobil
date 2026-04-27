@@ -11,6 +11,19 @@ final class NetworkManager: NetworkManagerProtocol {
 
     private let baseURL = "http://178.104.144.148:8080"
 
+    // MARK: - Errors
+    struct NetworkError: LocalizedError {
+        let statusCode: Int
+        let body: String
+
+        var errorDescription: String? {
+            if body.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty {
+                return "HTTP hata kodu: \(statusCode)"
+            }
+            return "HTTP hata kodu: \(statusCode) - \(body)"
+        }
+    }
+
     // MARK: - NORMAL REQUEST (JSON)
     func request<T: Decodable>(
         endpoint: Endpoint,
@@ -51,7 +64,6 @@ final class NetworkManager: NetworkManagerProtocol {
 
         print("REQUEST:", endpoint.path)
         print("BODY OBJECT:", body ?? "NO BODY")
-        print("TOKEN:", TokenStore.shared.token ?? "NO TOKEN")
 
         let (data, response) = try await URLSession.shared.data(for: request)
 
@@ -62,12 +74,29 @@ final class NetworkManager: NetworkManagerProtocol {
         }
 
         guard (200...299).contains(http.statusCode) else {
-            print("HTTP ERROR:", http.statusCode)
-            throw URLError(.init(rawValue: http.statusCode))
+            let bodyText = String(data: data, encoding: .utf8) ?? ""
+            print("HTTP ERROR:", http.statusCode, bodyText)
+            throw NetworkError(statusCode: http.statusCode, body: bodyText)
         }
 
         do {
-            let decoded = try JSONDecoder().decode(T.self, from: data)
+            let effectiveData: Data
+
+            // Some endpoints (notably schedules create/delete) may return empty 2xx bodies.
+            // JSONDecoder can't decode from an empty buffer, so we coerce empty/whitespace
+            // responses into an empty JSON object.
+            if data.isEmpty || data.allSatisfy({ b in
+                b == 0x20 /* space */ ||
+                b == 0x0A /* \n */ ||
+                b == 0x0D /* \r */ ||
+                b == 0x09 /* \t */
+            }) {
+                effectiveData = Data("{}".utf8)
+            } else {
+                effectiveData = data
+            }
+
+            let decoded = try JSONDecoder().decode(T.self, from: effectiveData)
             return decoded
         } catch {
             print("DECODING ERROR:", error)

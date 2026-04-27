@@ -14,6 +14,7 @@ import SwiftUI
     @Published var role: UserRole = .default
     @Published var companyDTO: BusinessDTO?
     @Published var businessMembers: [BusinessMemberDTO] = []
+    @Published var activitiesChangeToken: UUID = UUID()
 
     // MARK: - Derived Properties
     var displayName: String {
@@ -24,7 +25,7 @@ import SwiftUI
 
         let full = [f, l]
             .filter { !$0.isEmpty }
-            .joined(separator: .empty)
+            .joined(separator: " ")
 
         return full.isEmpty
             ? ConstantStrings.dashPlaceholder
@@ -33,6 +34,10 @@ import SwiftUI
 
     var businessId: String? { companyDTO?.id }
     var userId: String? { userDTO?.id }
+
+    func signalActivitiesChanged() {
+        activitiesChangeToken = UUID()
+    }
 
     // MARK: - Init
     init() {

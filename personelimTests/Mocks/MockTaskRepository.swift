@@ -37,4 +37,24 @@ final class MockTaskRepository: TaskRepositoryProtocol {
         thoughts: String,
         difficulty: String
     ) async throws {}
+
+    func deleteTask(taskId: String) async throws {}
+}
+
+final class MockScheduleRepository: ScheduleRepositoryProtocol {
+    var schedulesResult: Result<[TaskEntity], Error> = .success([])
+
+    func getSchedules(businessId: String) async throws -> [TaskEntity] {
+        try schedulesResult.get()
+    }
+
+    func createSchedule(
+        businessId: String,
+        title: String,
+        description: String,
+        date: Date,
+        activityType: ActivityType
+    ) async throws {}
+
+    func deleteSchedule(scheduleId: String) async throws {}
 }

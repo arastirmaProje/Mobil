@@ -17,27 +17,12 @@ final class TaskRepositoryImpl: TaskRepositoryProtocol {
 
     // MARK: - Get My Tasks
     func getMyTasks() async throws -> [TaskEntity] {
-        let response: ServiceResponse<[TaskDTO]> = try await network.request(
+        let taskResponse: ServiceResponse<[TaskDTO]> = try await network.request(
             endpoint: .myTasks,
             method: .get,
             body: nil
         )
-        print("RAW TASK RESPONSE:", response)
-        let formatter = ISO8601DateFormatter()
-
-        return (response.data ?? []).map { dto in
-            TaskEntity(
-                id: dto.id,
-                title: dto.title ?? "",
-                description: dto.description,
-                assignedToName: dto.assignedToName,
-                assignedByName: dto.assignedByName,
-                startDate: formatter.date(from: dto.startDate) ?? .now,
-                endDate: formatter.date(from: dto.endDate) ?? .now,
-                status: dto.status,
-                isOverdue: dto.isOverdue
-            )
-        }
+        return (taskResponse.data ?? []).map { $0.toEntity() }
     }
 
     // MARK: - Create Task
@@ -74,16 +59,24 @@ final class TaskRepositoryImpl: TaskRepositoryProtocol {
         difficulty: String
     ) async throws {
 
-        let body = [
-            "status": status,
-            "thoughts": thoughts,
-            "difficulty": difficulty
-        ]
+        let body = UpdateTaskStatusRequestDTO(
+            status: status,
+            thoughts: thoughts,
+            difficulty: difficulty
+        )
 
         let _: ServiceResponse<EmptyResponse> = try await network.request(
             endpoint: .updateTaskStatus(taskId: taskId),
             method: .put,
             body: body
+        )
+    }
+
+    func deleteTask(taskId: String) async throws {
+        let _: ServiceResponse<EmptyResponse> = try await network.request(
+            endpoint: .deleteTask(taskId: taskId),
+            method: .delete,
+            body: nil
         )
     }
 }

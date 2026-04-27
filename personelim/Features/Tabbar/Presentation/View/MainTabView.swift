@@ -11,21 +11,21 @@ struct MainTabView: View {
         TabView(selection: $selected) {
 
             NavigationStack { HomeView() }
-                .tabItem { Label("Ana Sayfa", systemImage: "house.circle.fill") }
+                .tabItem { Label(ConstantStrings.tabHomeTitle, systemImage: "house.circle.fill") }
                 .tag(Tab.home)
 
             NavigationStack { TasksListView() }
-                .tabItem { Label("Görevler", systemImage: "tray.circle.fill") }
+                .tabItem { Label(ConstantStrings.tabActivitiesTitle, systemImage: "tray.circle.fill") }
                 .tag(Tab.tasks)
 
             if appState.role.canSeePersonnelTab {
                 NavigationStack { PersonnelListView() }
-                    .tabItem { Label("Personel", systemImage: "person.3.fill") }
+                    .tabItem { Label(ConstantStrings.tabPersonnelTitle, systemImage: "person.3.fill") }
                     .tag(Tab.personnel)
             }
 
             NavigationStack { ProfileView() }
-                .tabItem { Label("Profil", systemImage: "person.crop.circle.fill") }
+                .tabItem { Label(ConstantStrings.tabProfileTitle, systemImage: "person.crop.circle.fill") }
                 .tag(Tab.profile)
         }
     }

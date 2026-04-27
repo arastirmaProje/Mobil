@@ -44,6 +44,36 @@ final class MockTaskRepo: TaskRepositoryProtocol {
     ) async throws {
         // no-op
     }
+
+    func deleteTask(taskId: String) async throws {
+        // no-op
+    }
+}
+
+final class MockScheduleRepo: ScheduleRepositoryProtocol {
+    let result: Result<[TaskEntity], Error>
+
+    init(result: Result<[TaskEntity], Error> = .success([])) {
+        self.result = result
+    }
+
+    func getSchedules(businessId: String) async throws -> [TaskEntity] {
+        try result.get()
+    }
+
+    func createSchedule(
+        businessId: String,
+        title: String,
+        description: String,
+        date: Date,
+        activityType: ActivityType
+    ) async throws {
+        // no-op
+    }
+
+    func deleteSchedule(scheduleId: String) async throws {
+        // no-op
+    }
 }
 
 // MARK: - Shift Repo Mock

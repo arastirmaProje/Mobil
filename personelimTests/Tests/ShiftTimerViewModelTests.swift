@@ -79,7 +79,7 @@ final class ShiftTimerViewModelTests: XCTestCase {
         try? await Task.sleep(nanoseconds: 200_000_000)
 
         let restored = ShiftTimerViewModel(
-            createShiftUseCase: useCase,
+            createShiftUseCase: useCase
            // locationManager: locationManager
         )
 

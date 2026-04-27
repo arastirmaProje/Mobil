@@ -13,28 +13,34 @@ struct TaskCardView: View {
     let currentUserId: String?
 
     private var isCompleted: Bool {
-        task.status.lowercased() == "tamamlandı"
+        task.statusEnum == .done
+    }
+
+    private var isClosed: Bool {
+        task.statusEnum == .closed
     }
 
     private var isExpired: Bool {
-        !isCompleted && task.endDate < Date()
+        !isCompleted && !isClosed && task.endDate < Date()
     }
 
     private var statusText: String {
-        if isCompleted { return "Tamamlandı" }
-        if isExpired { return "Süresi geçti" }
-        return "Beklemede"
+        if isCompleted { return ConstantStrings.completedText }
+        if isClosed { return ConstantStrings.closedText }
+        if isExpired { return ConstantStrings.expiredText }
+        return ConstantStrings.pendingText
     }
 
     private var statusColor: Color {
         if isCompleted { return .green }
+        if isClosed { return .gray }
         if isExpired { return .red }
         return .orange
     }
 
     private var createdByText: String {
         if let name = task.assignedByName {
-            return "\(name) tarafından gönderildi"
+            return "\(name) \(ConstantStrings.sentBySuffix)"
         }
         return ""
     }
@@ -43,8 +49,18 @@ struct TaskCardView: View {
 
             VStack(alignment: .leading, spacing: 6) {
 
-                Text(task.title)
-                    .font(.body.bold())
+                HStack(spacing: 6) {
+                    Text(task.title)
+                        .font(.body.bold())
+
+                    Circle()
+                        .fill(task.activityType.color)
+                        .frame(width: 7, height: 7)
+
+                    Text(task.activityType.rawValue)
+                        .font(.caption.bold())
+                        .foregroundColor(.secondary)
+                }
 
                 Text(createdByText)
                     .font(.caption)

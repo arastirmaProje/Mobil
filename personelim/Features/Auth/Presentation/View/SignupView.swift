@@ -14,101 +14,85 @@ struct SignupView: View {
     @StateObject private var vm = SignupViewModel()
 
     var body: some View {
-        ZStack {
-            VStack(spacing: 0) {
+        VStack(spacing: 0) {
 
-                // MARK: - Back Button
-                HStack {
-                    Button {
-                        dismiss()
-                    } label: {
-                        Image(systemName: "chevron.left")
-                            .foregroundColor(.primary)
-                            .padding(10)
-                            .background(Color(.systemGray5))
-                            .clipShape(Circle())
+            // MARK: - Back Button
+            HStack {
+                Button {
+                    dismiss()
+                } label: {
+                    Image(systemName: "chevron.left")
+                        .foregroundColor(.primary)
+                        .padding(10)
+                        .background(Color(.systemGray5))
+                        .clipShape(Circle())
+                }
+                Spacer()
+            }
+            .padding(.horizontal, 20)
+            .padding(.top, 12)
+
+            // MARK: - Content
+            ScrollView(showsIndicators: false) {
+                VStack(spacing: 24) {
+
+                    Text(ConstantStrings.signupTitle)
+                        .font(.title2.weight(.semibold))
+                        .padding(.top, 8)
+
+                    VStack(alignment: .leading, spacing: 18) {
+
+                        inputField(
+                            title: ConstantStrings.firstNameLabel,
+                            placeholder: ConstantStrings.firstNamePlaceholder,
+                            text: $vm.firstName
+                        )
+
+                        inputField(
+                            title: ConstantStrings.lastNameLabel,
+                            placeholder: ConstantStrings.lastNamePlaceholder,
+                            text: $vm.lastName
+                        )
+
+                        inputField(
+                            title: ConstantStrings.emailLabel,
+                            placeholder: ConstantStrings.emailPlaceholder,
+                            text: $vm.email,
+                            keyboard: .emailAddress
+                        )
+
+                        secureField(
+                            title: ConstantStrings.passwordLabel,
+                            placeholder: ConstantStrings.passwordPlaceholderSignup,
+                            text: $vm.password
+                        )
                     }
-                    Spacer()
                 }
                 .padding(.horizontal, 20)
-                .padding(.top, 12)
-
-                // MARK: - Content
-                ScrollView(showsIndicators: false) {
-                    VStack(spacing: 24) {
-
-                        Text(ConstantStrings.signupTitle)
-                            .font(.title2.weight(.semibold))
-                            .padding(.top, 8)
-
-                        VStack(alignment: .leading, spacing: 18) {
-
-                            Text(ConstantStrings.firstNameLabel)
-                                .font(.system(size: 14, weight: .medium))
-                            TextField(ConstantStrings.firstNamePlaceholder, text: $vm.firstName)
-                                .padding()
-                                .background(Color.white)
-                                .overlay(
-                                    RoundedRectangle(cornerRadius: 10)
-                                        .stroke(Color(UIColor.systemGray4), lineWidth: 1)
-                                )
-
-                            Text(ConstantStrings.lastNameLabel)
-                                .font(.system(size: 14, weight: .medium))
-                            TextField(ConstantStrings.lastNamePlaceholder, text: $vm.lastName)
-                                .padding()
-                                .background(Color.white)
-                                .overlay(
-                                    RoundedRectangle(cornerRadius: 10)
-                                        .stroke(Color(UIColor.systemGray4), lineWidth: 1)
-                                )
-
-                            Text(ConstantStrings.emailLabel)
-                                .font(.system(size: 14, weight: .medium))
-                            TextField(ConstantStrings.emailPlaceholder, text: $vm.email)
-                                .keyboardType(.emailAddress)
-                                .textInputAutocapitalization(.never)
-                                .autocorrectionDisabled(true)
-                                .padding()
-                                .background(Color.white)
-                                .overlay(
-                                    RoundedRectangle(cornerRadius: 10)
-                                        .stroke(Color(UIColor.systemGray4), lineWidth: 1)
-                                )
-
-                            Text(ConstantStrings.passwordLabel)
-                                .font(.system(size: 14, weight: .medium))
-                            SecureField(ConstantStrings.passwordPlaceholderSignup, text: $vm.password)
-                                .padding()
-                                .background(Color.white)
-                                .overlay(
-                                    RoundedRectangle(cornerRadius: 10)
-                                        .stroke(Color(UIColor.systemGray4), lineWidth: 1)
-                                )
-                        }
-                    }
-                    .padding(.horizontal, 20)
-                    .padding(.bottom, 140)
-                }
-
-                // MARK: - Bottom Button
-                VStack {
-                    Spacer()
-                    Button {
-                        Task { await vm.register() }
-                    } label: {
-                        Text(ConstantStrings.continueButton)
-                            .frame(maxWidth: .infinity, minHeight: 52)
-                    }
-                    .disabled(vm.isLoading)
-                    .buttonStyle(OnboardingButtonStyle())
-                    .padding(.horizontal, 20)
-                    .padding(.bottom, 12)
-                    .background(Color.white)
-                }
+                .padding(.bottom, 20)
             }
+            .scrollDismissesKeyboard(.interactively)
         }
         .navigationBarBackButtonHidden(true)
+        .safeAreaInset(edge: .bottom) {
+            Button {
+                Task { await vm.register() }
+            } label: {
+                if vm.isLoading {
+                    ProgressView()
+                        .frame(maxWidth: .infinity, minHeight: 52)
+                } else {
+                    Text(ConstantStrings.continueButton)
+                        .frame(maxWidth: .infinity, minHeight: 52)
+                }
+            }
+            .disabled(vm.isLoading)
+            .buttonStyle(OnboardingButtonStyle())
+            .padding(.horizontal, 20)
+            .padding(.top, 12)
+            .padding(.bottom, 12)
+            .background(Color.white)
+        }
 
         // MARK: - Navigation
         .navigationDestination(isPresented: $vm.goToCreateCompany) {
@@ -127,10 +111,7 @@ struct SignupView: View {
                         ownedBusinessCount: nil,
                         imageUrl: nil
                     )
-                    appState.applyLogin(
-                        userDTO: dto,
-                        role: u.role
-                    )
+                    appState.applyLogin(userDTO: dto, role: u.role)
                 }
             }
         }
@@ -140,6 +121,51 @@ struct SignupView: View {
             Button(ConstantStrings.okButton, role: .cancel) {}
         } message: {
             Text(vm.errorMessage)
+        }
+    }
+}
+
+private extension SignupView {
+
+    func inputField(
+        title: String,
+        placeholder: String,
+        text: Binding<String>,
+        keyboard: UIKeyboardType = .default
+    ) -> some View {
+        VStack(alignment: .leading, spacing: 6) {
+            Text(title)
+                .font(.system(size: 14, weight: .medium))
+
+            TextField(placeholder, text: text)
+                .keyboardType(keyboard)
+                .textInputAutocapitalization(.never)
+                .autocorrectionDisabled(true)
+                .padding()
+                .background(Color.white)
+                .overlay(
+                    RoundedRectangle(cornerRadius: 10)
+                        .stroke(Color(UIColor.systemGray4), lineWidth: 1)
+                )
+        }
+    }
+
+    func secureField(
+        title: String,
+        placeholder: String,
+        text: Binding<String>
+    ) -> some View {
+        VStack(alignment: .leading, spacing: 6) {
+            Text(title)
+                .font(.system(size: 14, weight: .medium))
+
+            SecureField(placeholder, text: text)
+                .padding()
+                .background(Color.white)
+                .overlay(
+                    RoundedRectangle(cornerRadius: 10)
+                        .stroke(Color(UIColor.systemGray4), lineWidth: 1)
+                )
         }
     }
 }

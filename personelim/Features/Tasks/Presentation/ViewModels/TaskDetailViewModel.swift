@@ -11,8 +11,8 @@ import Foundation
 final class TaskDetailViewModel: ObservableObject {
 
     enum TaskStatusOption: String, CaseIterable {
-        case completed = "Tamamlandı"
-        case pending = "Tamamlanmadı"
+        case done = "DONE"
+        case closed = "CLOSED"
     }
 
     @Published var selectedStatus: TaskStatusOption?
@@ -26,6 +26,6 @@ final class TaskDetailViewModel: ObservableObject {
     }
 
     var isCompletedSelected: Bool {
-        selectedStatus == .completed
+        selectedStatus == .done
     }
 }

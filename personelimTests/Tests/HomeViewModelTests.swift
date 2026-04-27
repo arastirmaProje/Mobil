@@ -15,11 +15,13 @@ final class HomeViewModelTests: XCTestCase {
     // MARK: - SUT factory
     private func makeSUT(
         taskRepo: TaskRepositoryProtocol = MockTaskRepo(),
+        scheduleRepo: ScheduleRepositoryProtocol = MockScheduleRepo(),
         shiftRepo: ShiftRepositoryProtocol = MockShiftRepo(),
         businessRepo: BusinessRepositoryProtocol = MockBusinessRepo()
     ) -> HomeViewModel {
         HomeViewModel(
             taskRepo: taskRepo,
+            scheduleRepo: scheduleRepo,
             shiftRepo: shiftRepo,
             businessRepo: businessRepo
         )
@@ -37,7 +39,7 @@ final class HomeViewModelTests: XCTestCase {
         let taskRepo = MockTaskRepo(result: .success(tasks))
         let sut = makeSUT(taskRepo: taskRepo)
 
-        await sut.loadActiveTasks()
+        await sut.loadActiveTasks(businessId: "business-id")
 
         XCTAssertEqual(sut.activeTasks.map(\.id), ["1", "3"])
         XCTAssertFalse(sut.isLoading)
@@ -47,7 +49,7 @@ final class HomeViewModelTests: XCTestCase {
         let taskRepo = MockTaskRepo(result: .failure(TestError.any))
         let sut = makeSUT(taskRepo: taskRepo)
 
-        await sut.loadActiveTasks()
+        await sut.loadActiveTasks(businessId: "business-id")
 
         XCTAssertTrue(sut.activeTasks.isEmpty)
         XCTAssertFalse(sut.isLoading)

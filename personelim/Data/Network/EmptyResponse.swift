@@ -8,3 +8,7 @@
 import Foundation
 
 struct EmptyResponse: Decodable {}
+
+struct IgnoredResponse: Decodable {
+    init(from decoder: Decoder) throws {}
+}

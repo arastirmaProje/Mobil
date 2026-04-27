@@ -21,3 +21,20 @@ struct TaskDTO: Decodable {
     let isOverdue: Bool
     let createdAt: String
 }
+
+extension TaskDTO {
+    func toEntity() -> TaskEntity {
+        return TaskEntity(
+            id: id,
+            title: title ?? "",
+            description: description,
+            assignedToName: assignedToName,
+            assignedByName: assignedByName,
+            startDate: ISODate.date(from: startDate) ?? .now,
+            endDate: ISODate.date(from: endDate) ?? .now,
+            status: status,
+            activityType: .task,
+            isOverdue: isOverdue
+        )
+    }
+}

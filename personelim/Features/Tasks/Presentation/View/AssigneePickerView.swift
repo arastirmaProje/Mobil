@@ -12,10 +12,10 @@ struct AssigneePickerView: View {
                 row(member)
             }
         }
-        .navigationTitle("Çalışan Seç")
+        .navigationTitle(ConstantStrings.assigneePickerTitle)
         .toolbar {
             ToolbarItem(placement: .confirmationAction) {
-                Button("Bitti") {
+                Button(ConstantStrings.doneButton) {
                     onDone()
                 }
             }

@@ -22,6 +22,7 @@ extension TaskEntity {
             startDate: Date().addingTimeInterval(-3600),
             endDate: Date().addingTimeInterval(86_400), // +1 gün
             status: "Beklemede",
+            activityType: .task,
             isOverdue: false
         )
     }
@@ -37,7 +38,8 @@ extension TaskEntity {
             assignedByName: nil,
             startDate: Date().addingTimeInterval(-86_400),
             endDate: Date().addingTimeInterval(-3600),
-            status: "Tamamlandı",
+            status: "DONE",
+            activityType: .task,
             isOverdue: false
         )
     }

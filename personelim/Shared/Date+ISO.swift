@@ -14,11 +14,36 @@ enum ISODate {
         return f.string(from: date)
     }
 
+    static func date(from value: String?) -> Date? {
+        guard let value, !value.isEmpty else { return nil }
+
+        // Common formats:
+        // - with fractional seconds
+        // - without fractional seconds
+        // - Z suffix that needs +00:00 in some parsers
+        let candidates = [
+            value,
+            value.replacingOccurrences(of: "Z", with: "+00:00")
+        ]
+
+        let withFrac = ISO8601DateFormatter()
+        withFrac.formatOptions = [.withInternetDateTime, .withFractionalSeconds]
+
+        let noFrac = ISO8601DateFormatter()
+        noFrac.formatOptions = [.withInternetDateTime]
+
+        for c in candidates {
+            if let d = withFrac.date(from: c) { return d }
+            if let d = noFrac.date(from: c) { return d }
+        }
+        return nil
+    }
+
     static func shortRange(start: String?, end: String?) -> String {
         guard
             let s = start, let e = end,
-            let sd = ISO8601DateFormatter().date(from: s) ?? ISO8601DateFormatter().date(from: s.replacingOccurrences(of: "Z", with: "+00:00")),
-            let ed = ISO8601DateFormatter().date(from: e) ?? ISO8601DateFormatter().date(from: e.replacingOccurrences(of: "Z", with: "+00:00"))
+            let sd = ISODate.date(from: s),
+            let ed = ISODate.date(from: e)
         else { return "-" }
 
         let df = DateFormatter()

@@ -12,13 +12,24 @@ import XCTest
 final class TasksListViewModelTests: XCTestCase {
 
     private var repository: MockTaskRepository!
-    private var useCase: GetMyTasksUseCase!
+    private var scheduleRepository: MockScheduleRepository!
     private var vm: TasksListViewModel!
 
     override func setUp() async throws {
         repository = MockTaskRepository()
-        useCase = GetMyTasksUseCase(repository: repository)
-        vm = TasksListViewModel(useCase: useCase)
+        scheduleRepository = MockScheduleRepository()
+        let getUseCase = GetActivitiesUseCase(
+            taskRepository: repository,
+            scheduleRepository: scheduleRepository
+        )
+        let deleteUseCase = DeleteActivityUseCase(
+            taskRepository: repository,
+            scheduleRepository: scheduleRepository
+        )
+        vm = TasksListViewModel(
+            getActivitiesUseCase: getUseCase,
+            deleteActivityUseCase: deleteUseCase
+        )
 
         await Task.yield()
     }
@@ -26,6 +37,7 @@ final class TasksListViewModelTests: XCTestCase {
     override func tearDown() {
         vm = nil
         repository = nil
+        scheduleRepository = nil
         super.tearDown()
     }
 
@@ -37,7 +49,7 @@ final class TasksListViewModelTests: XCTestCase {
             .pastMock()
         ])
 
-        await vm.refresh()
+        await vm.refresh(businessId: "business-id")
 
         XCTAssertFalse(vm.isLoading)
         XCTAssertNil(vm.errorMessage)
@@ -57,7 +69,7 @@ final class TasksListViewModelTests: XCTestCase {
             .activeMock()
         ])
 
-        await vm.refresh()
+        await vm.refresh(businessId: "business-id")
 
         XCTAssertEqual(vm.activeTasks.count, 2)
         XCTAssertTrue(vm.pastTasks.isEmpty)
@@ -71,7 +83,7 @@ final class TasksListViewModelTests: XCTestCase {
             .pastMock()
         ])
 
-        await vm.refresh()
+        await vm.refresh(businessId: "business-id")
 
         XCTAssertEqual(vm.pastTasks.count, 2)
         XCTAssertTrue(vm.activeTasks.isEmpty)
@@ -82,7 +94,7 @@ final class TasksListViewModelTests: XCTestCase {
     func test_load_failure_setsErrorMessage() async {
         repository.tasksResult = .failure(NSError(domain: "test", code: -1))
 
-        await vm.refresh()
+        await vm.refresh(businessId: "business-id")
 
         XCTAssertFalse(vm.isLoading)
         XCTAssertNotNil(vm.errorMessage)
@@ -95,10 +107,10 @@ final class TasksListViewModelTests: XCTestCase {
     func test_loadIfNeeded_calledOnce() async {
         repository.tasksResult = .success([.activeMock()])
 
-        await vm.loadIfNeeded()
+        await vm.loadIfNeeded(businessId: "business-id")
         let firstCount = vm.activeTasks.count
 
-        await vm.loadIfNeeded()
+        await vm.loadIfNeeded(businessId: "business-id")
         let secondCount = vm.activeTasks.count
 
         XCTAssertEqual(firstCount, secondCount)

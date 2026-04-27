@@ -30,6 +30,10 @@ enum Endpoint {
     case myTasks
     case createTask
     case updateTaskStatus(taskId: String)
+    case schedules(businessId: String)
+    case createSchedule
+    case deleteTask(taskId: String)
+    case deleteSchedule(scheduleId: String)
     case updateBusiness(businessId: String)
     case uploadBusinessDocument(businessId: String)
     case getBusinessDocuments(businessId: String)
@@ -76,6 +80,10 @@ enum Endpoint {
         case .myTasks: return "/api/Task/my-tasks"
         case .createTask: return "/api/Task/create"
         case .updateTaskStatus(let taskId): return "/api/Task/\(taskId)/status"
+        case .schedules(let businessId): return "/api/schedules/\(businessId)"
+        case .createSchedule: return "/api/schedules"
+        case .deleteTask(let taskId): return "/api/Task/\(taskId)"
+        case .deleteSchedule(let scheduleId): return "/api/schedules/\(scheduleId)"
         case .uploadBusinessDocument(let businessId): return "/api/Business/\(businessId)/documents"
         case .getBusinessDocuments(let businessId): return "/api/Business/\(businessId)/documents"
         case .deleteBusinessDocument(let documentId): return "/api/Business/documents/\(documentId)"
@@ -102,10 +110,10 @@ enum Endpoint {
 
     var method: HTTPMethod {
         switch self {
-        case .login, .register, .forgotPassword, .verifyResetCode, .resetPassword, .verifyBusiness, .createBusiness, .uploadMemberDocuments, .createTask, .uploadBusinessDocument, .sendInvitation, .performanceQuery, .createShift, .performanceQueryBulkScores, .createLeave:
+        case .login, .register, .forgotPassword, .verifyResetCode, .resetPassword, .verifyBusiness, .createBusiness, .uploadMemberDocuments, .createTask, .createSchedule, .uploadBusinessDocument, .sendInvitation, .performanceQuery, .createShift, .performanceQueryBulkScores, .createLeave:
             return .post
 
-        case .businessMembers, .profile, .getBusiness, .provinces, .districts, .business, .businessList, .getBusinessMember, .downloadDocument, .myTasks, .getBusinessDocuments, .performanceReports, .performanceReportDetail, .myShifts, .myLeaves, .businessLeaves:
+        case .businessMembers, .profile, .getBusiness, .provinces, .districts, .business, .businessList, .getBusinessMember, .downloadDocument, .myTasks, .schedules, .getBusinessDocuments, .performanceReports, .performanceReportDetail, .myShifts, .myLeaves, .businessLeaves:
             return .get
 
         case .profileUpdate, .updateBusinessMember, .updateBusiness, .updateTaskStatus, .updateLeaveStatus:
@@ -116,7 +124,9 @@ enum Endpoint {
              .deleteBusiness,
              .deleteBusinessMember,
              .deleteAccount,
-             .deleteLeave:
+             .deleteLeave,
+             .deleteTask,
+             .deleteSchedule:
         return .delete
         }
     }

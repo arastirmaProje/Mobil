@@ -5,6 +5,7 @@ final class CreateTaskViewModel: ObservableObject {
 
     @Published var title: String = ""
     @Published var detail: String = ""
+    @Published var activityType: ActivityType = .meeting
     @Published var selectedDates: Set<DateComponents> = []
     @Published var selectedAssignees: Set<String> = []
 
@@ -12,16 +13,16 @@ final class CreateTaskViewModel: ObservableObject {
     @Published var errorMessage: String?
     @Published var showAssigneePicker = false
 
-    private let createTaskUseCase: CreateTaskUseCase
+    private let createActivityUseCase: CreateActivityUseCase
 
-    init(createTaskUseCase: CreateTaskUseCase) {
-        self.createTaskUseCase = createTaskUseCase
+    init(createActivityUseCase: CreateActivityUseCase) {
+        self.createActivityUseCase = createActivityUseCase
     }
 
     var isFormValid: Bool {
         !title.trimmingCharacters(in: .whitespaces).isEmpty &&
         !selectedDates.isEmpty &&
-        !selectedAssignees.isEmpty
+        (activityType != .task || !selectedAssignees.isEmpty)
     }
 
     func createTask(businessId: String) async -> Bool {
@@ -32,7 +33,7 @@ final class CreateTaskViewModel: ObservableObject {
 
         guard let startDate = dates.first,
               let endDate = dates.last else {
-            errorMessage = "Tarih aralığı seçilmedi"
+            errorMessage = ConstantStrings.dateRangeNotSelectedError
             return false
         }
 
@@ -40,15 +41,27 @@ final class CreateTaskViewModel: ObservableObject {
         defer { isLoading = false }
 
         do {
-            for userId in selectedAssignees {
-
-                try await createTaskUseCase.execute(
+            if activityType == .task {
+                for userId in selectedAssignees {
+                    try await createActivityUseCase.execute(
+                        businessId: businessId,
+                        title: title,
+                        description: detail,
+                        startDate: startDate,
+                        endDate: endDate,
+                        assignedToUserId: userId,
+                        activityType: activityType
+                    )
+                }
+            } else {
+                try await createActivityUseCase.execute(
                     businessId: businessId,
                     title: title,
                     description: detail,
                     startDate: startDate,
                     endDate: endDate,
-                    assignedToUserId: userId
+                    assignedToUserId: "",
+                    activityType: activityType
                 )
             }
 

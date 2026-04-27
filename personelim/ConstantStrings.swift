@@ -96,9 +96,9 @@ public enum ConstantStrings {
     static let pause = "Duraklat"
     static let activeDayTable = "Aktif gün tablosu"
     static let seeDetails = "Detayları gör"
-    static let activeTasks = "Aktif görevler"
-    static let noActiveTasks = "Aktif görevin yok 🎉"
-    static let seeAllTasks = "Tüm görevleri gör"
+    static let activeTasks = "Aktif aktiviteler"
+    static let noActiveTasks = "Aktif aktiviten yok"
+    static let seeAllTasks = "Tüm aktiviteleri gör"
     static let businessIdNotFound = "BusinessId bulunamadı."
 
     // MARK: - Shift Day Detail
@@ -155,6 +155,8 @@ public enum ConstantStrings {
     static let createLeaveTitle = "İzin oluştur"
     static let createLeaveSubtitle = "Bir tarih aralığı seçin"
     static let dateRangeLabel = "Tarih aralığı"
+    static let startDateLabel = "Başlangıç"
+    static let endDateLabel = "Bitiş"
     static let leaveTitleLabel = "İzin başlığı"
     static let leaveTitlePlaceholder = "Başlık girin"
     static let leaveDescriptionLabel = "İzin açıklaması"
@@ -170,12 +172,61 @@ public enum ConstantStrings {
     static let descriptionLabel = "Açıklama"
     static let descriptionPlaceholder = "Açıklama gir"
     
-    // MARK: - Tasks
-    static let activeTasksTitle = "Aktif Görevler"
-    static let pastTasksTitle = "Geçmiş Görevler"
-    static let createTaskButton = "Yeni görev oluştur"
+    // MARK: - Activities
+    static let activeTasksTitle = "Aktif Aktiviteler"
+    static let pastTasksTitle = "Geçmiş Aktiviteler"
+    static let createTaskButton = "Yeni aktivite oluştur"
 
-    static let emptyTasksTitle = "Henüz görev yok"
-    static let emptyTasksDescription = "Sana atanmış veya tamamladığın bir görev bulunmuyor."
-    static let tasksNoDownload = "Görevler yüklenemedi"
+    static let emptyTasksTitle = "Henüz aktivite yok"
+    static let emptyTasksDescription = "Sana atanmış veya tamamladığın bir aktivite bulunmuyor."
+    static let tasksNoDownload = "Aktiviteler yüklenemedi"
+
+    static let activitiesNavTitle = "Aktiviteler"
+    static let activityCreatorTitle = "Aktivite oluşturucu"
+    static let activityCreatorSubtitle = "Bir tarih aralığı seçin"
+    static let activityTitleLabel = "Aktivite başlığı"
+    static let activityTitlePlaceholder = "Başlık girin"
+    static let activityTypeLabel = "Aktivite türü"
+    static let activityDetailLabel = "Aktivite detayı"
+    static let activityAssignLabel = "Aktiviteyi ata"
+    static let selectEmployeePlaceholder = "Çalışan seçiniz"
+
+    static let statusSelectLabel = "Durumu seçiniz"
+    static let pendingText = "Beklemede"
+    static let expiredText = "Süresi geçti"
+    static let completedText = "Tamamlandı"
+    static let closedText = "Kapatıldı"
+    static let sentBySuffix = "tarafından gönderildi"
+    static let assignedBySuffix = "tarafından atandı"
+    static let noDetailText = "Detay eklenmemiş."
+    static let activityDoneFooter = "Bu aktivite tamamlandı"
+    static let activityClosedFooter = "Bu aktivite kapatıldı"
+    static let activityExpiredFooter = "Aktivite süresi geçti"
+
+    static let dateRangeNotSelectedError = "Tarih aralığı seçilmedi"
+    static let feedbackNotSupportedError = "Bu aktivite için geri bildirim desteklenmiyor."
+
+    // MARK: - Assignee
+    static let assigneePickerTitle = "Çalışan Seç"
+    static let doneButton = "Bitti"
+
+    // MARK: - Feedback
+    static let feedbackTitle = "Aktivite Geri Bildirimi"
+    static let feedbackSubtitle = "Bu aktiviteyle ilgili deneyimini paylaş"
+    static let feedbackThoughtsLabel = "Düşünceler"
+    static let feedbackLevelLabel = "Seviye seçiniz"
+    static let feedbackVeryEasy = "Çok kolay"
+    static let feedbackVeryHard = "Çok zor"
+
+    static let difficultyVeryEasy = "Çok Kolay"
+    static let difficultyEasy = "Kolay"
+    static let difficultyMedium = "Orta"
+    static let difficultyHard = "Zor"
+    static let difficultyVeryHard = "Çok Zor"
+
+    // MARK: - Tab Bar
+    static let tabHomeTitle = "Ana Sayfa"
+    static let tabActivitiesTitle = "Aktiviteler"
+    static let tabPersonnelTitle = "Personel"
+    static let tabProfileTitle = "Profil"
 }

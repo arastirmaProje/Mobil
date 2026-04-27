@@ -2,6 +2,8 @@
 //  CreateTaskView.swift
 //  personelim
 //
+//  Created by Tuğberk Acabey on 19.12.2025.
+//
 
 import SwiftUI
 
@@ -14,11 +16,15 @@ struct CreateTaskView: View {
 
     init() {
         let network = NetworkManager()
-        let repo = TaskRepositoryImpl(network: network)
-        let useCase = CreateTaskUseCase(repository: repo)
+        let taskRepository = TaskRepositoryImpl(network: network)
+        let scheduleRepository = ScheduleRepositoryImpl(network: network)
+        let useCase = CreateActivityUseCase(
+            taskRepository: taskRepository,
+            scheduleRepository: scheduleRepository
+        )
 
         _vm = StateObject(
-            wrappedValue: CreateTaskViewModel(createTaskUseCase: useCase)
+            wrappedValue: CreateTaskViewModel(createActivityUseCase: useCase)
         )
     }
 
@@ -30,6 +36,7 @@ struct CreateTaskView: View {
                     titleSection
                     calendarSection
                     taskTitleSection
+                    activityTypeSection
                     taskDetailSection
                     assignUserSection
 
@@ -54,6 +61,7 @@ struct CreateTaskView: View {
 
                             let success = await vm.createTask(businessId: bid)
                             if success {
+                                appState.signalActivitiesChanged()
                                 dismiss()
                             }
                         }
@@ -72,7 +80,6 @@ struct CreateTaskView: View {
                 await appState.loadBusinessMembersIfNeeded(repository: memberRepo)
             }
 
-            // ✅ FIX: navigationDestination yerine sheet
             .sheet(isPresented: $vm.showAssigneePicker) {
                 NavigationStack {
                     AssigneePickerView(
@@ -86,13 +93,13 @@ struct CreateTaskView: View {
             }
 
             .alert(
-                "Hata",
+                ConstantStrings.errorTitle,
                 isPresented: Binding(
                     get: { vm.errorMessage != nil },
                     set: { _ in vm.errorMessage = nil }
                 )
             ) {
-                Button("Tamam", role: .cancel) {}
+                Button(ConstantStrings.okButton, role: .cancel) {}
             } message: {
                 Text(vm.errorMessage ?? "")
             }
@@ -105,10 +112,10 @@ private extension CreateTaskView {
 
     var titleSection: some View {
         VStack(alignment: .leading, spacing: 6) {
-            Text("Görev oluşturucu")
+            Text(ConstantStrings.activityCreatorTitle)
                 .font(.title.bold())
 
-            Text("Bir tarih aralığı seçin")
+            Text(ConstantStrings.activityCreatorSubtitle)
                 .font(.subheadline)
                 .foregroundColor(.secondary)
         }
@@ -119,7 +126,7 @@ private extension CreateTaskView {
     var calendarSection: some View {
         VStack(alignment: .leading, spacing: 12) {
             MultiDatePicker(
-                "Tarih aralığı",
+                ConstantStrings.dateRangeLabel,
                 selection: $vm.selectedDates
             )
             .labelsHidden()
@@ -134,10 +141,10 @@ private extension CreateTaskView {
 
     var taskTitleSection: some View {
         VStack(alignment: .leading, spacing: 8) {
-            Text("Görev başlığı")
+            Text(ConstantStrings.activityTitleLabel)
                 .font(.headline)
 
-            TextField("Başlık girin", text: $vm.title)
+            TextField(ConstantStrings.activityTitlePlaceholder, text: $vm.title)
                 .padding()
                 .background(Color(.systemGray6))
                 .cornerRadius(12)
@@ -145,9 +152,40 @@ private extension CreateTaskView {
         .padding(.horizontal)
     }
 
+    var activityTypeSection: some View {
+        VStack(alignment: .leading, spacing: 8) {
+            Text(ConstantStrings.activityTypeLabel)
+                .font(.headline)
+
+            HStack(spacing: 8) {
+                ForEach(ActivityType.allCases) { type in
+                    Button {
+                        vm.activityType = type
+                    } label: {
+                        HStack(spacing: 6) {
+                            Circle()
+                                .fill(type.color)
+                                .frame(width: 8, height: 8)
+
+                            Text(type.rawValue)
+                                .font(.subheadline.weight(.semibold))
+                        }
+                        .foregroundColor(vm.activityType == type ? .white : .primary)
+                        .frame(maxWidth: .infinity)
+                        .padding(.vertical, 12)
+                        .background(vm.activityType == type ? Color.primary : Color(.systemGray6))
+                        .cornerRadius(12)
+                    }
+                    .buttonStyle(.plain)
+                }
+            }
+        }
+        .padding(.horizontal)
+    }
+
     var taskDetailSection: some View {
         VStack(alignment: .leading, spacing: 8) {
-            Text("Görev detayı")
+            Text(ConstantStrings.activityDetailLabel)
                 .font(.headline)
 
             TextEditor(text: $vm.detail)
@@ -162,7 +200,7 @@ private extension CreateTaskView {
     var assignUserSection: some View {
         VStack(alignment: .leading, spacing: 8) {
 
-            Text("Görevi ata")
+            Text(ConstantStrings.activityAssignLabel)
                 .font(.headline)
 
             Button {
@@ -196,6 +234,8 @@ private extension CreateTaskView {
             .filter { vm.selectedAssignees.contains($0.userId) }
             .map { $0.fullName }
 
-        return names.isEmpty ? "Çalışan seçiniz" : names.joined(separator: ", ")
+        return names.isEmpty
+            ? ConstantStrings.selectEmployeePlaceholder
+            : names.joined(separator: ", ")
     }
 }

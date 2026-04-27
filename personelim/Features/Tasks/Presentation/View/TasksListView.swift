@@ -7,35 +7,38 @@ struct TasksListView: View {
     @State private var showCreateTask = false
 
     var body: some View {
-        ScrollView {
-            VStack(alignment: .leading, spacing: 24) {
-
-                if vm.isLoading {
-                    ProgressView()
-                        .frame(maxWidth: .infinity)
-                        .padding(.top, 40)
-                }
-
-                if !vm.isLoading && vm.activeTasks.isEmpty && vm.pastTasks.isEmpty {
-                    emptyState
-                }
-
-                if !vm.activeTasks.isEmpty {
-                    section(
-                        title: ConstantStrings.activeTasksTitle,
-                        tasks: vm.activeTasks
-                    )
-                }
-
-                if !vm.pastTasks.isEmpty {
-                    section(
-                        title: ConstantStrings.pastTasksTitle,
-                        tasks: vm.pastTasks
-                    )
-                }
+        List {
+            if vm.isLoading {
+                ProgressView()
+                    .frame(maxWidth: .infinity)
+                    .padding(.top, 40)
+                    .listRowSeparator(.hidden)
+                    .listRowBackground(Color.clear)
             }
-            .padding(.top)
+
+            if !vm.isLoading && vm.activeTasks.isEmpty && vm.pastTasks.isEmpty {
+                emptyState
+                    .listRowSeparator(.hidden)
+                    .listRowBackground(Color.clear)
+            }
+
+            if !vm.activeTasks.isEmpty {
+                section(
+                    title: ConstantStrings.activeTasksTitle,
+                    tasks: vm.activeTasks
+                )
+            }
+
+            if !vm.pastTasks.isEmpty {
+                section(
+                    title: ConstantStrings.pastTasksTitle,
+                    tasks: vm.pastTasks
+                )
+            }
         }
+        .listStyle(.plain)
+        .scrollContentBackground(.hidden)
+        .navigationTitle(ConstantStrings.activitiesNavTitle)
 
         // MARK: - Bottom Button
         .safeAreaInset(edge: .bottom) {
@@ -57,7 +60,8 @@ struct TasksListView: View {
 
         // MARK: - Initial Load
         .task {
-            await vm.loadIfNeeded()
+            guard let businessId = appState.businessId else { return }
+            await vm.loadIfNeeded(businessId: businessId)
         }
 
         // MARK: - NAVIGATION FIX
@@ -69,9 +73,21 @@ struct TasksListView: View {
         .onChange(of: showCreateTask) { isShown in
             if isShown == false {
                 Task {
-                    await vm.refresh()
+                    guard let businessId = appState.businessId else { return }
+                    await vm.refresh(businessId: businessId)
                 }
             }
+        }
+        .alert(
+            ConstantStrings.errorTitle,
+            isPresented: Binding(
+                get: { vm.errorMessage != nil },
+                set: { _ in vm.errorMessage = nil }
+            )
+        ) {
+            Button(ConstantStrings.okButton, role: .cancel) { }
+        } message: {
+            Text(vm.errorMessage ?? "")
         }
     }
 
@@ -81,11 +97,7 @@ struct TasksListView: View {
         title: String,
         tasks: [TaskEntity]
     ) -> some View {
-        VStack(alignment: .leading, spacing: 12) {
-            Text(title)
-                .font(.headline)
-                .padding(.horizontal)
-
+        Section {
             ForEach(tasks) { task in
                 NavigationLink {
                     TaskDetailView(
@@ -99,8 +111,29 @@ struct TasksListView: View {
                     )
                 }
                 .buttonStyle(.plain)
-                .padding(.horizontal)
+                .listRowSeparator(.hidden)
+                .listRowInsets(EdgeInsets(top: 6, leading: 16, bottom: 6, trailing: 16))
+                .listRowBackground(Color.clear)
+                .swipeActions(edge: .trailing, allowsFullSwipe: true) {
+                    Button(role: .destructive) {
+                        Task {
+                            let ok = await vm.delete(task)
+                            if ok {
+                                appState.signalActivitiesChanged()
+                            }
+                        }
+                    } label: {
+                        Image(systemName: "trash")
+                    }
+                    .tint(.red)
+                }
+                .disabled(vm.deletingTaskIds.contains(task.id))
             }
+        } header: {
+            Text(title)
+                .font(.headline)
+                .foregroundColor(.primary)
+                .textCase(nil)
         }
     }
 

@@ -11,15 +11,22 @@ struct TaskFeedbackView: View {
 
     // MARK: - State
     @StateObject private var vm: TaskFeedbackViewModel
+    @EnvironmentObject private var appState: AppState
     @Environment(\.dismiss) private var dismiss
 
     // MARK: - Init
-    init(task: TaskEntity) {
-        let repo = TaskRepositoryImpl(network: NetworkManager())
+    init(task: TaskEntity, finalStatus: String) {
+        let network = NetworkManager()
+        let updateStatusUseCase = UpdateActivityStatusUseCase(
+            taskRepository: TaskRepositoryImpl(network: network),
+            scheduleRepository: ScheduleRepositoryImpl(network: network)
+        )
         _vm = StateObject(
             wrappedValue: TaskFeedbackViewModel(
                 taskId: task.id,
-                repo: repo
+                activityType: task.activityType,
+                finalStatus: finalStatus,
+                updateStatusUseCase: updateStatusUseCase
             )
         )
     }
@@ -52,6 +59,7 @@ struct TaskFeedbackView: View {
                         Task {
                             let success = await vm.submit()
                             if success {
+                                appState.signalActivitiesChanged()
                                 dismiss()
                             }
                         }
@@ -65,13 +73,13 @@ struct TaskFeedbackView: View {
             }
         }
         .alert(
-            "Hata",
+            ConstantStrings.errorTitle,
             isPresented: Binding(
                 get: { vm.errorMessage != nil },
                 set: { _ in vm.errorMessage = nil }
             )
         ) {
-            Button("Tamam", role: .cancel) { }
+            Button(ConstantStrings.okButton, role: .cancel) { }
         } message: {
             Text(vm.errorMessage ?? "")
         }
@@ -83,10 +91,10 @@ private extension TaskFeedbackView {
 
     var headerSection: some View {
         VStack(alignment: .leading, spacing: 6) {
-            Text("Görev Geri Bildirimi")
+            Text(ConstantStrings.feedbackTitle)
                 .font(.title.bold())
 
-            Text("Bu görevle ilgili deneyimini paylaş")
+            Text(ConstantStrings.feedbackSubtitle)
                 .font(.subheadline)
                 .foregroundColor(.secondary)
         }
@@ -96,7 +104,7 @@ private extension TaskFeedbackView {
 
     var feedbackSection: some View {
         VStack(alignment: .leading, spacing: 8) {
-            Text("Düşünceler")
+            Text(ConstantStrings.feedbackThoughtsLabel)
                 .font(.headline)
 
             TextEditor(text: $vm.feedbackText)
@@ -110,7 +118,7 @@ private extension TaskFeedbackView {
 
     var difficultySection: some View {
         VStack(alignment: .leading, spacing: 8) {
-            Text("Seviye seçiniz")
+            Text(ConstantStrings.feedbackLevelLabel)
                 .font(.headline)
 
             Slider(
@@ -123,9 +131,9 @@ private extension TaskFeedbackView {
             )
 
             HStack {
-                Text("Çok kolay")
+                Text(ConstantStrings.feedbackVeryEasy)
                 Spacer()
-                Text("Çok zor")
+                Text(ConstantStrings.feedbackVeryHard)
             }
             .font(.caption)
             .foregroundColor(.secondary)

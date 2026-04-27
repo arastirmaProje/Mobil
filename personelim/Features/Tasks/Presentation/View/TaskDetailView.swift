@@ -12,36 +12,65 @@ struct TaskDetailView: View {
     // MARK: - Properties
     let task: TaskEntity
     let currentUserId: String?
+    private let updateStatusUseCase: UpdateActivityStatusUseCase
 
+    @EnvironmentObject private var appState: AppState
     @Environment(\.dismiss) private var dismiss
 
     // MARK: - UI State
     @State private var showStatusPicker = false
     @State private var selectedStatus: TaskStatus?
     @State private var navigateToFeedback = false
+    @State private var errorMessage: String?
 
     enum TaskStatus: String {
-        case completed = "Tamamlandı"
-        case pending = "Tamamlanmadı"
+        case done = "DONE"
+        case closed = "CLOSED"
+
+        var displayName: String {
+            switch self {
+            case .done: return ConstantStrings.completedText
+            case .closed: return ConstantStrings.closedText
+            }
+        }
+    }
+
+    init(
+        task: TaskEntity,
+        currentUserId: String?,
+        updateStatusUseCase: UpdateActivityStatusUseCase = UpdateActivityStatusUseCase(
+            taskRepository: TaskRepositoryImpl(network: NetworkManager()),
+            scheduleRepository: ScheduleRepositoryImpl(network: NetworkManager())
+        )
+    ) {
+        self.task = task
+        self.currentUserId = currentUserId
+        self.updateStatusUseCase = updateStatusUseCase
     }
 
     // MARK: - Derived States
     private var isCompleted: Bool {
-        selectedStatus == .completed || task.status.lowercased() == "tamamlandı"
+        selectedStatus == .done || task.statusEnum == .done
+    }
+
+    private var isClosed: Bool {
+        selectedStatus == .closed || task.statusEnum == .closed
     }
 
     private var isExpired: Bool {
-        !isCompleted && task.endDate < Date()
+        !isCompleted && !isClosed && task.endDate < Date()
     }
 
     private var statusText: String {
-        if isCompleted { return "Tamamlandı" }
-        if isExpired { return "Süresi geçti" }
-        return "Beklemede"
+        if isCompleted { return TaskStatus.done.displayName }
+        if isClosed { return TaskStatus.closed.displayName }
+        if isExpired { return ConstantStrings.expiredText }
+        return ConstantStrings.pendingText
     }
 
     private var statusColor: Color {
         if isCompleted { return .green }
+        if isClosed { return .gray }
         if isExpired { return .red }
         return .orange
     }
@@ -63,7 +92,10 @@ struct TaskDetailView: View {
             }
             .navigationBarBackButtonHidden(true)
             .navigationDestination(isPresented: $navigateToFeedback) {
-                TaskFeedbackView(task: task)
+                TaskFeedbackView(
+                    task: task,
+                    finalStatus: selectedStatus?.rawValue ?? TaskStatus.done.rawValue
+                )
             }
             .toolbar {
                 ToolbarItem(placement: .topBarLeading) {
@@ -76,18 +108,29 @@ struct TaskDetailView: View {
 
                 ToolbarItem(placement: .topBarTrailing) {
                     Button {
-                        if selectedStatus == .completed {
+                        if selectedStatus == .done || selectedStatus == .closed {
                             navigateToFeedback = true
                         }
                     } label: {
                         Image(systemName: "checkmark")
                             .foregroundStyle(
-                                selectedStatus == .completed ? .primary : .secondary
+                                selectedStatus == nil ? .secondary : .primary
                             )
                             .font(.headline)
                     }
-                    .disabled(selectedStatus != .completed)
+                    .disabled(selectedStatus == nil)
                 }
+            }
+            .alert(
+                ConstantStrings.errorTitle,
+                isPresented: Binding(
+                    get: { errorMessage != nil },
+                    set: { _ in errorMessage = nil }
+                )
+            ) {
+                Button(ConstantStrings.okButton, role: .cancel) { }
+            } message: {
+                Text(errorMessage ?? "")
             }
         }
     }
@@ -103,16 +146,20 @@ private extension TaskDetailView {
 
             HStack(spacing: 8) {
                 Circle()
-                    .fill(statusColor)
+                    .fill(task.activityType.color)
                     .frame(width: 10, height: 10)
 
-                Text(statusText)
+                Text(task.activityType.rawValue)
                     .font(.subheadline.bold())
+                    .foregroundColor(.secondary)
+
+                Text(statusText)
+                    .font(.caption.bold())
                     .foregroundColor(statusColor)
             }
 
             if let assignedBy = task.assignedByName {
-                Text("\(assignedBy) tarafından atandı")
+                Text("\(assignedBy) \(ConstantStrings.assignedBySuffix)")
                     .font(.caption)
                     .foregroundColor(.secondary)
             }
@@ -123,12 +170,12 @@ private extension TaskDetailView {
 
     var dateSection: some View {
         VStack(alignment: .leading, spacing: 12) {
-            Text("Tarih aralığı")
+            Text(ConstantStrings.dateRangeLabel)
                 .font(.headline)
 
             HStack {
                 VStack(alignment: .leading, spacing: 4) {
-                    Text("Başlangıç")
+                    Text(ConstantStrings.startDateLabel)
                         .font(.caption)
                         .foregroundColor(.secondary)
 
@@ -139,7 +186,7 @@ private extension TaskDetailView {
                 Spacer()
 
                 VStack(alignment: .leading, spacing: 4) {
-                    Text("Bitiş")
+                    Text(ConstantStrings.endDateLabel)
                         .font(.caption)
                         .foregroundColor(.secondary)
 
@@ -156,10 +203,10 @@ private extension TaskDetailView {
 
     var descriptionSection: some View {
         VStack(alignment: .leading, spacing: 8) {
-            Text("Görev detayı")
+            Text(ConstantStrings.activityDetailLabel)
                 .font(.headline)
 
-            Text(task.description ?? "Detay eklenmemiş.")
+            Text(task.description ?? ConstantStrings.noDetailText)
                 .font(.body)
                 .foregroundColor(.secondary)
                 .frame(maxWidth: .infinity, alignment: .leading)
@@ -171,73 +218,80 @@ private extension TaskDetailView {
     }
 
     var statusSection: some View {
-        VStack(alignment: .leading, spacing: 8) {
-            Text("Durumu seçiniz")
-                .font(.headline)
+        Group {
+            if task.activityType == .task {
+                VStack(alignment: .leading, spacing: 8) {
+                    Text(ConstantStrings.statusSelectLabel)
+                        .font(.headline)
 
-            Button {
-                withAnimation {
-                    showStatusPicker.toggle()
-                }
-            } label: {
+                    Button {
+                        withAnimation {
+                            showStatusPicker.toggle()
+                        }
+                    } label: {
                 HStack {
-                    Text(selectedStatus?.rawValue ?? "Seçiniz")
-                        .foregroundColor(
-                            selectedStatus == nil ? .secondary : .primary
-                        )
+                            Text(selectedStatus?.displayName ?? ConstantStrings.pickerSelect)
+                                .foregroundColor(
+                                    selectedStatus == nil ? .secondary : .primary
+                                )
 
-                    Spacer()
-
-                    Image(systemName: "chevron.down")
-                        .foregroundColor(.secondary)
-                }
-                .padding()
-                .background(Color(.systemGray6))
-                .cornerRadius(12)
-            }
-
-            if showStatusPicker {
-                VStack(spacing: 0) {
-                    Button {
-                        selectedStatus = .completed
-                        showStatusPicker = false
-                    } label: {
-                        HStack {
-                            Text("Tamamlandı")
-                                .foregroundColor(.black)
                             Spacer()
+
+                            Image(systemName: "chevron.down")
+                                .foregroundColor(.secondary)
                         }
                         .padding()
+                        .background(Color(.systemGray6))
+                        .cornerRadius(12)
                     }
 
-                    Divider()
+                    if showStatusPicker {
+                        VStack(spacing: 0) {
+                            Button {
+                                selectedStatus = .done
+                                showStatusPicker = false
+                            } label: {
+                                HStack {
+                                    Text(TaskStatus.done.displayName)
+                                        .foregroundColor(.black)
+                                    Spacer()
+                                }
+                                .padding()
+                            }
 
-                    Button {
-                        selectedStatus = .pending
-                        showStatusPicker = false
-                    } label: {
-                        HStack {
-                            Text("Tamamlanmadı")
-                                .foregroundColor(.black)
-                            Spacer()
+                            Divider()
+
+                            Button {
+                                selectedStatus = .closed
+                                showStatusPicker = false
+                            } label: {
+                                HStack {
+                                    Text(TaskStatus.closed.displayName)
+                                        .foregroundColor(.black)
+                                    Spacer()
+                                }
+                                .padding()
+                            }
                         }
-                        .padding()
+                        .background(Color(.systemGray6))
+                        .cornerRadius(12)
                     }
                 }
-                .background(Color(.systemGray6))
-                .cornerRadius(12)
+                .padding(.horizontal)
             }
         }
-        .padding(.horizontal)
     }
 
     var footerSection: some View {
         VStack(spacing: 12) {
             if isCompleted {
-                Label("Bu görev tamamlandı", systemImage: "checkmark.circle.fill")
+                Label(ConstantStrings.activityDoneFooter, systemImage: "checkmark.circle.fill")
                     .foregroundColor(.green)
+            } else if isClosed {
+                Label(ConstantStrings.activityClosedFooter, systemImage: "xmark.circle.fill")
+                    .foregroundColor(.gray)
             } else if isExpired {
-                Label("Görev süresi geçti", systemImage: "exclamationmark.triangle.fill")
+                Label(ConstantStrings.activityExpiredFooter, systemImage: "exclamationmark.triangle.fill")
                     .foregroundColor(.red)
             }
         }

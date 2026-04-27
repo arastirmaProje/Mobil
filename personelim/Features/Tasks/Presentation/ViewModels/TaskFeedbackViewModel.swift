@@ -16,11 +16,20 @@ final class TaskFeedbackViewModel: ObservableObject {
     @Published var errorMessage: String?
 
     let taskId: String
-    private let repo: TaskRepositoryProtocol
+    let activityType: ActivityType
+    let finalStatus: String
+    private let updateStatusUseCase: UpdateActivityStatusUseCase
 
-    init(taskId: String, repo: TaskRepositoryProtocol) {
+    init(
+        taskId: String,
+        activityType: ActivityType,
+        finalStatus: String,
+        updateStatusUseCase: UpdateActivityStatusUseCase
+    ) {
         self.taskId = taskId
-        self.repo = repo
+        self.activityType = activityType
+        self.finalStatus = finalStatus
+        self.updateStatusUseCase = updateStatusUseCase
     }
 
     var isValid: Bool {
@@ -29,25 +38,30 @@ final class TaskFeedbackViewModel: ObservableObject {
 
     var difficultyText: String {
         switch difficulty {
-        case 1: return "Çok Kolay"
-        case 2: return "Kolay"
-        case 3: return "Orta"
-        case 4: return "Zor"
-        case 5: return "Çok Zor"
-        default: return "Orta"
+        case 1: return ConstantStrings.difficultyVeryEasy
+        case 2: return ConstantStrings.difficultyEasy
+        case 3: return ConstantStrings.difficultyMedium
+        case 4: return ConstantStrings.difficultyHard
+        case 5: return ConstantStrings.difficultyVeryHard
+        default: return ConstantStrings.difficultyMedium
         }
     }
 
     func submit() async -> Bool {
         guard isValid else { return false }
+        guard activityType == .task else {
+            errorMessage = ConstantStrings.feedbackNotSupportedError
+            return false
+        }
 
         isSaving = true
         defer { isSaving = false }
 
         do {
-            try await repo.updateTaskStatus(
-                taskId: taskId,
-                status: "Tamamlandı",
+            try await updateStatusUseCase.execute(
+                activityId: taskId,
+                activityType: activityType,
+                status: finalStatus,
                 thoughts: feedbackText,
                 difficulty: difficultyText
             )
