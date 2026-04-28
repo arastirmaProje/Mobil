@@ -229,4 +229,139 @@ public enum ConstantStrings {
     static let tabActivitiesTitle = "Aktiviteler"
     static let tabPersonnelTitle = "Personel"
     static let tabProfileTitle = "Profil"
+    static let tabManagmentTitle = "Yönetim"
+    
+    // MARK: - Department Specific
+    static let addDepartmentTitle = "Departman Ekle"
+    static let selectSectorHeader = "Departman Sektörü Seçin"
+    static let sectorLabel = "Sektör"
+    static let departmentToCreateLabel = "Oluşturulacak Departman: "
+    
+    // MARK: - Add Member Specific
+    static let addMemberNavTitle = "Yeni Personel Ekle"
+    static let personalInfoSectionHeader = "Kişisel Bilgiler"
+    static let jobInfoSectionHeader = "İş Bilgileri"
+    static let positionLabel = "Pozisyon / Unvan"
+    static let tcNoLabel = "TC Kimlik No (Opsiyonel)"
+    static let salaryPlaceholder = "Maaş örneği: 45000"
+    
+    // MARK: - Personnel Detail
+    static let personnelTitlePrefix = "Ünvan:"
+    static let incomePrefix = "Gelir:"
+    static let identityLabel = "Kimlik"
+    static let resumeLabel = "CV"
+    static let documentsSectionLabel = "Belgeler"
+    static let remainingLeaveDays = "Kalan izin günü"
+    static let querySectionTitle = "Sorgu"
+    static let noReportTitle = "Henüz rapor yok"
+    static let noReportDescription = "Tarih aralığı seçip sorgu oluştur."
+    
+    // MARK: - General Actions
+    static let cancelButton = "İptal"
+    static let editButton = "Düzenle"
+    static let deleteButton = "Sil"
+    static let loadingText = "Yükleniyor..."
+    static let noDataFound = "Veri bulunamadı."
+    
+    // MARK: - Department Card
+    static let memberCountSuffix = "Çalışan"
+    
+    // MARK: - Department Detail
+    static let employeesHeader = "Çalışanlar"
+    static let noEmployeesInDepartment = "Bu departmanda henüz çalışan bulunmuyor."
+    static let addMemberAction = "Personel Ekle"
+    static let editDepartmentAction = "Departmanı Düzenle"
+    static let deleteDepartmentAction = "Departmanı Sil"
+    static let deleteDepartmentConfirmation = "Bu departmanı silmek istediğinize emin misiniz?"
+    static let defaultPosition = "Personel"
+    
+    // MARK: - Department List
+    static let departmentsNavTitle = "Departmanlar"
+    static let noDepartmentsFound = "Henüz bir departman bulunmuyor."
+    
+    // MARK: - Edit Department
+    static let editCategoryTitle = "Kategori Düzenle"
+    static let currentDepartmentPrefix = "Departman: "
+    static let selectNewCategory = "Yeni Kategori Seçin"
+    static let categoriesLoading = "Kategoriler Yükleniyor..."
+    static let updateButton = "Güncelle"
+    
+    // MARK: - Personnel Detail
+    static let positionPrefix = "Ünvan: "
+    static let remainingLeaveLabel = "Kalan izin günü"
+    static let noReportsAvailable = "Henüz rapor yok"
+    static let createQueryInstruction = "Tarih aralığı seçip sorgu oluştur."
+    static let queryRangeLabel = "Sorgu Aralığı"
+
+    // MARK: - Performance Levels
+    static let performanceWeak = "Zayıf"
+    static let performanceMedium = "Orta"
+    static let performanceGood = "İyi"
+    static let performanceExcellent = "Mükemmel"
+    
+    // MARK: - Add Employee
+    static let addEmployeeTitle = "Çalışan ekle"
+    
+    // MARK: - Performance Bulk Query
+    static let bulkQueryTitle = "Sorgu"
+    static let calendarInstruction = "Takvimden bir tarih aralığı seçin."
+    static let startDatePrefix = "Başlangıç: "
+    static let endDatePrefix = "Bitiş: "
+    static let weekdaysShort = ["Pzt","Sal","Çar","Per","Cum","Cmt","Paz"]
+    
+    static let performanceQueryTitle = "Sorgu"
+    static let performanceQuerySubtitle = "Takvimden bir tarih aralığı seçin."
+    static let startTitle = "Başlangıç"
+    static let endTitle = "Bitiş"
+    
+    // MARK: - Performance Report Detail
+    static let performanceScoreTitle = "Performans Skoru"
+    static let summaryTitle = "Özet"
+    static let detailTitle = "Detay"
+    static let levelPoor = "Zayıf"
+    static let levelAverage = "Orta"
+    static let levelGood = "İyi"
+    static let levelExcellent = "Mükemmel"
+    
+    // MARK: - Personnel Edit
+    static let editPersonnelTitle = "Personel Düzenle"
+    static let positionField = "Ünvan"
+    static let salaryField = "Gelir"
+    static let deletePersonnelButton = "Personeli Sil"
+    static let deleteAlertTitle = "Personeli silmek istiyor musun?"
+    static let deleteAlertMessage = "Bu işlem geri alınamaz."
+    static let cancel = "İptal"
+    static let delete = "Sil"
+    
+    // MARK: - Personnel List
+    static let addLabel = "Ekle"
+    static let myPersonnelTitle = "Personellerim"
+    static let loading = "Yükleniyor..."
+
+    // MARK: - Sort Options
+    static let sortNameAZ = "Ad (A → Z)"
+    static let sortNameZA = "Ad (Z → A)"
+    static let sortSalaryHighLow = "Maaş (Yüksek → Düşük)"
+    static let sortSalaryLowHigh = "Maaş (Düşük → Yüksek)"
+    
+    // MARK: - Add Employee
+    static let addEmployeeSubtitle = "Çalışanınızı e-posta adresiyle davet edin."
+    static let sendInvitation = "Davet Gönder"
+    static let invalidEmailError = "Geçerli bir email gir."
+    static let invitationSuccess = "Davet başarıyla gönderildi."
+    
+    // MARK: - Department Management
+    static let businessInfoNotFoundError = "İşletme bilgisi bulunamadı."
+    static let departmentNameEmptyError = "Departman adı boş olamaz."
+    static let departmentFetchError = "Departmanlar yüklenemedi."
+    static let categoryFetchError = "Kategoriler yüklenemedi."
+    
+    // MARK: - Job Titles
+    static let jobTitlesFetchError = "Unvanlar yüklenirken hata oluştu."
+    
+    // MARK: - Home View
+    static let calendarTitle = "Takvim"
+    static let allActivities = "Tüm aktiviteleri gör"
+    static let dailyActivitiesTitle = "Günün Aktiviteleri"
+    static let noActivityFound = "Bu güne ait bir aktivite bulunmuyor."
 }

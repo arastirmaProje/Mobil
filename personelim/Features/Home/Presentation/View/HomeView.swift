@@ -63,6 +63,9 @@ struct HomeView: View {
             .sheet(item: $vm.selectedDayDetail) { detail in
                 ShiftDayDetailSheet(detail: detail)
             }
+            .sheet(isPresented: $vm.showDetailSheet) {
+                activityDetailSheet
+            }
         }
     }
 }
@@ -74,12 +77,11 @@ private extension HomeView {
         HStack {
             VStack(alignment: .leading, spacing: 4) {
                 Text(ConstantStrings.welcome)
-                    .font(.system(size: 14, weight: .regular))
+                    .font(.system(size: 16, weight: .regular))
                     .foregroundColor(.secondary)
 
                 Text(appState.displayName)
-                    .font(.system(size: 22, weight: .semibold))
-                    .foregroundColor(.primary)
+                    .font(.system(size: 24, weight: .bold))
             }
             Spacer()
         }
@@ -177,7 +179,7 @@ private extension HomeView {
         VStack(alignment: .leading, spacing: 12) {
 
             Text(ConstantStrings.activeDayTable)
-                .font(.headline)
+                .font(.system(size: 24, weight: .bold))
                 .padding(.horizontal)
 
             ShiftMonthGridView(
@@ -206,40 +208,123 @@ private extension HomeView {
     }
 
     var activeTasksSection: some View {
-        VStack(alignment: .leading, spacing: 12) {
-
-            Text(ConstantStrings.activeTasks)
-                .font(.headline)
+        VStack(alignment: .leading, spacing: 20) {
+            
+            Text(ConstantStrings.calendarTitle)
+                .font(.system(size: 24, weight: .bold))
                 .padding(.horizontal)
 
-            ForEach(vm.activeTasks.prefix(3)) { task in
-                TaskCardView(
-                    task: task,
-                    currentUserId: nil
-                )
-                .padding(.horizontal)
+            HStack(alignment: .top, spacing: 0) {
+                ForEach(vm.currentWeekDays, id: \.self) { day in
+                    TaskCalendarDayCell(
+                        date: day,
+                        activities: vm.getActivitiesForDay(day),
+                        isSelected: Calendar.current.isDateInToday(day)
+                    )
+                    .onTapGesture {
+                        vm.selectDay(day)
+                    }
+                    if day != vm.currentWeekDays.last {
+                        Rectangle()
+                            .fill(Color.secondary.opacity(0.2))
+                            .frame(width: 1, height: 100)
+                            .padding(.top, 5)
+                    }
+                }
             }
-
-            if vm.activeTasks.isEmpty && !vm.isLoading {
-                Text(ConstantStrings.noActiveTasks)
-                    .font(.subheadline)
-                    .foregroundColor(.secondary)
-                    .padding(.horizontal)
-            }
+            .padding(.vertical, 10)
+            .background(Color(.systemBackground))
 
             Button {
                 showTaskList = true
             } label: {
-                Text(ConstantStrings.seeAllTasks)
-                    .font(.headline)
+                Text(ConstantStrings.allActivities)
+                    .font(.system(size: 17, weight: .semibold))
                     .foregroundColor(.primary)
                     .frame(maxWidth: .infinity)
-                    .padding()
+                    .padding(.vertical, 18)
                     .background(Color(.systemGray5))
-                    .cornerRadius(14)
+                    .cornerRadius(16)
             }
             .padding(.horizontal)
-            .padding(.top, 4)
         }
+    }
+
+    var activityDetailSheet: some View {
+        VStack(alignment: .leading, spacing: 20) {
+            HStack {
+                Text(ConstantStrings.dailyActivitiesTitle)
+                    .font(.title2.bold())
+                Spacer()
+                Button { vm.showDetailSheet = false } label: {
+                    Image(systemName: "xmark.circle.fill")
+                        .foregroundColor(.secondary)
+                        .font(.title2)
+                }
+            }
+            .padding(.top)
+
+            if vm.selectedDateTasks.isEmpty {
+                VStack(spacing: 12) {
+                    Image(systemName: "calendar.badge.exclamationmark")
+                        .font(.system(size: 40))
+                        .foregroundColor(.secondary)
+                    Text(ConstantStrings.noActivityFound)
+                        .foregroundColor(.secondary)
+                }
+                .frame(maxWidth: .infinity, maxHeight: .infinity)
+            } else {
+                ScrollView {
+                    VStack(spacing: 12) {
+                        ForEach(vm.selectedDateTasks) { task in
+                            HStack(spacing: 15) {
+                                Rectangle()
+                                    .fill(task.activityType.color)
+                                    .frame(width: 5)
+                                    .cornerRadius(2)
+
+                                VStack(alignment: .leading, spacing: 4) {
+                                    HStack(spacing: 6) {
+                                        Text(task.activityType.rawValue)
+                                            .font(.caption2.bold())
+                                            .textCase(.uppercase)
+                                            .foregroundColor(task.activityType.color)
+                                            .padding(.horizontal, 6)
+                                            .padding(.vertical, 2)
+                                            .background(task.activityType.color.opacity(0.12))
+                                            .cornerRadius(4)
+                                        
+                                        Text(task.title)
+                                            .font(.headline)
+                                    }
+                                    
+                                    if let desc = task.description {
+                                        Text(desc)
+                                            .font(.subheadline)
+                                            .foregroundColor(.secondary)
+                                            .lineLimit(2)
+                                    }
+                                }
+                                
+                                Spacer()
+                    
+                                Text(task.status)
+                                    .font(.caption.bold())
+                                    .padding(.horizontal, 8)
+                                    .padding(.vertical, 4)
+                                    .background(Color.secondary.opacity(0.1))
+                                    .cornerRadius(8)
+                            }
+                            .padding()
+                            .background(Color(.systemGray6))
+                            .cornerRadius(12)
+                        }
+                    }
+                }
+            }
+        }
+        .padding()
+        .presentationDetents([.medium, .large])
+        .presentationDragIndicator(.visible)
     }
 }

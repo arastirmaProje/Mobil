@@ -1,10 +1,3 @@
-//
-//  AddEmployeeView.swift
-//  personelim
-//
-//  Created by Yusuf Kaan USTA on 25.12.2025.
-//
-
 import SwiftUI
 
 struct AddEmployeeView: View {
@@ -27,13 +20,14 @@ struct AddEmployeeView: View {
         NavigationStack {
             VStack(spacing: 18) {
 
-                Text("Çalışan ekle")
+                Text(ConstantStrings.addEmployeeTitle)
                     .font(.title2.weight(.semibold))
                     .frame(maxWidth: .infinity, alignment: .leading)
 
                 VStack(alignment: .leading, spacing: 8) {
-                    Text("Email").font(.system(size: 13, weight: .medium))
-                    TextField("ornek@gmail.com", text: $vm.email)
+                    Text(ConstantStrings.emailLabel).font(.system(size: 13, weight: .medium))
+                    
+                    TextField(ConstantStrings.emailPlaceholder, text: $vm.email)
                         .textInputAutocapitalization(.never)
                         .keyboardType(.emailAddress)
                         .padding()

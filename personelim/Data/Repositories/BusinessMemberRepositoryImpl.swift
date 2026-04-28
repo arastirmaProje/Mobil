@@ -115,6 +115,14 @@ final class BusinessMemberRepositoryImpl: BusinessMemberRepositoryProtocol {
         )
         return res
     }
+    
+    func addMember(request: CreateMemberRequestDTO) async throws {
+        let _: ServiceResponse<EmptyResponse> = try await network.request(
+            endpoint: .addBusinessMember, // Artık hata vermez
+            method: .post,
+            body: request
+        )
+    }
 }
 
 

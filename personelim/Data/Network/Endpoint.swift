@@ -1,10 +1,3 @@
-//
-//  Endpoint.swift
-//  personelim
-//
-//  Created by Tuğberk Acabey on 23.11.2025.
-//
-
 import Foundation
 
 enum Endpoint {
@@ -54,6 +47,20 @@ enum Endpoint {
     case businessLeaves(businessId: String)
     case updateLeaveStatus(leaveId: String)
     case deleteLeave(leaveId: String)
+    
+    case departments(businessId: String)
+    case createDepartment
+    case jobTitleCategories
+    
+    case jobCategories
+    
+    case addBusinessMember
+    case updateMemberDocument(documentId: String)
+    
+    case jobTitlesByDepartment(departmentId: String)
+    
+    case updateDepartment(id: String)
+        case deleteDepartment(id: String)
 
     var path: String {
         switch self {
@@ -104,19 +111,37 @@ enum Endpoint {
         case .updateLeaveStatus(let leaveId): return "/api/Leave/\(leaveId)/status"
         case .deleteLeave(let leaveId): return "/api/Leave/\(leaveId)"
             
-
-        }
+        case .departments(let businessId): return "/api/Department/business/\(businessId)"
+        case .createDepartment: return "/api/Department"
+        case .jobTitleCategories: return "/api/job-titles/categories"
+            
+        case .jobCategories:
+            return "/api/JobTitles/categories"
+            
+        case .addBusinessMember:
+                    return "/api/BusinessMember/add"
+                case .updateMemberDocument(let id):
+                    return "/api/BusinessMember/documents/\(id)"
+            
+        case .jobTitlesByDepartment(let id):
+                    return "/api/JobTitles/by-department/\(id)"
+            
+        case .updateDepartment(let id): return "/api/Department/\(id)"
+                case .deleteDepartment(let id): return "/api/Department/\(id)"
+                }
+        
+        
     }
 
     var method: HTTPMethod {
         switch self {
-        case .login, .register, .forgotPassword, .verifyResetCode, .resetPassword, .verifyBusiness, .createBusiness, .uploadMemberDocuments, .createTask, .createSchedule, .uploadBusinessDocument, .sendInvitation, .performanceQuery, .createShift, .performanceQueryBulkScores, .createLeave:
+        case .login, .register, .forgotPassword, .verifyResetCode, .resetPassword, .verifyBusiness, .createBusiness, .uploadMemberDocuments, .createTask, .createSchedule, .uploadBusinessDocument, .sendInvitation, .performanceQuery, .createShift, .performanceQueryBulkScores, .createLeave, .createDepartment, .addBusinessMember, .updateMemberDocument:
             return .post
 
-        case .businessMembers, .profile, .getBusiness, .provinces, .districts, .business, .businessList, .getBusinessMember, .downloadDocument, .myTasks, .schedules, .getBusinessDocuments, .performanceReports, .performanceReportDetail, .myShifts, .myLeaves, .businessLeaves:
+        case .businessMembers, .profile, .getBusiness, .provinces, .districts, .business, .businessList, .getBusinessMember, .downloadDocument, .myTasks, .schedules, .getBusinessDocuments, .performanceReports, .performanceReportDetail, .myShifts, .myLeaves, .businessLeaves, .departments, .jobTitleCategories, .jobCategories, .jobTitlesByDepartment:
             return .get
 
-        case .profileUpdate, .updateBusinessMember, .updateBusiness, .updateTaskStatus, .updateLeaveStatus:
+        case .profileUpdate, .updateBusinessMember, .updateBusiness, .updateTaskStatus, .updateLeaveStatus, .updateDepartment:
             return .put
             
         case .deleteBusinessDocument,
@@ -126,8 +151,10 @@ enum Endpoint {
              .deleteAccount,
              .deleteLeave,
              .deleteTask,
-             .deleteSchedule:
-        return .delete
+             .deleteSchedule,
+             .deleteDepartment
+            :
+            return .delete
         }
     }
 }

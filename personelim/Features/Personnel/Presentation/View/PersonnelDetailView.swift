@@ -1,10 +1,3 @@
-//
-//  PersonnelDetailView.swift
-//  personelim
-//
-//  Created by Yusuf Kaan USTA on 25.12.2025.
-//
-
 import SwiftUI
 
 struct PersonnelDetailView: View {
@@ -23,10 +16,8 @@ struct PersonnelDetailView: View {
         self.memberId = memberId
 
         let network = NetworkManager()
-
         let memberRepo = BusinessMemberRepositoryImpl(network: network)
         let getMember = GetBusinessMemberUseCase(repo: memberRepo)
-
         let perfRepo = PerformanceRepositoryImpl(network: network)
         let getReports = GetPerformanceReportsUseCase(repo: perfRepo)
 
@@ -37,105 +28,100 @@ struct PersonnelDetailView: View {
     }
 
     var body: some View {
-        NavigationStack {
-            ScrollView(showsIndicators: false) {
-                VStack(alignment: .leading, spacing: 16) {
+        ScrollView(showsIndicators: false) {
+            VStack(alignment: .leading, spacing: 16) {
 
-                    header
+                header
 
-                    if vm.isLoading {
-                        ProgressView().padding(.top, 16)
-                    }
+                if vm.isLoading {
+                    ProgressView().padding(.top, 16)
+                }
 
-                    if let err = vm.errorMessage {
-                        Text(err).foregroundColor(.red)
-                    }
+                if let err = vm.errorMessage {
+                    Text(err).foregroundColor(.red)
+                }
 
-                    if let m = vm.member {
-                        detailFields(m)  
-                        querySection
-                    }
-
-                    Spacer().frame(height: 40)
-                }
-                .padding(.horizontal, 16)
-                .padding(.top, 12)
-            }
-            .navigationTitle("")
-            .navigationBarBackButtonHidden(true)
-            .toolbar {
-                ToolbarItem(placement: .topBarLeading) {
-                    Button { dismiss() } label: {
-                        Image(systemName: "chevron.left")
-                    }
-                }
-                ToolbarItem(placement: .topBarTrailing) {
-                    Button {
-                        showEdit = true
-                    } label: {
-                        Image(systemName: "pencil")
-                    }
-                    .disabled(vm.member == nil)
-                }
-            }
-            .task {
-                await vm.load(memberId: memberId)
-                await loadReportsIfPossible()
-            }
-            .refreshable {
-                await vm.load(memberId: memberId)
-                await loadReportsIfPossible()
-            }
-            .navigationDestination(isPresented: Binding(
-                get: { selectedReportId != nil },
-                set: { if !$0 { selectedReportId = nil } }
-            )) {
-                if let rid = selectedReportId {
-                    PerformanceReportDetailView(reportId: rid)
-                }
-            }
-            .sheet(isPresented: $showQuery) {
-                if let bid = appState.businessId,
-                   let uid = vm.member?.userId {
-                    PerformanceQueryView(
-                        businessId: bid,
-                        employeeUserId: uid,
-                        onCreated: { _ in
-                            Task { await vm.loadReports(businessId: bid, employeeUserId: uid) }
-                        }
-                    )
-                    .presentationDetents([.large])
-                }
-            }
-            .sheet(isPresented: $showEdit) {
                 if let m = vm.member {
-                    PersonnelEditView(
-                        memberId: memberId,
-                        originalMember: m,
-                        onSaved: {
-                            Task {
-                                await vm.load(memberId: memberId)
-                                await loadReportsIfPossible()
-                            }
-                        },
-                        onDeleted: {
-                            dismiss()
-                        }
-                    )
+                    detailFields(m)
+                    querySection
                 }
+
+                Spacer().frame(height: 40)
+            }
+            .padding(.horizontal, 16)
+            .padding(.top, 12)
+        }
+        .navigationTitle("")
+        .navigationBarTitleDisplayMode(.inline)
+        .navigationBarBackButtonHidden(true)
+        .toolbar {
+            ToolbarItem(placement: .topBarLeading) {
+                Button { dismiss() } label: {
+                    Image(systemName: "chevron.left")
+                }
+            }
+            ToolbarItem(placement: .topBarTrailing) {
+                Button {
+                    showEdit = true
+                } label: {
+                    Image(systemName: "pencil")
+                }
+                .disabled(vm.member == nil)
+            }
+        }
+        .task {
+            await vm.load(memberId: memberId)
+            await loadReportsIfPossible()
+        }
+        .refreshable {
+            await vm.load(memberId: memberId)
+            await loadReportsIfPossible()
+        }
+        .navigationDestination(isPresented: Binding(
+            get: { selectedReportId != nil },
+            set: { if !$0 { selectedReportId = nil } }
+        )) {
+            if let rid = selectedReportId {
+                PerformanceReportDetailView(reportId: rid)
+            }
+        }
+        .sheet(isPresented: $showQuery) {
+            if let bid = appState.businessId,
+               let uid = vm.member?.userId {
+                PerformanceQueryView(
+                    businessId: bid,
+                    employeeUserId: uid,
+                    onCreated: { _ in
+                        Task { await vm.loadReports(businessId: bid, employeeUserId: uid) }
+                    }
+                )
+                .presentationDetents([.large])
+            }
+        }
+        .sheet(isPresented: $showEdit) {
+            if let m = vm.member {
+                PersonnelEditView(
+                    memberId: memberId,
+                    originalMember: m,
+                    onSaved: {
+                        Task {
+                            await vm.load(memberId: memberId)
+                            await loadReportsIfPossible()
+                        }
+                    },
+                    onDeleted: {
+                        dismiss()
+                    }
+                )
             }
         }
     }
-
-    // MARK: - Helpers
 
     private func loadReportsIfPossible() async {
         guard let bid = appState.businessId,
               let uid = vm.member?.userId else { return }
         await vm.loadReports(businessId: bid, employeeUserId: uid)
     }
-
-    // MARK: - UI Parts
 
     private var header: some View {
         HStack(spacing: 12) {
@@ -147,16 +133,15 @@ struct PersonnelDetailView: View {
                 Text(vm.member?.fullName ?? "—")
                     .font(.system(size: 20, weight: .semibold))
 
-                Text("Ünvan: \(vm.member?.position ?? "-")")
+                Text("\(ConstantStrings.positionPrefix)\(vm.member?.position ?? "-")")
                     .font(.system(size: 13))
                     .foregroundColor(.gray)
 
                 let salaryText = vm.member?.salary.map { "\(Int($0)) TL" } ?? "-"
-                Text("Gelir: \(salaryText)")
+                Text("\(ConstantStrings.incomePrefix)\(salaryText)")
                     .font(.system(size: 13))
                     .foregroundColor(.gray)
             }
-
             Spacer()
         }
         .padding(.top, 4)
@@ -164,24 +149,19 @@ struct PersonnelDetailView: View {
 
     private func detailFields(_ m: BusinessMemberDTO) -> some View {
         VStack(alignment: .leading, spacing: 12) {
-            InfoCard(title: "Kimlik", value: m.tcIdentityNumber ?? "-")
-            InfoCard(title: "CV", value: "Resume")
-            InfoCard(title: "Belgeler", value: (m.documents?.first?.fileName ?? "-"))
-            InfoCard(title: "Kalan izin günü", value: "4")
+            InfoCard(title: ConstantStrings.identityLabel, value: m.tcIdentityNumber ?? "-")
+            InfoCard(title: ConstantStrings.resumeLabel, value: "Resume")
+            InfoCard(title: ConstantStrings.documentsLabel, value: (m.documents?.first?.fileName ?? "-"))
+            InfoCard(title: ConstantStrings.remainingLeaveLabel, value: "4")
         }
     }
 
-    // MARK: - Query Section (rapor kartları)
-
     private var querySection: some View {
         VStack(alignment: .leading, spacing: 10) {
-
             HStack {
-                Text("Sorgu")
+                Text(ConstantStrings.querySectionTitle)
                     .font(.system(size: 18, weight: .semibold))
-
                 Spacer()
-
                 Button { showQuery = true } label: {
                     Image(systemName: "magnifyingglass")
                 }
@@ -220,15 +200,14 @@ struct PersonnelDetailView: View {
                     Circle()
                         .fill(Color(UIColor.systemGray5))
                         .frame(width: 44, height: 44)
-
                     VStack(alignment: .leading, spacing: 4) {
-                        Text("Henüz rapor yok")
+                
+                        Text(ConstantStrings.noReportsAvailable)
                             .font(.system(size: 14, weight: .semibold))
-                        Text("Tarih aralığı seçip sorgu oluştur.")
+                        Text(ConstantStrings.createQueryInstruction)
                             .font(.system(size: 12))
                             .foregroundColor(.gray)
                     }
-
                     Spacer()
                 }
                 .padding(.horizontal, 12)
@@ -256,7 +235,8 @@ private struct PerformanceReportCard: View {
                         ScoreMiniGauge(score: report.score ?? 0)
 
                         VStack(alignment: .leading, spacing: 4) {
-                            Text("Sorgu Aralığı")
+                  
+                            Text(ConstantStrings.queryRangeLabel)
                                 .font(.system(size: 11, weight: .medium))
                                 .foregroundColor(.secondary)
 
@@ -310,10 +290,10 @@ private struct ScoreMiniGauge: View {
 
 private func scoreLevel(_ s: Int) -> String {
     switch s {
-    case 0..<40: return "Zayıf"
-    case 40..<70: return "Orta"
-    case 70..<85: return "İyi"
-    default: return "Mükemmel"
+    case 0..<40: return ConstantStrings.performanceWeak
+    case 40..<70: return ConstantStrings.performanceMedium
+    case 70..<85: return ConstantStrings.performanceGood
+    default: return ConstantStrings.performanceExcellent
     }
 }
 

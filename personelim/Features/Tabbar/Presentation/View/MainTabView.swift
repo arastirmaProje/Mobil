@@ -2,7 +2,7 @@ import SwiftUI
 
 struct MainTabView: View {
 
-    enum Tab: Hashable { case home, tasks, personnel, profile }
+    enum Tab: Hashable { case home, tasks, personnel, profile, departments }
 
     @EnvironmentObject private var appState: AppState
     @State private var selected: Tab = .home
@@ -22,6 +22,12 @@ struct MainTabView: View {
                 NavigationStack { PersonnelListView() }
                     .tabItem { Label(ConstantStrings.tabPersonnelTitle, systemImage: "person.3.fill") }
                     .tag(Tab.personnel)
+            }
+            
+            if appState.role.canSeePersonnelTab {
+                NavigationStack { DepartmentListView() }
+                    .tabItem { Label(ConstantStrings.tabManagmentTitle, systemImage: "building.2.fill") }
+                    .tag(Tab.departments)
             }
 
             NavigationStack { ProfileView() }

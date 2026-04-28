@@ -10,6 +10,7 @@ import Foundation
 final class NetworkManager: NetworkManagerProtocol {
 
     private let baseURL = "http://178.104.144.148:8080"
+    static let shared = NetworkManager()
 
     // MARK: - Errors
     struct NetworkError: LocalizedError {
@@ -82,9 +83,6 @@ final class NetworkManager: NetworkManagerProtocol {
         do {
             let effectiveData: Data
 
-            // Some endpoints (notably schedules create/delete) may return empty 2xx bodies.
-            // JSONDecoder can't decode from an empty buffer, so we coerce empty/whitespace
-            // responses into an empty JSON object.
             if data.isEmpty || data.allSatisfy({ b in
                 b == 0x20 /* space */ ||
                 b == 0x0A /* \n */ ||

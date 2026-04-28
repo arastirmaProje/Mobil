@@ -20,10 +20,10 @@ struct PersonnelListView: View {
 
         var title: String {
             switch self {
-            case .nameAZ: return "Ad (A → Z)"
-            case .nameZA: return "Ad (Z → A)"
-            case .salaryHighLow: return "Maaş (Yüksek → Düşük)"
-            case .salaryLowHigh: return "Maaş (Düşük → Yüksek)"
+            case .nameAZ: return ConstantStrings.sortNameAZ
+            case .nameZA: return ConstantStrings.sortNameZA
+            case .salaryHighLow: return ConstantStrings.sortSalaryHighLow
+            case .salaryLowHigh: return ConstantStrings.sortSalaryLowHigh
             }
         }
 
@@ -52,7 +52,7 @@ struct PersonnelListView: View {
                             .font(.system(size: 14, weight: .semibold))
                             .foregroundStyle(.secondary)
 
-                        TextField("Ara", text: $vm.query)
+                        TextField(ConstantStrings.searchPlaceholder, text: $vm.query)
                             .textInputAutocapitalization(.never)
                             .foregroundStyle(.primary)
                     }
@@ -62,7 +62,7 @@ struct PersonnelListView: View {
                     .clipShape(RoundedRectangle(cornerRadius: 14))
 
                     Menu {
-                        Picker("Sırala", selection: $sortOption) {
+                        Picker(ConstantStrings.sortTitle, selection: $sortOption) {
                             ForEach(SortOption.allCases, id: \.self) { opt in
                                 Label(opt.title, systemImage: opt.systemImage).tag(opt)
                             }
@@ -78,7 +78,7 @@ struct PersonnelListView: View {
                     .buttonStyle(.plain)
 
                     Button { showAddEmployee = true } label: {
-                        Text("Ekle")
+                        Text(ConstantStrings.addLabel)
                             .font(.system(size: 14, weight: .semibold))
                             .foregroundStyle(.blue)
                             .padding(.horizontal, 12)
@@ -93,7 +93,7 @@ struct PersonnelListView: View {
 
                 // MARK: - Header + Bulk Query
                 HStack {
-                    Text("Personellerim")
+                    Text(ConstantStrings.myPersonnelTitle)
                         .font(.title3.weight(.semibold))
 
                     Spacer()
@@ -107,7 +107,7 @@ struct PersonnelListView: View {
                                     .font(.system(size: 12, weight: .semibold))
                             }
 
-                            Text("Toplu Sorgu")
+                            Text(ConstantStrings.bulkQueryTitle)
                                 .font(.system(size: 13, weight: .semibold))
                         }
                         .foregroundStyle(.blue)
@@ -188,7 +188,7 @@ struct PersonnelListView: View {
                 } else {
                     VStack(spacing: 12) {
                         ProgressView()
-                        Text("Yükleniyor...")
+                        Text(ConstantStrings.loading)
                             .foregroundColor(.gray)
                     }
                     .presentationDetents([.medium])
@@ -197,7 +197,7 @@ struct PersonnelListView: View {
         }
     }
 
-    // MARK: - Sorting
+    // MARK: - Sorting Logic
     private func sortMembers(_ members: [BusinessMemberDTO], by option: SortOption) -> [BusinessMemberDTO] {
         func normName(_ s: String) -> String {
             s.trimmingCharacters(in: .whitespacesAndNewlines).lowercased()

@@ -36,10 +36,10 @@ struct PerformanceBulkQueryView: View {
             ScrollView(showsIndicators: false) {
                 VStack(alignment: .leading, spacing: 16) {
 
-                    Text("Sorgu")
+                    Text(ConstantStrings.bulkQueryTitle)
                         .font(.system(size: 24, weight: .semibold))
 
-                    Text("Takvimden bir tarih aralığı seçin.")
+                    Text(ConstantStrings.calendarInstruction)
                         .font(.system(size: 14))
                         .foregroundColor(.gray)
 
@@ -62,7 +62,7 @@ struct PerformanceBulkQueryView: View {
                 .padding(.horizontal, 16)
                 .padding(.top, 12)
             }
-            .navigationTitle("") // boş başlık
+            .navigationTitle("")
             .navigationBarBackButtonHidden(true)
             .toolbar {
                 ToolbarItem(placement: .topBarLeading) {
@@ -91,11 +91,11 @@ struct PerformanceBulkQueryView: View {
 
     private var rangeSummary: some View {
         HStack(spacing: 6) {
-            Text("Başlangıç: \(startDate.trShortDate())")
+            Text("\(ConstantStrings.startDatePrefix)\(startDate.trShortDate())")
                 .font(.system(size: 13, weight: .medium))
                 .foregroundColor(.gray)
 
-            Text("Bitiş: \(endDate.trShortDate())")
+            Text("\(ConstantStrings.endDatePrefix)\(endDate.trShortDate())")
                 .font(.system(size: 13, weight: .medium))
                 .foregroundColor(.gray)
         }
@@ -150,7 +150,7 @@ private struct RangeCalendarView: View {
             }
 
             LazyVGrid(columns: columns, spacing: 8) {
-                ForEach(weekdaysTR, id: \.self) { w in
+                ForEach(ConstantStrings.weekdaysShort, id: \.self) { w in
                     Text(w)
                         .font(.system(size: 11, weight: .semibold))
                         .foregroundColor(.secondary)
@@ -219,9 +219,9 @@ private struct RangeCalendarView: View {
 
         return days
     }
-
-    private var weekdaysTR: [String] { ["Pzt","Sal","Çar","Per","Cum","Cmt","Paz"] }
 }
+
+
 
 // MARK: - DayCell
 

@@ -1,10 +1,3 @@
-//
-//  PersonnelEditView.swift
-//  personelim
-//
-//  Created by Yusuf Kaan USTA on 25.12.2025.
-//
-
 import SwiftUI
 
 struct PersonnelEditView: View {
@@ -44,22 +37,24 @@ struct PersonnelEditView: View {
         NavigationStack {
             VStack(spacing: 16) {
 
-                Text("Personel Düzenle")
+        
+                Text(ConstantStrings.editPersonnelTitle)
                     .font(.title2.weight(.semibold))
                     .frame(maxWidth: .infinity, alignment: .leading)
 
                 // MARK: - Fields
-                field(title: "Ünvan", text: $vm.position)
-                field(title: "Gelir", text: $vm.salaryText, keyboard: .numberPad)
+     
+                field(title: ConstantStrings.positionField, text: $vm.position)
+ 
+                field(title: ConstantStrings.salaryField, text: $vm.salaryText, keyboard: .numberPad)
 
                 if vm.isLoading { ProgressView() }
-
 
                 // MARK: - Delete Button
                 Button {
                     showDeleteConfirm = true
                 } label: {
-                    Text("Personeli Sil")
+                    Text(ConstantStrings.deletePersonnelButton)
                         .font(.system(size: 15, weight: .semibold))
                         .frame(maxWidth: .infinity)
                         .padding(.vertical, 12)
@@ -74,14 +69,12 @@ struct PersonnelEditView: View {
             .navigationTitle("")
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {
-                // MARK: - Back Button
                 ToolbarItem(placement: .navigationBarLeading) {
                     Button { dismiss() } label: {
                         Image(systemName: "chevron.left")
                     }
                 }
 
-                // MARK: - Save Button
                 ToolbarItem(placement: .navigationBarTrailing) {
                     Button {
                         Task { await vm.save(memberId: memberId, original: originalMember) }
@@ -103,13 +96,14 @@ struct PersonnelEditView: View {
             onDeleted()
             dismiss()
         }
-        .alert("Personeli silmek istiyor musun?", isPresented: $showDeleteConfirm) {
-            Button("İptal", role: .cancel) { }
-            Button("Sil", role: .destructive) {
+        // Alert Metinleri Güncellendi
+        .alert(ConstantStrings.deleteAlertTitle, isPresented: $showDeleteConfirm) {
+            Button(ConstantStrings.cancel, role: .cancel) { }
+            Button(ConstantStrings.delete, role: .destructive) {
                 Task { await vm.delete(memberId: memberId) }
             }
         } message: {
-            Text("Bu işlem geri alınamaz.")
+            Text(ConstantStrings.deleteAlertMessage)
         }
     }
 

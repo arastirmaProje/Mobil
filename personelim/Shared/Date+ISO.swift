@@ -17,10 +17,6 @@ enum ISODate {
     static func date(from value: String?) -> Date? {
         guard let value, !value.isEmpty else { return nil }
 
-        // Common formats:
-        // - with fractional seconds
-        // - without fractional seconds
-        // - Z suffix that needs +00:00 in some parsers
         let candidates = [
             value,
             value.replacingOccurrences(of: "Z", with: "+00:00")
@@ -50,5 +46,27 @@ enum ISODate {
         df.locale = Locale(identifier: "tr_TR")
         df.dateFormat = "dd/MM/yyyy"
         return "\(df.string(from: sd)) – \(df.string(from: ed))"
+    }
+}
+
+extension Date {
+    
+    func formatToWeekDayShort() -> String {
+        let formatter = DateFormatter()
+        formatter.locale = Locale(identifier: "tr_TR")
+        formatter.dateFormat = "EEE"
+        return formatter.string(from: self)
+    }
+    
+    func formatToDayNumber() -> String {
+        let formatter = DateFormatter()
+        formatter.dateFormat = "d"
+        return formatter.string(from: self)
+    }
+    
+    func taskDayKey() -> String {
+        let formatter = DateFormatter()
+        formatter.dateFormat = "yyyy-MM-dd"
+        return formatter.string(from: self)
     }
 }

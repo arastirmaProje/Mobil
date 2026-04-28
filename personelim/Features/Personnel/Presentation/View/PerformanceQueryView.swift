@@ -41,9 +41,10 @@ struct PerformanceQueryView: View {
                 VStack(spacing: 24) {
 
                     VStack(alignment: .leading, spacing: 6) {
-                        Text("Sorgu")
+                        Text(ConstantStrings.performanceQueryTitle)
                             .font(.title.bold())
-                        Text("Takvimden bir tarih aralığı seçin.")
+                        
+                        Text(ConstantStrings.performanceQuerySubtitle)
                             .font(.subheadline)
                             .foregroundColor(.secondary)
                     }
@@ -57,7 +58,7 @@ struct PerformanceQueryView: View {
 
                     HStack(spacing: 24) {
                         VStack(alignment: .leading) {
-                            Text("Başlangıç")
+                            Text(ConstantStrings.startTitle)
                                 .font(.caption)
                                 .foregroundColor(.secondary)
                             Text(startDate?.trShortDate() ?? "-")
@@ -65,7 +66,7 @@ struct PerformanceQueryView: View {
                         }
 
                         VStack(alignment: .leading) {
-                            Text("Bitiş")
+                            Text(ConstantStrings.endTitle)
                                 .font(.caption)
                                 .foregroundColor(.secondary)
                             Text(endDate?.trShortDate() ?? "-")
@@ -118,7 +119,7 @@ struct PerformanceQueryView: View {
     }
 }
 
-// MARK: - RangeCalendarCard (Leave görünümü birebir)
+// MARK: - RangeCalendarCard
 
 @available(iOS 17.0, *)
 private struct RangeCalendarCard: View {
@@ -165,7 +166,8 @@ private struct RangeCalendarCard: View {
             }
 
             LazyVGrid(columns: columns, spacing: 8) {
-                ForEach(weekdaysTR, id: \.self) { w in
+                // ConstantStrings.weekdaysShort kullanıldı
+                ForEach(ConstantStrings.weekdaysShort, id: \.self) { w in
                     Text(w)
                         .font(.system(size: 11, weight: .semibold))
                         .foregroundColor(.secondary)
@@ -242,9 +244,8 @@ private struct RangeCalendarCard: View {
 
         return days
     }
-
-    private var weekdaysTR: [String] { ["Pzt","Sal","Çar","Per","Cum","Cmt","Paz"] }
 }
+// ... DayCell ve Date extension kısımları aynı kalıyor.
 
 // MARK: - DayCell
 

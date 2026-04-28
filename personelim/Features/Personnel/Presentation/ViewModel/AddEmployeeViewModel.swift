@@ -26,8 +26,9 @@ final class AddEmployeeViewModel: ObservableObject {
         successMessage = nil
 
         let e = email.trimmingCharacters(in: .whitespacesAndNewlines)
+        
         guard !e.isEmpty, e.contains("@") else {
-            errorMessage = "Geçerli bir email gir."
+            errorMessage = ConstantStrings.invalidEmailError
             return
         }
 
@@ -36,7 +37,7 @@ final class AddEmployeeViewModel: ObservableObject {
 
         do {
             let res = try await sendUseCase.execute(businessId: businessId, email: e, message: nil)
-            successMessage = res.message
+            successMessage = res.message ?? ConstantStrings.invitationSuccess
         } catch {
             errorMessage = error.localizedDescription
         }

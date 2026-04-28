@@ -19,4 +19,5 @@ protocol BusinessMemberRepositoryProtocol {
     ) async throws -> BusinessMemberDocumentDTO
     func deleteMemberDocument(documentId: String) async throws
     func deleteMember(memberId: String) async throws -> EmptyResponse
+    func addMember(request: CreateMemberRequestDTO) async throws
 }
