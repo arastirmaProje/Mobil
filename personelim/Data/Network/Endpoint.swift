@@ -1,66 +1,93 @@
 import Foundation
 
 enum Endpoint {
+    // MARK: - Auth
     case login
     case register
     case forgotPassword
     case verifyResetCode
     case resetPassword
+
+    // MARK: - Business
     case verifyBusiness
     case createBusiness
-    case businessMembers(businessId: String)
     case getBusiness(businessId: String)
-    case provinces
-    case districts(provinceId: Int)
-    case profileUpdate
-    case profile
     case business
     case businessList
-    case uploadMemberDocuments(memberId: String)
-    case getBusinessMember(memberId: String)
-    case updateBusinessMember(memberId: String)
-    case downloadDocument(documentId: String)
-    case myTasks
-    case createTask
-    case updateTaskStatus(taskId: String)
-    case schedules(businessId: String)
-    case createSchedule
-    case deleteTask(taskId: String)
-    case deleteSchedule(scheduleId: String)
     case updateBusiness(businessId: String)
     case uploadBusinessDocument(businessId: String)
     case getBusinessDocuments(businessId: String)
     case deleteBusinessDocument(documentId: String)
-    case deleteMemberDocument(documentId: String)
     case deleteBusiness(businessId: String)
+
+    // MARK: - Business Member
+    case businessMembers(businessId: String)
+    case getBusinessMember(memberId: String)
+    case updateBusinessMember(memberId: String)
+    case addBusinessMember
     case deleteBusinessMember(memberId: String)
+    case uploadMemberDocuments(memberId: String)
+    case updateMemberDocument(documentId: String)
+    case deleteMemberDocument(documentId: String)
+    case downloadDocument(documentId: String)
+
+    // MARK: - Profile
+    case profile
+    case profileUpdate
     case deleteAccount
+
+    // MARK: - Location
+    case provinces
+    case districts(provinceId: Int)
+
+    // MARK: - Invitation
     case sendInvitation
+
+    // MARK: - Task
+    case myTasks
+    case createTask
+    case updateTaskStatus(taskId: String)
+    case deleteTask(taskId: String)
+
+    // MARK: - Schedule
+    case schedules(businessId: String)
+    case createSchedule
+    case deleteSchedule(scheduleId: String)
+
+    // MARK: - Performance
     case performanceQuery
     case performanceReports(businessId: String, employeeUserId: String)
     case performanceReportDetail(reportId: String)
+    case performanceQueryBulkScores
+
+    // MARK: - Shift
     case createShift
     case myShifts(businessId: String)
-    case performanceQueryBulkScores
+
+    // MARK: - Leave
     case createLeave
     case myLeaves(businessId: String)
     case businessLeaves(businessId: String)
     case updateLeaveStatus(leaveId: String)
     case deleteLeave(leaveId: String)
-    
+
+    // MARK: - Department
     case departments(businessId: String)
     case createDepartment
-    case jobTitleCategories
-    
-    case jobCategories
-    
-    case addBusinessMember
-    case updateMemberDocument(documentId: String)
-    
-    case jobTitlesByDepartment(departmentId: String)
-    
     case updateDepartment(id: String)
-        case deleteDepartment(id: String)
+    case deleteDepartment(id: String)
+
+    // MARK: - Job Titles
+    case jobTitleCategories
+    case jobCategories
+    case jobTitlesByDepartment(departmentId: String)
+
+    // MARK: - Slack Integration
+    case slackWebhooks(businessId: String)
+    case createSlackWebhook
+    case updateSlackWebhook(id: String)
+    case deleteSlackWebhook(id: String)
+    case slackWebhookEventTypes
 
     var path: String {
         switch self {
@@ -127,7 +154,12 @@ enum Endpoint {
                     return "/api/JobTitles/by-department/\(id)"
             
         case .updateDepartment(let id): return "/api/Department/\(id)"
-                case .deleteDepartment(let id): return "/api/Department/\(id)"
+        case .deleteDepartment(let id): return "/api/Department/\(id)"
+        case .slackWebhooks(let businessId): return "/api/SlackWebhooks/\(businessId)"
+        case .createSlackWebhook: return "/api/SlackWebhooks"
+        case .updateSlackWebhook(let id): return "/api/SlackWebhooks/\(id)"
+        case .deleteSlackWebhook(let id): return "/api/SlackWebhooks/\(id)"
+        case .slackWebhookEventTypes: return "/api/SlackWebhooks/event-types"
                 }
         
         
@@ -135,13 +167,13 @@ enum Endpoint {
 
     var method: HTTPMethod {
         switch self {
-        case .login, .register, .forgotPassword, .verifyResetCode, .resetPassword, .verifyBusiness, .createBusiness, .uploadMemberDocuments, .createTask, .createSchedule, .uploadBusinessDocument, .sendInvitation, .performanceQuery, .createShift, .performanceQueryBulkScores, .createLeave, .createDepartment, .addBusinessMember, .updateMemberDocument:
+        case .login, .register, .forgotPassword, .verifyResetCode, .resetPassword, .verifyBusiness, .createBusiness, .uploadMemberDocuments, .createTask, .createSchedule, .uploadBusinessDocument, .sendInvitation, .performanceQuery, .createShift, .performanceQueryBulkScores, .createLeave, .createDepartment, .addBusinessMember, .updateMemberDocument, .createSlackWebhook:
             return .post
 
-        case .businessMembers, .profile, .getBusiness, .provinces, .districts, .business, .businessList, .getBusinessMember, .downloadDocument, .myTasks, .schedules, .getBusinessDocuments, .performanceReports, .performanceReportDetail, .myShifts, .myLeaves, .businessLeaves, .departments, .jobTitleCategories, .jobCategories, .jobTitlesByDepartment:
+        case .businessMembers, .profile, .getBusiness, .provinces, .districts, .business, .businessList, .getBusinessMember, .downloadDocument, .myTasks, .schedules, .getBusinessDocuments, .performanceReports, .performanceReportDetail, .myShifts, .myLeaves, .businessLeaves, .departments, .jobTitleCategories, .jobCategories, .jobTitlesByDepartment, .slackWebhooks, .slackWebhookEventTypes:
             return .get
 
-        case .profileUpdate, .updateBusinessMember, .updateBusiness, .updateTaskStatus, .updateLeaveStatus, .updateDepartment:
+        case .profileUpdate, .updateBusinessMember, .updateBusiness, .updateTaskStatus, .updateLeaveStatus, .updateDepartment, .updateSlackWebhook:
             return .put
             
         case .deleteBusinessDocument,
@@ -152,7 +184,8 @@ enum Endpoint {
              .deleteLeave,
              .deleteTask,
              .deleteSchedule,
-             .deleteDepartment
+             .deleteDepartment,
+             .deleteSlackWebhook
             :
             return .delete
         }

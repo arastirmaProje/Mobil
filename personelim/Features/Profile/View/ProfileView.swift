@@ -10,12 +10,15 @@ struct ProfileView: View {
 
     @StateObject private var vm: ProfileViewModel
     @StateObject private var perfVM: ProfilePerformanceViewModel
+    @StateObject private var slackVM: SlackIntegrationViewModel
 
     @State private var showCreateLeave = false
     @State private var showEditPersonalProfile = false
     @State private var showEditCompany = false
+    @State private var showAddSlackIntegration = false
     @State private var showQuery = false
     @State private var selectedReportId: String?
+    @State private var selectedSlackIntegration: SlackIntegration?
     @State private var previewDoc: DocumentToPreview?
     @State private var avatarRefreshToken = UUID()
     
@@ -42,6 +45,12 @@ struct ProfileView: View {
         _perfVM = StateObject(
             wrappedValue: ProfilePerformanceViewModel(
                 getReportsUseCase: getReports
+            )
+        )
+
+        _slackVM = StateObject(
+            wrappedValue: SlackIntegrationViewModel(
+                repository: SlackWebhookRepositoryImpl(network: network)
             )
         )
     }
@@ -78,11 +87,13 @@ struct ProfileView: View {
         .task {
             await vm.loadIfNeeded(appState: appState)
             await loadReportsIfPossible()
+            await loadSlackIfPossible()
             isInitialLoad = false
         }
         .refreshable {
             await vm.reload(appState: appState)
             await loadReportsIfPossible()
+            await loadSlackIfPossible()
         }
         // MARK: - Sheets
         .sheet(isPresented: $showEditPersonalProfile, onDismiss: {
@@ -138,6 +149,28 @@ struct ProfileView: View {
         ) {
             if let rid = selectedReportId {
                 PerformanceReportDetailView(reportId: rid)
+            }
+        }
+        .navigationDestination(isPresented: $showAddSlackIntegration) {
+            if let bid = appState.businessId {
+                SlackIntegrationEditorView(
+                    viewModel: slackVM,
+                    businessId: bid,
+                    integration: nil
+                )
+            } else {
+                loadingSheet()
+            }
+        }
+        .navigationDestination(item: $selectedSlackIntegration) { integration in
+            if let bid = appState.businessId {
+                SlackIntegrationEditorView(
+                    viewModel: slackVM,
+                    businessId: bid,
+                    integration: integration
+                )
+            } else {
+                loadingSheet()
             }
         }
     }
@@ -206,6 +239,12 @@ struct ProfileView: View {
 
             companyDetailsSection(m)
             officesSection(offices: m.offices)
+            SlackIntegrationSection(
+                integrations: slackVM.integrations,
+                isLoading: slackVM.isLoading,
+                onAdd: { showAddSlackIntegration = true },
+                onSelect: { selectedSlackIntegration = $0 }
+            )
 
             Divider()
                 .padding(.vertical, 8)
@@ -431,6 +470,11 @@ struct ProfileView: View {
     private func loadReportsIfPossible() async {
         guard let bid = appState.businessId, let uid = appState.userId else { return }
         await perfVM.load(businessId: bid, employeeUserId: uid)
+    }
+
+    private func loadSlackIfPossible() async {
+        guard appState.role.canSeePersonnelTab, let bid = appState.businessId else { return }
+        await slackVM.load(businessId: bid)
     }
 
     private func openPhone(_ phone: String) {

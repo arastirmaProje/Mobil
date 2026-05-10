@@ -358,6 +358,26 @@ public enum ConstantStrings {
     
     // MARK: - Job Titles
     static let jobTitlesFetchError = "Unvanlar yüklenirken hata oluştu."
+
+    // MARK: - Slack Integration
+    static let slackIntegrationTitle = "Slack Entegrasyonu"
+    static let slackIntegrationFormTitle = "Slack entegrasyon"
+    static let slackAddTitle = "Slack Ekle"
+    static let slackDetailTitle = "Slack Detay"
+    static let slackEditTitle = "Slack Düzenle"
+    static let slackChannelNameLabel = "Kanal adı"
+    static let slackChannelNamePlaceholder = "Slack Kanalı"
+    static let slackWebhookURLLabel = "Webhook url"
+    static let slackWebhookURLPlaceholder = "Genel Kanalının url"
+    static let slackActivityTypesLabel = "Aktivite tipleri"
+    static let slackActivitySubtitle = "Bildirim gönderilecek"
+    static let slackActivityMeeting = "Toplantı"
+    static let slackActivityTask = "Görev"
+    static let slackActivityEvent = "Etkinlik"
+    static let slackEmptyText = "Henüz Slack kanalı eklenmedi."
+    static let slackChannelNameRequired = "Kanal adı boş olamaz."
+    static let slackWebhookURLRequired = "Webhook URL boş olamaz."
+    static let slackActivityTypeRequired = "En az bir aktivite tipi seçmelisin."
     
     // MARK: - Home View
     static let calendarTitle = "Takvim"
