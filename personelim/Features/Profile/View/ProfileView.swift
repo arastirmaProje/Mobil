@@ -16,6 +16,7 @@ struct ProfileView: View {
     @State private var showEditPersonalProfile = false
     @State private var showEditCompany = false
     @State private var showAddSlackIntegration = false
+    @State private var showPremiumSubscription = false
     @State private var showQuery = false
     @State private var selectedReportId: String?
     @State private var selectedSlackIntegration: SlackIntegration?
@@ -69,6 +70,14 @@ struct ProfileView: View {
                     Text(err)
                         .foregroundColor(.red)
                         .padding(.horizontal, 16)
+                }
+
+                if appState.businessId != nil {
+                    PremiumPromotionCard(
+                        isSubscribed: appState.companyDTO?.isSubscribed ?? false,
+                        onTap: { showPremiumSubscription = true }
+                    )
+                    .padding(.horizontal, 16)
                 }
 
                 if let m = vm.managerUI {
@@ -157,6 +166,19 @@ struct ProfileView: View {
                     viewModel: slackVM,
                     businessId: bid,
                     integration: nil
+                )
+            } else {
+                loadingSheet()
+            }
+        }
+        .navigationDestination(isPresented: $showPremiumSubscription) {
+            if let bid = appState.businessId {
+                PremiumSubscriptionView(
+                    businessId: bid,
+                    repository: PremiumSubscriptionRepositoryImpl(network: network),
+                    onSubscriptionChanged: {
+                        Task { await vm.reload(appState: appState) }
+                    }
                 )
             } else {
                 loadingSheet()

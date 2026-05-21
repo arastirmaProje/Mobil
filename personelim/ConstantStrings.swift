@@ -359,6 +359,29 @@ public enum ConstantStrings {
     // MARK: - Job Titles
     static let jobTitlesFetchError = "Unvanlar yüklenirken hata oluştu."
 
+    // MARK: - Premium Subscription
+    static let premiumTitle = "Personelim Premium"
+    static let premiumCardDescription = "Gelişmiş rol ve ekip yönetimi gibi daha birçok özelliğe erişin"
+    static let premiumFeatureAIChatbot = "Kişiye özel AI chatbot desteği"
+    static let premiumFeaturePerformance = "Gelişmiş performans analizleri ve grafikler"
+    static let premiumFeaturePDF = "PDF rapor oluşturma ve paylaşma"
+    static let premiumFeatureCalendar = "Kişisel takvim & iş yükü takibi"
+    static let premiumFeatureRoleManagement = "Gelişmiş rol & ekip yönetimi"
+    static let premiumPlansEmptyTitle = "Henüz paket bulunamadı"
+    static let premiumPlansEmptyDescription = "Paketler yüklendiğinde burada görünecek."
+    static let premiumPurchaseAlertTitle = "Abonelik Satın Al"
+    static let premiumPurchaseAlertMessageFormat = "%@ paketi %@ fiyatıyla aktif edilecek."
+    static let premiumPurchaseButton = "Satın Al"
+    static let premiumSubscribeFailed = "Abonelik başlatılamadı"
+    static let premiumSubscribeSuccess = "Personelim Premium aktif edildi."
+    static let premiumMockBadge = "Sana özel yüzde 50% indirim"
+    static let premiumPlanYearly = "Yıllık"
+    static let premiumPlanMonthly = "Aylık"
+    static let premiumPlanLifetime = "Tek seferlik"
+    static let premiumPlanAllFeatures = "Tüm Premium özellikler"
+    static let premiumPlanLifetimeSubtitle = "Tüm Premium özelliklere ömür boyu sahip ol"
+    static let premiumPlanFallbackTitle = "Premium Paket"
+
     // MARK: - Slack Integration
     static let slackIntegrationTitle = "Slack Entegrasyonu"
     static let slackIntegrationFormTitle = "Slack entegrasyon"

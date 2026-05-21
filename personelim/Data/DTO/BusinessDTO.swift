@@ -28,6 +28,7 @@ struct BusinessDTO: Codable, Identifiable {
 
     let role: String?
     let memberCount: Int?
+    let isSubscribed: Bool?
     let parentBusinessId: String?
     let parentBusinessName: String?
     let isSubBusiness: Bool?

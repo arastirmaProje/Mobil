@@ -18,6 +18,7 @@ enum Endpoint {
     case uploadBusinessDocument(businessId: String)
     case getBusinessDocuments(businessId: String)
     case deleteBusinessDocument(documentId: String)
+    case subscribeBusiness(businessId: String)
     case deleteBusiness(businessId: String)
 
     // MARK: - Business Member
@@ -121,6 +122,7 @@ enum Endpoint {
         case .uploadBusinessDocument(let businessId): return "/api/Business/\(businessId)/documents"
         case .getBusinessDocuments(let businessId): return "/api/Business/\(businessId)/documents"
         case .deleteBusinessDocument(let documentId): return "/api/Business/documents/\(documentId)"
+        case .subscribeBusiness(let businessId): return "/api/Business/\(businessId)/subscribe"
         case .deleteMemberDocument(let documentId): return "/api/BusinessMember/documents/\(documentId)"
         case .deleteBusiness(let businessId): return "/api/Business/\(businessId)"
         case .deleteBusinessMember(let memberId): return "/api/BusinessMember/\(memberId)"
@@ -167,7 +169,7 @@ enum Endpoint {
 
     var method: HTTPMethod {
         switch self {
-        case .login, .register, .forgotPassword, .verifyResetCode, .resetPassword, .verifyBusiness, .createBusiness, .uploadMemberDocuments, .createTask, .createSchedule, .uploadBusinessDocument, .sendInvitation, .performanceQuery, .createShift, .performanceQueryBulkScores, .createLeave, .createDepartment, .addBusinessMember, .updateMemberDocument, .createSlackWebhook:
+        case .login, .register, .forgotPassword, .verifyResetCode, .resetPassword, .verifyBusiness, .createBusiness, .uploadMemberDocuments, .createTask, .createSchedule, .uploadBusinessDocument, .subscribeBusiness, .sendInvitation, .performanceQuery, .createShift, .performanceQueryBulkScores, .createLeave, .createDepartment, .addBusinessMember, .updateMemberDocument, .createSlackWebhook:
             return .post
 
         case .businessMembers, .profile, .getBusiness, .provinces, .districts, .business, .businessList, .getBusinessMember, .downloadDocument, .myTasks, .schedules, .getBusinessDocuments, .performanceReports, .performanceReportDetail, .myShifts, .myLeaves, .businessLeaves, .departments, .jobTitleCategories, .jobCategories, .jobTitlesByDepartment, .slackWebhooks, .slackWebhookEventTypes:
