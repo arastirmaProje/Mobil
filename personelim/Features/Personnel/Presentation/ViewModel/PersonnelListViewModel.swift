@@ -29,7 +29,7 @@ final class PersonnelListViewModel: ObservableObject {
         }
     }
 
-    func runBulkQuery(businessId: String, start: Date, end: Date) async {
+    func runBulkQuery(businessId: String, start: Date, end: Date) async -> Bool {
         bulkError = nil
         isBulkLoading = true
         defer { isBulkLoading = false }
@@ -39,21 +39,53 @@ final class PersonnelListViewModel: ObservableObject {
 
             var dict: [String: Double] = [:]
             for it in items {
-                if let uid = it.userId?.lowercased(),
-                   let sc = it.score {
-                    dict[uid] = sc
+                guard let score = it.score else { continue }
+
+                for key in scoreLookupKeys(for: it) {
+                    dict[key] = score
                 }
             }
 
             self.bulkScoresByUserId = dict
+            return true
 
         } catch {
             bulkError = error.localizedDescription
+            return false
         }
     }
 
     func scoreText(for member: BusinessMemberDTO) -> String? {
-        guard let s = bulkScoresByUserId[member.userId.lowercased()] else { return nil }
+        let score = scoreLookupKeys(for: member).compactMap { bulkScoresByUserId[$0] }.first
+        guard let s = score else { return nil }
         return String(format: "%.0f", s)
+    }
+
+    private func scoreLookupKeys(for item: PerformanceBulkScoreItemDTO) -> [String] {
+        [
+            item.employeeUserId,
+            item.calisanId,
+            item.name.map { "name:\($0)" }
+        ]
+        .compactMap { normalizedScoreKey($0) }
+    }
+
+    private func scoreLookupKeys(for member: BusinessMemberDTO) -> [String] {
+        [
+            member.userId,
+            member.id,
+            "name:\(member.fullName)"
+        ]
+        .compactMap { normalizedScoreKey($0) }
+    }
+
+    private func normalizedScoreKey(_ value: String?) -> String? {
+        guard let value else { return nil }
+
+        let normalized = value
+            .trimmingCharacters(in: .whitespacesAndNewlines)
+            .lowercased()
+
+        return normalized.isEmpty ? nil : normalized
     }
 }

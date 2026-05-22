@@ -303,7 +303,7 @@ public enum ConstantStrings {
     static let addEmployeeTitle = "Çalışan ekle"
     
     // MARK: - Performance Bulk Query
-    static let bulkQueryTitle = "Sorgu"
+    static let bulkQueryTitle = "Toplu Sorgu"
     static let calendarInstruction = "Takvimden bir tarih aralığı seçin."
     static let startDatePrefix = "Başlangıç: "
     static let endDatePrefix = "Bitiş: "

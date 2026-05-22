@@ -6,7 +6,8 @@ final class CreateTaskViewModel: ObservableObject {
     @Published var title: String = ""
     @Published var detail: String = ""
     @Published var activityType: ActivityType = .meeting
-    @Published var selectedDates: Set<DateComponents> = []
+    @Published var startDate: Date?
+    @Published var endDate: Date?
     @Published var selectedAssignees: Set<String> = []
 
     @Published var isLoading: Bool = false
@@ -21,21 +22,21 @@ final class CreateTaskViewModel: ObservableObject {
 
     var isFormValid: Bool {
         !title.trimmingCharacters(in: .whitespaces).isEmpty &&
-        !selectedDates.isEmpty &&
+        startDate != nil &&
+        endDate != nil &&
         (activityType != .task || !selectedAssignees.isEmpty)
     }
 
     func createTask(businessId: String) async -> Bool {
 
-        let dates = selectedDates
-            .compactMap { Calendar.current.date(from: $0) }
-            .sorted()
-
-        guard let startDate = dates.first,
-              let endDate = dates.last else {
+        guard let startDate,
+              let endDate else {
             errorMessage = ConstantStrings.dateRangeNotSelectedError
             return false
         }
+
+        let normalizedStartDate = min(startDate, endDate)
+        let normalizedEndDate = max(startDate, endDate)
 
         isLoading = true
         defer { isLoading = false }
@@ -47,8 +48,8 @@ final class CreateTaskViewModel: ObservableObject {
                         businessId: businessId,
                         title: title,
                         description: detail,
-                        startDate: startDate,
-                        endDate: endDate,
+                        startDate: normalizedStartDate,
+                        endDate: normalizedEndDate,
                         assignedToUserId: userId,
                         activityType: activityType
                     )
@@ -58,8 +59,8 @@ final class CreateTaskViewModel: ObservableObject {
                     businessId: businessId,
                     title: title,
                     description: detail,
-                    startDate: startDate,
-                    endDate: endDate,
+                    startDate: normalizedStartDate,
+                    endDate: normalizedEndDate,
                     assignedToUserId: "",
                     activityType: activityType
                 )

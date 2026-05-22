@@ -124,19 +124,35 @@ private extension CreateTaskView {
     }
 
     var calendarSection: some View {
-        VStack(alignment: .leading, spacing: 12) {
-            MultiDatePicker(
-                ConstantStrings.dateRangeLabel,
-                selection: $vm.selectedDates
+        VStack(spacing: 14) {
+            RangeCalendarCard(
+                startDate: $vm.startDate,
+                endDate: $vm.endDate
             )
-            .labelsHidden()
-            .environment(\.locale, Locale(identifier: "tr_TR"))
+
+            HStack(spacing: 24) {
+                VStack(alignment: .leading) {
+                    Text(ConstantStrings.startTitle)
+                        .font(.caption)
+                        .foregroundColor(.secondary)
+
+                    Text(vm.startDate?.trShortDate() ?? "-")
+                        .font(.body.bold())
+                }
+
+                VStack(alignment: .leading) {
+                    Text(ConstantStrings.endTitle)
+                        .font(.caption)
+                        .foregroundColor(.secondary)
+
+                    Text(vm.endDate?.trShortDate() ?? "-")
+                        .font(.body.bold())
+                }
+
+                Spacer()
+            }
+            .padding(.horizontal)
         }
-        .padding()
-        .background(Color(.systemBackground))
-        .cornerRadius(24)
-        .shadow(color: .black.opacity(0.05), radius: 10, y: 4)
-        .padding(.horizontal)
     }
 
     var taskTitleSection: some View {

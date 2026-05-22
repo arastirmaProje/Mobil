@@ -50,6 +50,7 @@ struct PerformanceBulkQueryView: View {
                         startDate: $startDate,
                         endDate: $endDate
                     )
+                    .disabled(vm.isBulkLoading)
 
                     if let err = vm.bulkError {
                         Text(err)
@@ -73,12 +74,15 @@ struct PerformanceBulkQueryView: View {
                 ToolbarItem(placement: .topBarTrailing) {
                     Button {
                         Task {
-                            await vm.runBulkQuery(businessId: businessId, start: startDate, end: endDate)
-                            onCompleted(startDate, endDate)
-                            dismiss()
+                            guard !vm.isBulkLoading else { return }
+                            let didComplete = await vm.runBulkQuery(businessId: businessId, start: startDate, end: endDate)
+                            if didComplete {
+                                onCompleted(startDate, endDate)
+                                dismiss()
+                            }
                         }
                     } label: {
-                        Image(systemName: vm.isBulkLoading ? "hourglass" : "checkmark")
+                        toolbarSubmitLabel
                     }
                     .disabled(vm.isBulkLoading)
                 }
@@ -100,6 +104,17 @@ struct PerformanceBulkQueryView: View {
                 .foregroundColor(.gray)
         }
         .padding(.top, 2)
+    }
+
+    @ViewBuilder
+    private var toolbarSubmitLabel: some View {
+        if vm.isBulkLoading {
+            ProgressView()
+                .controlSize(.small)
+                .frame(width: 24, height: 24)
+        } else {
+            Image(systemName: "checkmark")
+        }
     }
 }
 
@@ -262,47 +277,5 @@ private struct DayCell: View {
         }
         .frame(height: 34)
         .contentShape(Rectangle())
-    }
-}
-
-// MARK: - Date helpers
-
-private extension Date {
-
-    func stripTime() -> Date {
-        Calendar.current.startOfDay(for: self)
-    }
-
-    func startOfMonth() -> Date {
-        let cal = Calendar.current
-        let comps = cal.dateComponents([.year, .month], from: self)
-        return cal.date(from: comps) ?? self
-    }
-
-    func isSameMonth(as other: Date) -> Bool {
-        let cal = Calendar.current
-        return cal.component(.year, from: self) == cal.component(.year, from: other)
-        && cal.component(.month, from: self) == cal.component(.month, from: other)
-    }
-
-    func isBetweenInclusive(start: Date, end: Date) -> Bool {
-        let d = self.stripTime()
-        let s = start.stripTime()
-        let e = end.stripTime()
-        return d >= min(s, e) && d <= max(s, e)
-    }
-
-    func trShortDate() -> String {
-        let f = DateFormatter()
-        f.locale = Locale(identifier: "tr_TR")
-        f.dateFormat = "d MMM yyyy"
-        return f.string(from: self)
-    }
-
-    func trMonthTitle() -> String {
-        let f = DateFormatter()
-        f.locale = Locale(identifier: "tr_TR")
-        f.dateFormat = "LLLL yyyy"
-        return f.string(from: self).capitalized(with: Locale(identifier: "tr_TR"))
     }
 }
