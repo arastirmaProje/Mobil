@@ -5,7 +5,6 @@
 //  Created by Yusuf Kaan USTA on 25.12.2025.
 //
 
-
 import SwiftUI
 import Foundation
 
@@ -15,6 +14,7 @@ struct PerformanceReportDetailView: View {
     let reportId: String
 
     @StateObject private var vm: PerformanceReportDetailViewModel
+    @State private var animateIn = false
 
     init(reportId: String) {
         self.reportId = reportId
@@ -24,133 +24,241 @@ struct PerformanceReportDetailView: View {
     }
 
     var body: some View {
-        ScrollView(showsIndicators: false) {
-            VStack(alignment: .leading, spacing: 20) {
+        ZStack {
+            Color(.systemGroupedBackground)
+                .ignoresSafeArea()
 
-                if vm.isLoading {
-                    ProgressView()
-                        .frame(maxWidth: .infinity)
-                        .padding(.top, 40)
-                } else if let err = vm.errorMessage {
-                    Text(err)
-                        .foregroundColor(.red)
-                        .padding()
-                } else if let r = vm.report {
-                    scoreHeader(r)
+            ScrollView(showsIndicators: false) {
+                VStack(alignment: .leading, spacing: 18) {
 
-                    textCard(
-                        title: ConstantStrings.summaryTitle,
-                        text: (r.summaryText ?? "-").cleanedMarkdownAndRedactedIDs
-                    )
+                    if vm.isLoading {
+                        loadingView
+                    } else if let err = vm.errorMessage {
+                        errorView(err)
+                    } else if let r = vm.report {
+                        scoreHeader(r)
 
-                    textCard(
-                        title: ConstantStrings.detailTitle,
-                        text: (r.detailText ?? "-").cleanedMarkdownAndRedactedIDs
-                    )
+                        textCard(
+                            icon: "text.alignleft",
+                            title: ConstantStrings.summaryTitle,
+                            text: (r.summaryText ?? "-").cleanedMarkdownAndRedactedIDs
+                        )
+
+                        textCard(
+                            icon: "doc.text.magnifyingglass",
+                            title: ConstantStrings.detailTitle,
+                            text: (r.detailText ?? "-").cleanedMarkdownAndRedactedIDs
+                        )
+                    }
+
+                    Spacer().frame(height: 36)
                 }
-
-                Spacer().frame(height: 40)
+                .padding(.horizontal, 16)
+                .padding(.top, 14)
+                .opacity(animateIn ? 1 : 0)
+                .offset(y: animateIn ? 0 : 14)
             }
-            .padding(.horizontal, 16)
-            .padding(.top, 12)
         }
+        .navigationTitle("Performans Raporu")
         .navigationBarTitleDisplayMode(.inline)
         .navigationBarBackButtonHidden(true)
         .toolbar {
             ToolbarItem(placement: .topBarLeading) {
-                Button { dismiss() } label: {
+                Button {
+                    dismiss()
+                } label: {
                     Image(systemName: "chevron.left")
-                        .fontWeight(.bold)
-                        .foregroundColor(.primary)
+                        .font(.system(size: 16, weight: .bold))
+                        .foregroundStyle(.primary)
+                        .frame(width: 34, height: 34)
+                        .background(
+                            Circle()
+                                .fill(Color(.secondarySystemGroupedBackground))
+                        )
                 }
+                .buttonStyle(.plain)
             }
         }
-        .task { await vm.load(reportId: reportId) }
+        .task {
+            await vm.load(reportId: reportId)
+
+            withAnimation(.easeOut(duration: 0.45)) {
+                animateIn = true
+            }
+        }
     }
 
-    // MARK: - Score Header
-    private func scoreHeader(_ r: PerformanceReportDTO) -> some View {
-        VStack(spacing: 18) {
-            ZStack {
-                Circle()
-                    .stroke(Color.gray.opacity(0.15), lineWidth: 20)
+    // MARK: - Loading
 
-                Circle()
-                    .trim(from: 0, to: CGFloat(r.score ?? 0) / 100)
-                    .stroke(
-                        scoreColor(r.score ?? 0),
-                        style: StrokeStyle(lineWidth: 20, lineCap: .round)
-                    )
-                    .rotationEffect(.degrees(-90))
-                    .animation(.easeOut(duration: 1.2), value: r.score)
+    private var loadingView: some View {
+        VStack(spacing: 14) {
+            ProgressView()
+                .scaleEffect(1.1)
 
-                VStack(spacing: 4) {
-                    Text("\(r.score ?? 0)")
-                        .font(.system(size: 44, weight: .bold))
+            Text("Rapor yükleniyor...")
+                .font(.subheadline.weight(.medium))
+                .foregroundStyle(.secondary)
+        }
+        .frame(maxWidth: .infinity)
+        .padding(.top, 70)
+    }
 
-                    Text(scoreLevel(r.score ?? 0))
-                        .font(.system(size: 14, weight: .medium))
-                        .foregroundColor(scoreColor(r.score ?? 0))
-                }
-            }
-            .frame(width: 180, height: 180)
+    // MARK: - Error
 
-            Text(ConstantStrings.performanceScoreTitle)
-                .font(.system(size: 14, weight: .medium))
-                .foregroundColor(.secondary)
+    private func errorView(_ message: String) -> some View {
+        VStack(spacing: 14) {
+            Image(systemName: "exclamationmark.triangle.fill")
+                .font(.system(size: 38))
+                .foregroundStyle(.orange)
+
+            Text("Rapor yüklenemedi")
+                .font(.headline)
+
+            Text(message)
+                .font(.subheadline)
+                .foregroundStyle(.secondary)
+                .multilineTextAlignment(.center)
         }
         .frame(maxWidth: .infinity)
         .padding(24)
-        .background(
-            RoundedRectangle(cornerRadius: 22)
-                .fill(Color(.systemBackground))
-                .shadow(color: .black.opacity(0.05), radius: 8, y: 4)
-        )
+        .background(cardBackground(cornerRadius: 22))
     }
 
+    // MARK: - Score Header
+
+    private func scoreHeader(_ r: PerformanceReportDTO) -> some View {
+        let score = r.score ?? 0
+
+        return VStack(spacing: 20) {
+
+            HStack {
+                VStack(alignment: .leading, spacing: 6) {
+                    Text(ConstantStrings.performanceScoreTitle)
+                        .font(.title3.weight(.bold))
+
+                    Text(scoreLevel(score))
+                        .font(.subheadline.weight(.semibold))
+                        .foregroundStyle(scoreColor(score))
+                }
+
+                Spacer()
+
+                Text("\(score)/100")
+                    .font(.caption.weight(.bold))
+                    .foregroundStyle(scoreColor(score))
+                    .padding(.horizontal, 12)
+                    .padding(.vertical, 8)
+                    .background(
+                        Capsule()
+                            .fill(scoreColor(score).opacity(0.14))
+                    )
+            }
+
+            ZStack {
+                Circle()
+                    .stroke(Color.gray.opacity(0.14), lineWidth: 18)
+
+                Circle()
+                    .trim(from: 0, to: CGFloat(score) / 100)
+                    .stroke(
+                        scoreColor(score),
+                        style: StrokeStyle(lineWidth: 18, lineCap: .round)
+                    )
+                    .rotationEffect(.degrees(-90))
+                    .animation(.easeOut(duration: 1.1), value: score)
+
+                VStack(spacing: 4) {
+                    Text("\(score)")
+                        .font(.system(size: 48, weight: .bold, design: .rounded))
+
+                    Text(scoreLevel(score))
+                        .font(.system(size: 14, weight: .semibold))
+                        .foregroundStyle(scoreColor(score))
+                }
+            }
+            .frame(width: 178, height: 178)
+            .padding(.vertical, 4)
+
+        }
+        .frame(maxWidth: .infinity)
+        .padding(20)
+        .background(cardBackground(cornerRadius: 26))
+    }
+
+    
+
     // MARK: - Text Cards
-    private func textCard(title: String, text: String) -> some View {
-        VStack(alignment: .leading, spacing: 12) {
-            Text(title)
-                .font(.system(size: 15, weight: .semibold))
-                .foregroundColor(.secondary)
+
+    private func textCard(icon: String, title: String, text: String) -> some View {
+        VStack(alignment: .leading, spacing: 14) {
+
+            HStack(spacing: 10) {
+                Image(systemName: icon)
+                    .font(.system(size: 15, weight: .semibold))
+                    .foregroundStyle(.blue)
+                    .frame(width: 32, height: 32)
+                    .background(
+                        Circle()
+                            .fill(Color.blue.opacity(0.12))
+                    )
+
+                Text(title)
+                    .font(.headline.weight(.semibold))
+
+                Spacer()
+            }
 
             Text(text.isEmpty ? "-" : text)
-                .font(.system(size: 14))
-                .lineSpacing(4)
+                .font(.system(size: 15))
+                .foregroundStyle(.primary)
+                .lineSpacing(5)
                 .multilineTextAlignment(.leading)
                 .fixedSize(horizontal: false, vertical: true)
         }
         .frame(maxWidth: .infinity, alignment: .leading)
-        .padding(16)
-        .background(
-            RoundedRectangle(cornerRadius: 18)
-                .fill(Color(.systemBackground))
-                .shadow(color: .black.opacity(0.03), radius: 6, y: 3)
-        )
+        .padding(18)
+        .background(cardBackground(cornerRadius: 22))
+    }
+
+    // MARK: - Shared Card Background
+
+    private func cardBackground(cornerRadius: CGFloat) -> some View {
+        RoundedRectangle(cornerRadius: cornerRadius, style: .continuous)
+            .fill(Color(.secondarySystemGroupedBackground))
+            .shadow(color: .black.opacity(0.055), radius: 14, x: 0, y: 7)
     }
 }
 
-// MARK: - Score Helpers (Aynı kalıyor)
+// MARK: - Score Helpers
+
 private func scoreLevel(_ s: Int) -> String {
     switch s {
-    case 0..<40: return ConstantStrings.levelPoor
-    case 40..<70: return ConstantStrings.levelAverage
-    case 70..<85: return ConstantStrings.levelGood
-    default: return ConstantStrings.levelExcellent
+    case 0..<40:
+        return ConstantStrings.levelPoor
+    case 40..<70:
+        return ConstantStrings.levelAverage
+    case 70..<85:
+        return ConstantStrings.levelGood
+    default:
+        return ConstantStrings.levelExcellent
     }
 }
 
 private func scoreColor(_ s: Int) -> Color {
     switch s {
-    case 0..<40: return .red
-    case 40..<70: return .orange
-    case 70..<85: return .blue
-    default: return .green
+    case 0..<40:
+        return .red
+    case 40..<70:
+        return .orange
+    case 70..<85:
+        return .blue
+    default:
+        return .green
     }
 }
 
-// MARK: - Extensions (Aynı kalıyor)
+// MARK: - Extensions
+
 private extension String {
     var cleanedMarkdownAndRedactedIDs: String {
         var s = self
@@ -158,29 +266,46 @@ private extension String {
         s = s.replacingOccurrences(of: "\n---\n", with: "\n")
         s = s.replacingOccurrences(of: "---", with: "")
         s = s.replacingOccurrences(of: "\n* ", with: "\n• ")
-        s = s.replacingOccurrences(of: "\n* ", with: "\n• ")
         s = s.replacingOccurrences(of: "\n- ", with: "\n• ")
         s = s.removingLines(containingAnyOf: ["ID:", "Kimliği:", "Identifier:"])
         s = s.replacingUUIDs(with: "")
         s = s.replacingOccurrences(of: "  ", with: " ")
-        while s.contains("\n\n\n") { s = s.replacingOccurrences(of: "\n\n\n", with: "\n\n") }
+
+        while s.contains("\n\n\n") {
+            s = s.replacingOccurrences(of: "\n\n\n", with: "\n\n")
+        }
+
         return s.trimmingCharacters(in: .whitespacesAndNewlines)
     }
 
     private func removingLines(containingAnyOf needles: [String]) -> String {
         let lines = self.components(separatedBy: .newlines)
+
         let filtered = lines.filter { line in
             let trimmed = line.trimmingCharacters(in: .whitespacesAndNewlines)
             guard !trimmed.isEmpty else { return true }
-            return !needles.contains(where: { trimmed.localizedCaseInsensitiveContains($0) })
+
+            return !needles.contains {
+                trimmed.localizedCaseInsensitiveContains($0)
+            }
         }
+
         return filtered.joined(separator: "\n")
     }
 
     private func replacingUUIDs(with replacement: String) -> String {
         let pattern = #"\b[0-9a-fA-F]{8}\-[0-9a-fA-F]{4}\-[0-9a-fA-F]{4}\-[0-9a-fA-F]{4}\-[0-9a-fA-F]{12}\b"#
-        guard let regex = try? NSRegularExpression(pattern: pattern) else { return self }
+
+        guard let regex = try? NSRegularExpression(pattern: pattern) else {
+            return self
+        }
+
         let range = NSRange(self.startIndex..<self.endIndex, in: self)
-        return regex.stringByReplacingMatches(in: self, range: range, withTemplate: replacement)
+
+        return regex.stringByReplacingMatches(
+            in: self,
+            range: range,
+            withTemplate: replacement
+        )
     }
 }

@@ -45,6 +45,7 @@ final class EditPersonalProfileViewModel: ObservableObject {
     }
 
     // MARK: - Load
+
     func load() async {
         isLoading = true
         errorMessage = nil
@@ -57,12 +58,14 @@ final class EditPersonalProfileViewModel: ObservableObject {
             firstName = p.firstName ?? ""
             lastName = p.lastName ?? ""
             remoteImageUrl = p.imageUrl
+
             initialEmail = email
             initialFirstName = firstName
             initialLastName = lastName
             initialRemoteImageUrl = remoteImageUrl
 
             let businesses = try await businessRepo.getBusinesses()
+
             guard let business = businesses.first else {
                 existingCVs = []
                 existingDocuments = []
@@ -72,6 +75,7 @@ final class EditPersonalProfileViewModel: ObservableObject {
             }
 
             let members = try await memberRepo.getMembers(businessId: business.id)
+
             guard let me = members.first(where: { $0.userId.lowercased() == p.id.lowercased() }) else {
                 existingCVs = []
                 existingDocuments = []
@@ -95,8 +99,10 @@ final class EditPersonalProfileViewModel: ObservableObject {
     }
 
     // MARK: - Photo
+
     func onPickPhoto(_ item: PhotosPickerItem?) async {
         guard let item else { return }
+
         do {
             if let data = try await item.loadTransferable(type: Data.self) {
                 photoData = data
@@ -106,11 +112,20 @@ final class EditPersonalProfileViewModel: ObservableObject {
         }
     }
 
-    func setTC(_ value: String) { tcIdentityNumber = value }
-    func setCV(url: URL) { cvURL = url }
-    func setDocument(url: URL) { documentURL = url }
+    func setTC(_ value: String) {
+        tcIdentityNumber = value
+    }
 
-    // MARK: - Save (Company gibi: işlem sonrası reload)
+    func setCV(url: URL) {
+        cvURL = url
+    }
+
+    func setDocument(url: URL) {
+        documentURL = url
+    }
+
+    // MARK: - Save
+
     func save() async throws {
         isLoading = true
         errorMessage = nil
@@ -125,20 +140,25 @@ final class EditPersonalProfileViewModel: ObservableObject {
                 lastName: lastName.trimmed,
                 imageData: photoData
             )
+
             didChangeAnything = true
         }
 
-    
         do {
             let tcUpdated = try await updateTCIdentityIfNeeded()
-            if tcUpdated { didChangeAnything = true }
+
+            if tcUpdated {
+                didChangeAnything = true
+            }
         } catch {
-         
             self.errorMessage = error.localizedDescription
         }
 
         let uploaded = try await uploadSelectedPDFsIfNeeded()
-        if uploaded { didChangeAnything = true }
+
+        if uploaded {
+            didChangeAnything = true
+        }
 
         if didChangeAnything {
             photoData = nil
@@ -151,6 +171,7 @@ final class EditPersonalProfileViewModel: ObservableObject {
     }
 
     // MARK: - Delete account
+
     func deleteMyAccount() async {
         isLoading = true
         errorMessage = nil
@@ -165,6 +186,7 @@ final class EditPersonalProfileViewModel: ObservableObject {
     }
 
     // MARK: - Delete document
+
     func deleteDocument(_ doc: BusinessMemberDocumentDTO) async {
         isDeletingDoc = true
         errorMessage = nil
@@ -204,7 +226,6 @@ final class EditPersonalProfileViewModel: ObservableObject {
         let initial = initialTCIdentityNumber.trimmed
 
         guard tc != initial else { return false }
-
         guard !tc.isEmpty else { return false }
 
         let auth = try await authRepo.getProfile()
@@ -214,23 +235,31 @@ final class EditPersonalProfileViewModel: ObservableObject {
         guard let business = businesses.first else { return false }
 
         let members = try await memberRepo.getMembers(businessId: business.id)
-        guard let me = members.first(where: { $0.userId.lowercased() == myUserId.lowercased() }) else { return false }
+
+        guard let me = members.first(where: { $0.userId.lowercased() == myUserId.lowercased() }) else {
+            return false
+        }
 
         let req = UpdateBusinessMemberRequestDTO(
-            role: nil,
-            position: nil,
-            salary: nil,
+            role: me.role.apiIntValue,
+            positionId: me.positionId,
+            salary: me.salary,
             tcIdentityNumber: tc
         )
 
-        try await memberRepo.updateMember(memberId: me.id, request: req)
+        try await memberRepo.updateMember(
+            memberId: me.id,
+            request: req
+        )
 
         initialTCIdentityNumber = tc
         return true
     }
 
     private func uploadSelectedPDFsIfNeeded() async throws -> Bool {
-        if cvURL == nil && documentURL == nil { return false }
+        if cvURL == nil && documentURL == nil {
+            return false
+        }
 
         let auth = try await authRepo.getProfile()
         let myUserId = auth.id
@@ -239,29 +268,36 @@ final class EditPersonalProfileViewModel: ObservableObject {
         guard let business = businesses.first else { return false }
 
         let members = try await memberRepo.getMembers(businessId: business.id)
-        guard let me = members.first(where: { $0.userId.lowercased() == myUserId.lowercased() }) else { return false }
+
+        guard let me = members.first(where: { $0.userId.lowercased() == myUserId.lowercased() }) else {
+            return false
+        }
 
         var didUpload = false
 
         if let url = cvURL {
             let data = try readFileData(url: url)
+
             _ = try await memberRepo.uploadDocument(
                 memberId: me.id,
                 documentType: "CV",
                 fileData: data,
                 fileName: url.lastPathComponent.isEmpty ? "cv.pdf" : url.lastPathComponent
             )
+
             didUpload = true
         }
 
         if let url = documentURL {
             let data = try readFileData(url: url)
+
             _ = try await memberRepo.uploadDocument(
                 memberId: me.id,
                 documentType: "DOCUMENT",
                 fileData: data,
                 fileName: url.lastPathComponent.isEmpty ? "document.pdf" : url.lastPathComponent
             )
+
             didUpload = true
         }
 
@@ -270,12 +306,21 @@ final class EditPersonalProfileViewModel: ObservableObject {
 
     private func readFileData(url: URL) throws -> Data {
         let needsSecurity = url.startAccessingSecurityScopedResource()
-        defer { if needsSecurity { url.stopAccessingSecurityScopedResource() } }
+
+        defer {
+            if needsSecurity {
+                url.stopAccessingSecurityScopedResource()
+            }
+        }
+
         return try Data(contentsOf: url)
     }
 }
 
-// MARK: - String helper
+// MARK: - String Helper
+
 private extension String {
-    var trimmed: String { trimmingCharacters(in: .whitespacesAndNewlines) }
+    var trimmed: String {
+        trimmingCharacters(in: .whitespacesAndNewlines)
+    }
 }

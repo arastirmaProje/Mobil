@@ -1,85 +1,182 @@
-//
-//  SlackIntegrationViews.swift
-//  personelim
-//
-//  Created by Tuğberk Acabey on 06.05.2026.
-//
-
 import SwiftUI
 
 struct SlackIntegrationSection: View {
+
     let integrations: [SlackIntegration]
     let isLoading: Bool
     let onAdd: () -> Void
     let onSelect: (SlackIntegration) -> Void
 
     var body: some View {
-        VStack(alignment: .leading, spacing: 10) {
-            HStack {
-                Text(ConstantStrings.slackIntegrationTitle)
-                    .font(.system(size: 18, weight: .semibold))
-
-                Spacer()
-
-                Button(ConstantStrings.addButton, action: onAdd)
-                    .font(.system(size: 13, weight: .medium))
-                    .foregroundStyle(.blue)
-                    .buttonStyle(.plain)
-            }
+        VStack(alignment: .leading, spacing: 12) {
+            header
 
             if isLoading {
-                ProgressView()
-                    .padding(.vertical, 12)
-                    .frame(maxWidth: .infinity)
+                loadingCard
             } else if integrations.isEmpty {
-                Text(ConstantStrings.slackEmptyText)
-                    .font(.system(size: 14))
-                    .foregroundStyle(.secondary)
-                    .padding(14)
-                    .frame(maxWidth: .infinity, alignment: .leading)
-                    .background(Color(.systemGray6))
-                    .clipShape(RoundedRectangle(cornerRadius: 8))
+                emptyCard
             } else {
-                VStack(spacing: 8) {
-                    ForEach(integrations) { integration in
-                        Button {
-                            onSelect(integration)
-                        } label: {
-                            SlackIntegrationCard(title: integration.label)
-                        }
-                        .buttonStyle(.plain)
-                    }
-                }
+                integrationsList
             }
         }
         .padding(.top, 6)
     }
-}
 
-private struct SlackIntegrationCard: View {
-    let title: String
+    private var header: some View {
+        HStack(alignment: .center, spacing: 12) {
+            VStack(alignment: .leading, spacing: 4) {
+                Text(ConstantStrings.slackIntegrationTitle)
+                    .font(.system(size: 21, weight: .bold))
+                    .foregroundStyle(.primary)
 
-    var body: some View {
-        HStack(spacing: 12) {
-            Text(title)
-                .font(.system(size: 15, weight: .semibold))
-                .foregroundStyle(.primary)
-                .lineLimit(1)
+                Text("Slack bildirim bağlantılarını yönet")
+                    .font(.caption)
+                    .foregroundStyle(.secondary)
+            }
 
             Spacer()
 
-            Circle()
-                .fill(Color(.systemGray3))
-                .frame(width: 12, height: 12)
+            Button(action: onAdd) {
+                Label(ConstantStrings.addButton, systemImage: "plus")
+                    .font(.caption.weight(.semibold))
+                    .foregroundStyle(.blue)
+                    .padding(.horizontal, 12)
+                    .padding(.vertical, 8)
+                    .background(
+                        Capsule()
+                            .fill(Color.blue.opacity(0.10))
+                    )
+            }
+            .buttonStyle(.plain)
         }
-        .padding(.horizontal, 14)
-        .frame(height: 44)
-        .background(Color(.systemGray6))
-        .clipShape(RoundedRectangle(cornerRadius: 8))
+    }
+
+    private var loadingCard: some View {
+        HStack(spacing: 12) {
+            ProgressView()
+
+            Text("Slack entegrasyonları yükleniyor...")
+                .font(.subheadline)
+                .foregroundStyle(.secondary)
+
+            Spacer()
+        }
+        .padding(14)
+        .background(Color(.systemBackground))
+        .clipShape(RoundedRectangle(cornerRadius: 18, style: .continuous))
+        .overlay(
+            RoundedRectangle(cornerRadius: 18, style: .continuous)
+                .stroke(Color.black.opacity(0.06), lineWidth: 1)
+        )
+    }
+
+    private var emptyCard: some View {
+        HStack(spacing: 13) {
+            iconBox(systemName: "bubble.left.and.bubble.right.fill")
+
+            VStack(alignment: .leading, spacing: 4) {
+                Text(ConstantStrings.slackEmptyText)
+                    .font(.system(size: 15, weight: .semibold))
+                    .foregroundStyle(.primary)
+
+                Text("Yeni Slack webhook bağlantısı ekleyebilirsin.")
+                    .font(.caption)
+                    .foregroundStyle(.secondary)
+            }
+
+            Spacer()
+        }
+        .padding(14)
+        .background(Color(.systemBackground))
+        .clipShape(RoundedRectangle(cornerRadius: 18, style: .continuous))
+        .overlay(
+            RoundedRectangle(cornerRadius: 18, style: .continuous)
+                .stroke(Color.black.opacity(0.06), lineWidth: 1)
+        )
+    }
+
+    private var integrationsList: some View {
+        VStack(spacing: 0) {
+            ForEach(integrations) { integration in
+                Button {
+                    onSelect(integration)
+                } label: {
+                    SlackIntegrationCard(title: integration.label)
+                }
+                .buttonStyle(.plain)
+
+                if integration.id != integrations.last?.id {
+                    Divider()
+                        .padding(.leading, 62)
+                }
+            }
+        }
+        .background(Color(.systemBackground))
+        .clipShape(RoundedRectangle(cornerRadius: 18, style: .continuous))
+        .overlay(
+            RoundedRectangle(cornerRadius: 18, style: .continuous)
+                .stroke(Color.black.opacity(0.06), lineWidth: 1)
+        )
+    }
+
+    private func iconBox(systemName: String) -> some View {
+        ZStack {
+            Circle()
+                .fill(Color.blue.opacity(0.10))
+
+            Image(systemName: systemName)
+                .font(.system(size: 17, weight: .semibold))
+                .foregroundStyle(.blue)
+        }
+        .frame(width: 42, height: 42)
     }
 }
 
+// MARK: - Slack Integration Card
+
+private struct SlackIntegrationCard: View {
+
+    let title: String
+
+    var body: some View {
+        HStack(spacing: 13) {
+            ZStack {
+                Circle()
+                    .fill(Color.blue.opacity(0.10))
+
+                Image(systemName: "number")
+                    .font(.system(size: 16, weight: .semibold))
+                    .foregroundStyle(.blue)
+            }
+            .frame(width: 42, height: 42)
+
+            VStack(alignment: .leading, spacing: 4) {
+                Text(title)
+                    .font(.system(size: 15, weight: .bold))
+                    .foregroundStyle(.primary)
+                    .lineLimit(1)
+
+                Text("Slack webhook entegrasyonu")
+                    .font(.caption)
+                    .foregroundStyle(.secondary)
+            }
+
+            Spacer()
+
+            Image(systemName: "chevron.right")
+                .font(.system(size: 12, weight: .semibold))
+                .foregroundStyle(.secondary)
+        }
+        .padding(.horizontal, 14)
+        .padding(.vertical, 13)
+        .background(Color(.systemBackground))
+    }
+}
+
+// MARK: - Slack Integration Editor
+
 struct SlackIntegrationEditorView: View {
+
     @ObservedObject var viewModel: SlackIntegrationViewModel
 
     let businessId: String
@@ -94,7 +191,17 @@ struct SlackIntegrationEditorView: View {
     @State private var isEditing: Bool
     @State private var showError = false
 
-    private var isAdding: Bool { integration == nil }
+    private var isAdding: Bool {
+        integration == nil
+    }
+
+    private var canSave: Bool {
+        isEditing &&
+        !viewModel.isLoading &&
+        !trimmed(label).isEmpty &&
+        !trimmed(webhookUrl).isEmpty &&
+        !selectedTypes.isEmpty
+    }
 
     init(
         viewModel: SlackIntegrationViewModel,
@@ -113,60 +220,65 @@ struct SlackIntegrationEditorView: View {
     }
 
     var body: some View {
-        ScrollView(showsIndicators: false) {
-            VStack(alignment: .leading, spacing: 14) {
-                Text(ConstantStrings.slackIntegrationFormTitle)
-                    .font(.system(size: 20, weight: .semibold))
-                    .padding(.top, 8)
+        NavigationStack {
+            ZStack(alignment: .bottom) {
+                Color(.systemBackground)
+                    .ignoresSafeArea()
 
-                formField(
-                    title: ConstantStrings.slackChannelNameLabel,
-                    placeholder: ConstantStrings.slackChannelNamePlaceholder,
-                    text: $label,
-                    keyboardType: .default
-                )
+                ScrollView(showsIndicators: false) {
+                    VStack(spacing: 16) {
+                        headerSection
 
-                formField(
-                    title: ConstantStrings.slackWebhookURLLabel,
-                    placeholder: ConstantStrings.slackWebhookURLPlaceholder,
-                    text: $webhookUrl,
-                    keyboardType: .URL
-                )
+                        formSection
 
-                VStack(alignment: .leading, spacing: 8) {
-                    Text(ConstantStrings.slackActivityTypesLabel)
-                        .font(.system(size: 13, weight: .medium))
+                        activityTypesSection
 
-                    ForEach(SlackActivityType.allCases) { type in
-                        activityRow(type)
+                        if viewModel.isLoading {
+                            loadingCard
+                        }
+
+                        Spacer(minLength: 100)
+                    }
+                    .padding(.horizontal, 18)
+                    .padding(.top, 14)
+                    .padding(.bottom, 28)
+                }
+
+                bottomActionButton
+            }
+            .navigationTitle(navigationTitle)
+            .navigationBarTitleDisplayMode(.inline)
+            .navigationBarBackButtonHidden(true)
+            .toolbar {
+                ToolbarItem(placement: .topBarLeading) {
+                    Button {
+                        dismiss()
+                    } label: {
+                        Image(systemName: "chevron.left")
+                            .font(.system(size: 16, weight: .semibold))
                     }
                 }
 
-                Spacer(minLength: 24)
-            }
-            .padding(.horizontal, 18)
-            .padding(.bottom, 28)
-        }
-        .background(Color.white.ignoresSafeArea())
-        .navigationTitle(navigationTitle)
-        .navigationBarTitleDisplayMode(.inline)
-        .navigationBarBackButtonHidden(true)
-        .toolbar {
-            ToolbarItem(placement: .topBarLeading) {
-                Button {
-                    dismiss()
-                } label: {
-                    Image(systemName: "chevron.left")
-                        .font(.system(size: 15, weight: .semibold))
-                        .foregroundStyle(.primary)
-                        .frame(width: 34, height: 34)
-                        .background(Color(.systemGray6))
-                        .clipShape(Circle())
+                if !isEditing {
+                    ToolbarItem(placement: .topBarTrailing) {
+                        Button {
+                            withAnimation(.spring(response: 0.3, dampingFraction: 0.85)) {
+                                isEditing = true
+                            }
+                        } label: {
+                            Text(ConstantStrings.editButton)
+                                .font(.caption.weight(.semibold))
+                                .foregroundStyle(.blue)
+                                .padding(.horizontal, 12)
+                                .padding(.vertical, 8)
+                                .background(
+                                    Capsule()
+                                        .fill(Color.blue.opacity(0.10))
+                                )
+                        }
+                        .buttonStyle(.plain)
+                    }
                 }
-            }
-
-            ToolbarItem(placement: .topBarTrailing) {
-                trailingButton
             }
         }
         .alert(ConstantStrings.errorTitle, isPresented: $showError) {
@@ -183,90 +295,283 @@ struct SlackIntegrationEditorView: View {
         if isAdding {
             return ConstantStrings.slackAddTitle
         }
-        return isEditing ? ConstantStrings.slackEditTitle : ConstantStrings.slackDetailTitle
+
+        return isEditing
+            ? ConstantStrings.slackEditTitle
+            : ConstantStrings.slackDetailTitle
+    }
+}
+
+// MARK: - Editor Sections
+
+private extension SlackIntegrationEditorView {
+
+    var headerSection: some View {
+        HStack(spacing: 14) {
+            ZStack {
+                Circle()
+                    .fill(Color.blue.opacity(0.10))
+
+                Image(systemName: "bubble.left.and.bubble.right.fill")
+                    .font(.system(size: 24, weight: .semibold))
+                    .foregroundStyle(.blue)
+            }
+            .frame(width: 56, height: 56)
+
+            VStack(alignment: .leading, spacing: 5) {
+                Text(ConstantStrings.slackIntegrationFormTitle)
+                    .font(.system(size: 24, weight: .bold))
+                    .foregroundStyle(.primary)
+                    .lineLimit(1)
+
+                Text(isEditing ? "Webhook bilgilerini düzenle." : "Entegrasyon detaylarını görüntüle.")
+                    .font(.subheadline)
+                    .foregroundStyle(.secondary)
+                    .lineLimit(2)
+            }
+
+            Spacer()
+        }
+        .padding(16)
+        .background(Color(.systemBackground))
+        .clipShape(RoundedRectangle(cornerRadius: 24, style: .continuous))
+        .overlay(
+            RoundedRectangle(cornerRadius: 24, style: .continuous)
+                .stroke(Color.black.opacity(0.06), lineWidth: 1)
+        )
     }
 
-    @ViewBuilder
-    private var trailingButton: some View {
-        if isEditing {
-            Button {
-                Task { await save() }
-            } label: {
-                Image(systemName: "checkmark")
-                    .font(.system(size: 15, weight: .semibold))
-                    .foregroundStyle(.primary)
-                    .frame(width: 34, height: 34)
-                    .background(Color(.systemGray6))
-                    .clipShape(Circle())
-            }
-            .disabled(viewModel.isLoading)
-        } else {
-            Button(ConstantStrings.editButton) {
-                isEditing = true
-            }
-            .font(.system(size: 12, weight: .semibold))
-            .foregroundStyle(.white)
-            .padding(.horizontal, 12)
-            .padding(.vertical, 7)
-            .background(Color.blue)
-            .clipShape(Capsule())
+    var formSection: some View {
+        sectionCard(title: "Webhook Bilgileri") {
+            formField(
+                title: ConstantStrings.slackChannelNameLabel,
+                placeholder: ConstantStrings.slackChannelNamePlaceholder,
+                text: $label,
+                icon: "number",
+                keyboardType: .default
+            )
+
+            formField(
+                title: ConstantStrings.slackWebhookURLLabel,
+                placeholder: ConstantStrings.slackWebhookURLPlaceholder,
+                text: $webhookUrl,
+                icon: "link",
+                keyboardType: .URL
+            )
         }
     }
 
-    private func formField(
+    var activityTypesSection: some View {
+        sectionCard(title: ConstantStrings.slackActivityTypesLabel) {
+            VStack(spacing: 0) {
+                ForEach(SlackActivityType.allCases) { type in
+                    activityRow(type)
+
+                    if type.id != SlackActivityType.allCases.last?.id {
+                        Divider()
+                            .padding(.leading, 58)
+                    }
+                }
+            }
+        }
+    }
+
+    var loadingCard: some View {
+        HStack(spacing: 12) {
+            ProgressView()
+
+            Text("İşlem yapılıyor...")
+                .font(.subheadline)
+                .foregroundStyle(.secondary)
+
+            Spacer()
+        }
+        .padding(14)
+        .background(Color(.systemBackground))
+        .clipShape(RoundedRectangle(cornerRadius: 18, style: .continuous))
+        .overlay(
+            RoundedRectangle(cornerRadius: 18, style: .continuous)
+                .stroke(Color.black.opacity(0.06), lineWidth: 1)
+        )
+    }
+
+    var bottomActionButton: some View {
+        VStack(spacing: 0) {
+            Divider()
+
+            Button {
+                if isEditing {
+                    Task {
+                        await save()
+                    }
+                } else {
+                    withAnimation(.spring(response: 0.3, dampingFraction: 0.85)) {
+                        isEditing = true
+                    }
+                }
+            } label: {
+                HStack(spacing: 8) {
+                    if viewModel.isLoading {
+                        ProgressView()
+                            .tint(.white)
+                    } else {
+                        Image(systemName: isEditing ? "checkmark.circle.fill" : "square.and.pencil")
+                    }
+
+                    Text(bottomButtonTitle)
+                        .font(.headline)
+                }
+                .foregroundStyle(.white)
+                .frame(maxWidth: .infinity)
+                .frame(height: 54)
+                .background(bottomButtonColor)
+                .clipShape(RoundedRectangle(cornerRadius: 16, style: .continuous))
+            }
+            .buttonStyle(.plain)
+            .disabled(isEditing && !canSave)
+            .padding(.horizontal, 18)
+            .padding(.top, 12)
+            .padding(.bottom, 12)
+            .background(.regularMaterial)
+        }
+    }
+
+    var bottomButtonTitle: String {
+        if viewModel.isLoading {
+            return "Kaydediliyor..."
+        }
+
+        return isEditing
+            ? "Kaydet"
+            : ConstantStrings.editButton
+    }
+
+    var bottomButtonColor: Color {
+        if isEditing {
+            return canSave ? .blue : .gray
+        }
+
+        return .blue
+    }
+}
+
+// MARK: - Editor UI Helpers
+
+private extension SlackIntegrationEditorView {
+
+    func formField(
         title: String,
         placeholder: String,
         text: Binding<String>,
+        icon: String,
         keyboardType: UIKeyboardType
     ) -> some View {
-        VStack(alignment: .leading, spacing: 6) {
-            Text(title)
-                .font(.system(size: 13, weight: .medium))
+        HStack(spacing: 12) {
+            Image(systemName: icon)
+                .font(.system(size: 16, weight: .semibold))
+                .foregroundStyle(.blue)
+                .frame(width: 32, height: 32)
 
-            TextField(placeholder, text: text)
-                .font(.system(size: 13))
-                .keyboardType(keyboardType)
-                .textInputAutocapitalization(.never)
-                .autocorrectionDisabled()
-                .disabled(!isEditing || viewModel.isLoading)
-                .padding(.horizontal, 12)
-                .frame(height: 38)
-                .background(Color(.systemGray6))
-                .clipShape(RoundedRectangle(cornerRadius: 7))
+            VStack(alignment: .leading, spacing: 5) {
+                Text(title)
+                    .font(.caption.weight(.semibold))
+                    .foregroundStyle(.secondary)
+
+                TextField(placeholder, text: text)
+                    .font(.system(size: 15, weight: .medium))
+                    .keyboardType(keyboardType)
+                    .textInputAutocapitalization(.never)
+                    .autocorrectionDisabled()
+                    .disabled(!isEditing || viewModel.isLoading)
+                    .foregroundStyle(isEditing ? .primary : .secondary)
+            }
         }
+        .formRowBackground()
     }
 
-    private func activityRow(_ type: SlackActivityType) -> some View {
+    func activityRow(_ type: SlackActivityType) -> some View {
         Button {
             guard isEditing, !viewModel.isLoading else { return }
-            toggle(type)
+
+            withAnimation(.spring(response: 0.28, dampingFraction: 0.85)) {
+                toggle(type)
+            }
         } label: {
             HStack(spacing: 12) {
-                VStack(alignment: .leading, spacing: 4) {
+                ZStack {
+                    Circle()
+                        .fill(isSelected(type) ? Color.green.opacity(0.12) : Color(.systemGray6))
+
+                    Image(systemName: isSelected(type) ? "bell.fill" : "bell.slash.fill")
+                        .font(.system(size: 15, weight: .semibold))
+                        .foregroundStyle(isSelected(type) ? .green : .secondary)
+                }
+                .frame(width: 38, height: 38)
+
+                VStack(alignment: .leading, spacing: 3) {
                     Text(type.title)
-                        .font(.system(size: 14, weight: .medium))
+                        .font(.system(size: 15, weight: .semibold))
                         .foregroundStyle(.primary)
 
                     Text(ConstantStrings.slackActivitySubtitle)
-                        .font(.system(size: 11))
+                        .font(.caption)
                         .foregroundStyle(.secondary)
+                        .lineLimit(1)
                 }
 
                 Spacer()
 
-                Circle()
-                    .fill(selectedTypes.contains(type) ? Color.green : Color(.systemGray4))
-                    .frame(width: 12, height: 12)
+                if isSelected(type) {
+                    Image(systemName: "checkmark.circle.fill")
+                        .font(.system(size: 21, weight: .semibold))
+                        .foregroundStyle(.green)
+                } else {
+                    Circle()
+                        .stroke(Color.black.opacity(0.14), lineWidth: 1.4)
+                        .frame(width: 21, height: 21)
+                }
             }
-            .padding(.horizontal, 12)
-            .frame(height: 54)
-            .background(Color(.systemGray6))
-            .clipShape(RoundedRectangle(cornerRadius: 8))
+            .padding(.horizontal, 14)
+            .padding(.vertical, 13)
+            .background(
+                isSelected(type)
+                ? Color.green.opacity(0.035)
+                : Color(.systemBackground)
+            )
+            .contentShape(Rectangle())
         }
         .buttonStyle(.plain)
+        .disabled(!isEditing || viewModel.isLoading)
+        .opacity((!isEditing || viewModel.isLoading) ? 0.72 : 1)
     }
 
-    private func toggle(_ type: SlackActivityType) {
+    func sectionCard<Content: View>(
+        title: String,
+        @ViewBuilder content: () -> Content
+    ) -> some View {
+        VStack(alignment: .leading, spacing: 10) {
+            Text(title)
+                .font(.system(size: 17, weight: .bold))
+                .foregroundStyle(.primary)
+                .padding(.horizontal, 2)
+
+            VStack(spacing: 0) {
+                content()
+            }
+            .background(Color(.systemBackground))
+            .clipShape(RoundedRectangle(cornerRadius: 18, style: .continuous))
+            .overlay(
+                RoundedRectangle(cornerRadius: 18, style: .continuous)
+                    .stroke(Color.black.opacity(0.06), lineWidth: 1)
+            )
+        }
+    }
+
+    func isSelected(_ type: SlackActivityType) -> Bool {
+        selectedTypes.contains(type)
+    }
+
+    func toggle(_ type: SlackActivityType) {
         if selectedTypes.contains(type) {
             selectedTypes.remove(type)
         } else {
@@ -274,8 +579,11 @@ struct SlackIntegrationEditorView: View {
         }
     }
 
-    private func save() async {
-        let orderedTypes = SlackActivityType.allCases.filter { selectedTypes.contains($0) }
+    func save() async {
+        let orderedTypes = SlackActivityType.allCases.filter {
+            selectedTypes.contains($0)
+        }
+
         let success: Bool
 
         if let integrationToUpdate = currentIntegration {
@@ -305,18 +613,37 @@ struct SlackIntegrationEditorView: View {
         }
     }
 
-    private func refreshCurrentIntegration() {
+    func refreshCurrentIntegration() {
         guard let oldIntegration = currentIntegration else { return }
 
         let oldRecordIds = Set(oldIntegration.records.map(\.id))
+
         currentIntegration = viewModel.integrations.first { candidate in
             candidate.records.contains { oldRecordIds.contains($0.id) }
         } ?? viewModel.integrations.first { candidate in
-            candidate.label == trimmed(label) && candidate.webhookUrl == trimmed(webhookUrl)
+            candidate.label == trimmed(label) &&
+            candidate.webhookUrl == trimmed(webhookUrl)
         }
     }
 
-    private func trimmed(_ value: String) -> String {
+    func trimmed(_ value: String) -> String {
         value.trimmingCharacters(in: .whitespacesAndNewlines)
+    }
+}
+
+// MARK: - Row Background
+
+private extension View {
+    func formRowBackground() -> some View {
+        self
+            .padding(.horizontal, 14)
+            .padding(.vertical, 12)
+            .background(Color(.systemBackground))
+            .overlay(alignment: .bottom) {
+                Rectangle()
+                    .fill(Color.black.opacity(0.055))
+                    .frame(height: 0.7)
+                    .padding(.leading, 58)
+            }
     }
 }

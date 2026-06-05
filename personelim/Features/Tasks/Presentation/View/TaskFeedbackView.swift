@@ -1,26 +1,23 @@
-//
-//  TaskFeedbackView.swift
-//  personelim
-//
-//  Created by Tuğberk Acabey on 19.12.2025.
-//
-
 import SwiftUI
 
 struct TaskFeedbackView: View {
 
     // MARK: - State
+
     @StateObject private var vm: TaskFeedbackViewModel
     @EnvironmentObject private var appState: AppState
     @Environment(\.dismiss) private var dismiss
 
     // MARK: - Init
+
     init(task: TaskEntity, finalStatus: String) {
         let network = NetworkManager()
+
         let updateStatusUseCase = UpdateActivityStatusUseCase(
             taskRepository: TaskRepositoryImpl(network: network),
             scheduleRepository: ScheduleRepositoryImpl(network: network)
         )
+
         _vm = StateObject(
             wrappedValue: TaskFeedbackViewModel(
                 taskId: task.id,
@@ -32,18 +29,32 @@ struct TaskFeedbackView: View {
     }
 
     // MARK: - Body
+
     var body: some View {
         NavigationStack {
-            ScrollView {
-                VStack(spacing: 24) {
-                    headerSection
-                    feedbackSection
-                    difficultySection
+            ZStack(alignment: .bottom) {
+                Color(.systemBackground)
+                    .ignoresSafeArea()
 
-                    Spacer(minLength: 40)
+                ScrollView(showsIndicators: false) {
+                    VStack(spacing: 16) {
+                        headerSection
+
+                        feedbackSection
+
+                        difficultySection
+
+                        Spacer(minLength: 100)
+                    }
+                    .padding(.horizontal, 18)
+                    .padding(.top, 14)
+                    .padding(.bottom, 28)
                 }
-                .padding(.bottom, 32)
+
+                bottomSubmitButton
             }
+            .navigationTitle("Geri Bildirim")
+            .navigationBarTitleDisplayMode(.inline)
             .navigationBarBackButtonHidden(true)
             .toolbar {
                 ToolbarItem(placement: .topBarLeading) {
@@ -51,24 +62,8 @@ struct TaskFeedbackView: View {
                         dismiss()
                     } label: {
                         Image(systemName: "chevron.left")
+                            .font(.system(size: 16, weight: .semibold))
                     }
-                }
-
-                ToolbarItem(placement: .topBarTrailing) {
-                    Button {
-                        Task {
-                            let success = await vm.submit()
-                            if success {
-                                appState.signalActivitiesChanged()
-                                dismiss()
-                            }
-                        }
-                    } label: {
-                        Image(systemName: "checkmark")
-                            .foregroundStyle(vm.isValid ? .primary : .secondary)
-                            .font(.headline)
-                    }
-                    .disabled(!vm.isValid || vm.isSaving)
                 }
             }
         }
@@ -87,57 +82,246 @@ struct TaskFeedbackView: View {
 }
 
 // MARK: - Sections
+
 private extension TaskFeedbackView {
 
     var headerSection: some View {
-        VStack(alignment: .leading, spacing: 6) {
-            Text(ConstantStrings.feedbackTitle)
-                .font(.title.bold())
+        VStack(alignment: .leading, spacing: 14) {
+            HStack(spacing: 14) {
+                ZStack {
+                    Circle()
+                        .fill(Color.blue.opacity(0.10))
 
-            Text(ConstantStrings.feedbackSubtitle)
-                .font(.subheadline)
-                .foregroundColor(.secondary)
+                    Image(systemName: "bubble.left.and.text.bubble.right.fill")
+                        .font(.system(size: 24, weight: .semibold))
+                        .foregroundStyle(.blue)
+                }
+                .frame(width: 56, height: 56)
+
+                VStack(alignment: .leading, spacing: 5) {
+                    Text(ConstantStrings.feedbackTitle)
+                        .font(.system(size: 24, weight: .bold))
+                        .foregroundStyle(.primary)
+
+                    Text(ConstantStrings.feedbackSubtitle)
+                        .font(.subheadline)
+                        .foregroundStyle(.secondary)
+                        .lineLimit(2)
+                }
+
+                Spacer()
+            }
         }
-        .frame(maxWidth: .infinity, alignment: .leading)
-        .padding(.horizontal)
+        .padding(16)
+        .background(Color(.systemBackground))
+        .clipShape(RoundedRectangle(cornerRadius: 24, style: .continuous))
+        .overlay(
+            RoundedRectangle(cornerRadius: 24, style: .continuous)
+                .stroke(Color.black.opacity(0.06), lineWidth: 1)
+        )
     }
 
     var feedbackSection: some View {
-        VStack(alignment: .leading, spacing: 8) {
-            Text(ConstantStrings.feedbackThoughtsLabel)
-                .font(.headline)
+        sectionCard(title: ConstantStrings.feedbackThoughtsLabel) {
+            VStack(alignment: .leading, spacing: 8) {
+                TextEditor(text: $vm.feedbackText)
+                    .font(.system(size: 15, weight: .medium))
+                    .frame(height: 150)
+                    .scrollContentBackground(.hidden)
+                    .padding(10)
+                    .background(Color(.systemBackground))
+                    .overlay(
+                        RoundedRectangle(cornerRadius: 16, style: .continuous)
+                            .stroke(Color.black.opacity(0.06), lineWidth: 1)
+                    )
+                    .clipShape(RoundedRectangle(cornerRadius: 16, style: .continuous))
 
-            TextEditor(text: $vm.feedbackText)
-                .frame(height: 140)
-                .padding(8)
-                .background(Color(.systemGray6))
-                .cornerRadius(12)
+                Text("\(vm.feedbackText.count) karakter")
+                    .font(.caption)
+                    .foregroundStyle(.secondary)
+                    .frame(maxWidth: .infinity, alignment: .trailing)
+            }
+            .padding(14)
+            .background(Color(.systemBackground))
         }
-        .padding(.horizontal)
     }
 
     var difficultySection: some View {
-        VStack(alignment: .leading, spacing: 8) {
-            Text(ConstantStrings.feedbackLevelLabel)
-                .font(.headline)
+        sectionCard(title: ConstantStrings.feedbackLevelLabel) {
+            VStack(alignment: .leading, spacing: 16) {
+                HStack(spacing: 12) {
+                    difficultyIcon
 
-            Slider(
-                value: Binding(
-                    get: { Double(vm.difficulty) },
-                    set: { vm.difficulty = Int($0) }
-                ),
-                in: 1...5,
-                step: 1
-            )
+                    VStack(alignment: .leading, spacing: 4) {
+                        Text(difficultyTitle)
+                            .font(.system(size: 17, weight: .bold))
+                            .foregroundStyle(difficultyColor)
 
-            HStack {
-                Text(ConstantStrings.feedbackVeryEasy)
-                Spacer()
-                Text(ConstantStrings.feedbackVeryHard)
+                        Text("Seviye \(vm.difficulty) / 5")
+                            .font(.caption)
+                            .foregroundStyle(.secondary)
+                    }
+
+                    Spacer()
+                }
+
+                Slider(
+                    value: Binding(
+                        get: { Double(vm.difficulty) },
+                        set: { vm.difficulty = Int($0) }
+                    ),
+                    in: 1...5,
+                    step: 1
+                )
+                .tint(difficultyColor)
+
+                HStack {
+                    Text(ConstantStrings.feedbackVeryEasy)
+                    Spacer()
+                    Text(ConstantStrings.feedbackVeryHard)
+                }
+                .font(.caption)
+                .foregroundStyle(.secondary)
+
+                difficultyDots
             }
-            .font(.caption)
-            .foregroundColor(.secondary)
+            .padding(14)
+            .background(Color(.systemBackground))
         }
-        .padding(.horizontal)
+    }
+
+    var bottomSubmitButton: some View {
+        VStack(spacing: 0) {
+            Divider()
+
+            Button {
+                Task {
+                    let success = await vm.submit()
+
+                    if success {
+                        appState.signalActivitiesChanged()
+                        dismiss()
+                    }
+                }
+            } label: {
+                HStack(spacing: 8) {
+                    if vm.isSaving {
+                        ProgressView()
+                            .tint(.white)
+                    } else {
+                        Image(systemName: "checkmark.circle.fill")
+                    }
+
+                    Text(vm.isSaving ? "Kaydediliyor..." : "Kaydet")
+                        .font(.headline)
+                }
+                .foregroundStyle(.white)
+                .frame(maxWidth: .infinity)
+                .frame(height: 54)
+                .background(vm.isValid && !vm.isSaving ? Color.blue : Color.gray)
+                .clipShape(RoundedRectangle(cornerRadius: 16, style: .continuous))
+            }
+            .buttonStyle(.plain)
+            .disabled(!vm.isValid || vm.isSaving)
+            .padding(.horizontal, 18)
+            .padding(.top, 12)
+            .padding(.bottom, 12)
+            .background(.regularMaterial)
+        }
+    }
+}
+
+// MARK: - UI Pieces
+
+private extension TaskFeedbackView {
+
+    func sectionCard<Content: View>(
+        title: String,
+        @ViewBuilder content: () -> Content
+    ) -> some View {
+        VStack(alignment: .leading, spacing: 10) {
+            Text(title)
+                .font(.system(size: 17, weight: .bold))
+                .foregroundStyle(.primary)
+                .padding(.horizontal, 2)
+
+            VStack(spacing: 0) {
+                content()
+            }
+            .background(Color(.systemBackground))
+            .clipShape(RoundedRectangle(cornerRadius: 18, style: .continuous))
+            .overlay(
+                RoundedRectangle(cornerRadius: 18, style: .continuous)
+                    .stroke(Color.black.opacity(0.06), lineWidth: 1)
+            )
+        }
+    }
+
+    var difficultyIcon: some View {
+        ZStack {
+            Circle()
+                .fill(difficultyColor.opacity(0.12))
+
+            Image(systemName: difficultySystemIcon)
+                .font(.system(size: 20, weight: .semibold))
+                .foregroundStyle(difficultyColor)
+        }
+        .frame(width: 46, height: 46)
+    }
+
+    var difficultyDots: some View {
+        HStack(spacing: 7) {
+            ForEach(1...5, id: \.self) { value in
+                Circle()
+                    .fill(value <= vm.difficulty ? difficultyColor : Color.black.opacity(0.08))
+                    .frame(width: 9, height: 9)
+            }
+        }
+        .frame(maxWidth: .infinity, alignment: .center)
+    }
+
+    var difficultyTitle: String {
+        switch vm.difficulty {
+        case 1:
+            return ConstantStrings.feedbackVeryEasy
+        case 2:
+            return "Kolay"
+        case 3:
+            return "Orta"
+        case 4:
+            return "Zor"
+        default:
+            return ConstantStrings.feedbackVeryHard
+        }
+    }
+
+    var difficultySystemIcon: String {
+        switch vm.difficulty {
+        case 1:
+            return "leaf.fill"
+        case 2:
+            return "hand.thumbsup.fill"
+        case 3:
+            return "minus.circle.fill"
+        case 4:
+            return "flame.fill"
+        default:
+            return "exclamationmark.triangle.fill"
+        }
+    }
+
+    var difficultyColor: Color {
+        switch vm.difficulty {
+        case 1:
+            return .green
+        case 2:
+            return .mint
+        case 3:
+            return .orange
+        case 4:
+            return .red.opacity(0.85)
+        default:
+            return .red
+        }
     }
 }

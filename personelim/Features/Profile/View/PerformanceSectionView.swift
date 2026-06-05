@@ -10,133 +10,231 @@ struct PerformanceSectionView: View {
     let onSelectReport: (String) -> Void
 
     var body: some View {
-        VStack(alignment: .leading, spacing: 10) {
+        VStack(alignment: .leading, spacing: 12) {
 
-            HStack {
-                Text("Sorgu")
-                    .font(.system(size: 18, weight: .semibold))
+            header
 
-                Spacer()
-
-                Button(action: onCreateQuery) {
-                    HStack(spacing: 8) {
-                        Image(systemName: "magnifyingglass")
-                            .font(.system(size: 14, weight: .semibold))
-                        Text("Sorgu")
-                            .font(.system(size: 14, weight: .semibold))
-                    }
-                    .foregroundStyle(.blue)
-                    .padding(.horizontal, 12)
-                    .padding(.vertical, 7)
-                    .background(Color(.systemGray6))
-                    .clipShape(Capsule())
-                }
-                .buttonStyle(.plain)
+            if let error {
+                errorRow(error)
             }
-            .padding(.top, 6)
-
 
             if isLoading {
-                ProgressView().padding(.top, 8)
-            }
-
-            if reports.isEmpty && !isLoading {
-                emptyReportCard
+                loadingRow
+            } else if reports.isEmpty {
+                emptyReportRow
             } else {
-                VStack(spacing: 10) {
-                    ForEach(reports) { r in
-                        PerformanceReportCard(report: r) {
-                            onSelectReport(r.id)
-                        }
-                    }
-                }
-                .padding(.top, 4)
+                reportsList
             }
         }
     }
 
-    private var emptyReportCard: some View {
-        RoundedRectangle(cornerRadius: 12)
-            .fill(Color(UIColor.systemGray6))
-            .frame(height: 70)
-            .overlay(
-                HStack(spacing: 12) {
-                    Circle()
-                        .fill(Color(UIColor.systemGray5))
-                        .frame(width: 44, height: 44)
+    // MARK: - Header
 
-                    VStack(alignment: .leading, spacing: 4) {
-                        Text("Henüz rapor yok")
-                            .font(.system(size: 14, weight: .semibold))
-                        Text("Tarih aralığı seçip sorgu oluştur.")
-                            .font(.system(size: 12))
-                            .foregroundColor(.gray)
+    private var header: some View {
+        HStack(spacing: 12) {
+            VStack(alignment: .leading, spacing: 3) {
+                Text("Performans Sorguları")
+                    .font(.system(size: 17, weight: .bold))
+
+                Text(reports.isEmpty ? "Rapor geçmişi bulunmuyor" : "\(reports.count) rapor listeleniyor")
+                    .font(.caption)
+                    .foregroundStyle(.secondary)
+            }
+
+            Spacer()
+
+            Button(action: onCreateQuery) {
+                HStack(spacing: 7) {
+                    Image(systemName: "magnifyingglass")
+                        .font(.system(size: 13, weight: .semibold))
+
+                    Text("Sorgu")
+                        .font(.system(size: 13, weight: .semibold))
+                }
+                .foregroundStyle(.blue)
+                .padding(.horizontal, 12)
+                .padding(.vertical, 8)
+                .background(
+                    Capsule()
+                        .fill(Color.blue.opacity(0.10))
+                )
+            }
+            .buttonStyle(.plain)
+        }
+    }
+
+    // MARK: - Reports
+
+    private var reportsList: some View {
+        VStack(spacing: 0) {
+            ForEach(reports) { report in
+                PerformanceReportRow(report: report) {
+                    onSelectReport(report.id)
+                }
+            }
+        }
+        .background(Color(.systemBackground))
+        .clipShape(RoundedRectangle(cornerRadius: 18, style: .continuous))
+        .overlay(
+            RoundedRectangle(cornerRadius: 18, style: .continuous)
+                .stroke(Color.black.opacity(0.06), lineWidth: 1)
+        )
+    }
+
+    // MARK: - States
+
+    private var loadingRow: some View {
+        HStack(spacing: 12) {
+            ProgressView()
+
+            Text("Raporlar yükleniyor...")
+                .font(.system(size: 15, weight: .medium))
+                .foregroundStyle(.secondary)
+
+            Spacer()
+        }
+        .padding(.horizontal, 14)
+        .padding(.vertical, 14)
+        .background(Color(.systemBackground))
+        .clipShape(RoundedRectangle(cornerRadius: 18, style: .continuous))
+        .overlay(
+            RoundedRectangle(cornerRadius: 18, style: .continuous)
+                .stroke(Color.black.opacity(0.06), lineWidth: 1)
+        )
+    }
+
+    private var emptyReportRow: some View {
+        HStack(spacing: 12) {
+            Image(systemName: "doc.text.magnifyingglass")
+                .font(.system(size: 18, weight: .semibold))
+                .foregroundStyle(.blue)
+                .frame(width: 36, height: 36)
+
+            VStack(alignment: .leading, spacing: 3) {
+                Text("Henüz rapor yok")
+                    .font(.system(size: 15, weight: .semibold))
+
+                Text("Tarih aralığı seçip performans sorgusu oluştur.")
+                    .font(.caption)
+                    .foregroundStyle(.secondary)
+            }
+
+            Spacer()
+        }
+        .padding(.horizontal, 14)
+        .padding(.vertical, 14)
+        .background(Color(.systemBackground))
+        .clipShape(RoundedRectangle(cornerRadius: 18, style: .continuous))
+        .overlay(
+            RoundedRectangle(cornerRadius: 18, style: .continuous)
+                .stroke(Color.black.opacity(0.06), lineWidth: 1)
+        )
+    }
+
+    private func errorRow(_ message: String) -> some View {
+        HStack(spacing: 12) {
+            Image(systemName: "exclamationmark.triangle.fill")
+                .foregroundStyle(.red)
+
+            Text(message)
+                .font(.caption)
+                .foregroundStyle(.red)
+                .multilineTextAlignment(.leading)
+
+            Spacer()
+        }
+        .padding(.horizontal, 14)
+        .padding(.vertical, 12)
+        .background(Color(.systemBackground))
+        .clipShape(RoundedRectangle(cornerRadius: 18, style: .continuous))
+        .overlay(
+            RoundedRectangle(cornerRadius: 18, style: .continuous)
+                .stroke(Color.red.opacity(0.25), lineWidth: 1)
+        )
+    }
+}
+
+// MARK: - Performance Report Row
+
+private struct PerformanceReportRow: View {
+
+    let report: PerformanceReportDTO
+    let onTap: () -> Void
+
+    private var score: Int {
+        report.score ?? 0
+    }
+
+    var body: some View {
+        Button(action: onTap) {
+            HStack(spacing: 13) {
+
+                ScoreMiniGauge(score: score)
+
+                VStack(alignment: .leading, spacing: 4) {
+                    HStack(spacing: 6) {
+                        Text("Sorgu Aralığı")
+                            .font(.caption.weight(.semibold))
+                            .foregroundStyle(.secondary)
+
+                        statusPill
                     }
 
-                    Spacer()
+                    Text(ISODate.shortRange(start: report.startDate, end: report.endDate))
+                        .font(.system(size: 14, weight: .semibold))
+                        .foregroundStyle(.primary)
+                        .lineLimit(1)
+
+                    Text(scoreLevel(score))
+                        .font(.caption.weight(.semibold))
+                        .foregroundStyle(scoreColor(score))
                 }
-                .padding(.horizontal, 12)
+
+                Spacer()
+
+                Image(systemName: "chevron.right")
+                    .font(.system(size: 12, weight: .semibold))
+                    .foregroundStyle(.secondary)
+            }
+            .padding(.horizontal, 14)
+            .padding(.vertical, 13)
+            .background(Color(.systemBackground))
+            .overlay(alignment: .bottom) {
+                Rectangle()
+                    .fill(Color.black.opacity(0.055))
+                    .frame(height: 0.7)
+                    .padding(.leading, 70)
+            }
+        }
+        .buttonStyle(.plain)
+    }
+
+    private var statusPill: some View {
+        Text("\(score) gün")
+            .font(.caption2.weight(.bold))
+            .foregroundStyle(scoreColor(score))
+            .padding(.horizontal, 7)
+            .padding(.vertical, 3)
+            .background(
+                Capsule()
+                    .fill(scoreColor(score).opacity(0.12))
             )
     }
 }
 
-// MARK: - Performance Report Card (DETAIL İLE BİREBİR)
-
-private struct PerformanceReportCard: View {
-    let report: PerformanceReportDTO
-    let onTap: () -> Void
-
-    var body: some View {
-        Button {
-            onTap()
-        } label: {
-            RoundedRectangle(cornerRadius: 12)
-                .fill(Color(.systemBackground))
-                .shadow(color: .black.opacity(0.04), radius: 8, y: 4)
-                .frame(height: 82)
-                .overlay(
-                    HStack(spacing: 14) {
-
-                        ScoreMiniGauge(score: report.score ?? 0)
-
-                        VStack(alignment: .leading, spacing: 4) {
-                            Text("Sorgu Aralığı")
-                                .font(.system(size: 11, weight: .medium))
-                                .foregroundColor(.secondary)
-
-                            Text(ISODate.shortRange(start: report.startDate, end: report.endDate))
-                                .font(.system(size: 13, weight: .semibold))
-
-                            Text(scoreLevel(report.score ?? 0))
-                                .font(.system(size: 11, weight: .semibold))
-                                .foregroundColor(scoreColor(report.score ?? 0))
-                        }
-
-                        Spacer()
-
-                        Image(systemName: "chevron.right")
-                            .font(.system(size: 13, weight: .semibold))
-                            .foregroundColor(.gray)
-                    }
-                    .padding(.horizontal, 14)
-                )
-        }
-        .buttonStyle(.plain)
-    }
-}
-
-// MARK: - Mini Radial Gauge (DETAIL İLE BİREBİR)
+// MARK: - Mini Radial Gauge
 
 private struct ScoreMiniGauge: View {
+
     let score: Int
 
     var body: some View {
         ZStack {
             Circle()
-                .stroke(Color.gray.opacity(0.15), lineWidth: 6)
+                .stroke(Color.black.opacity(0.08), lineWidth: 6)
 
             Circle()
-                .trim(from: 0, to: CGFloat(score) / 100)
+                .trim(from: 0, to: min(CGFloat(score) / 100, 1))
                 .stroke(
                     scoreColor(score),
                     style: StrokeStyle(lineWidth: 6, lineCap: .round)
@@ -145,27 +243,36 @@ private struct ScoreMiniGauge: View {
 
             Text("\(score)")
                 .font(.system(size: 12, weight: .bold))
+                .foregroundStyle(.primary)
         }
-        .frame(width: 44, height: 44)
+        .frame(width: 46, height: 46)
     }
 }
 
 // MARK: - Score Helpers
 
-private func scoreLevel(_ s: Int) -> String {
-    switch s {
-    case 0..<40: return "Zayıf"
-    case 40..<70: return "Orta"
-    case 70..<85: return "İyi"
-    default: return "Mükemmel"
+private func scoreLevel(_ score: Int) -> String {
+    switch score {
+    case 0..<40:
+        return "Zayıf"
+    case 40..<70:
+        return "Orta"
+    case 70..<85:
+        return "İyi"
+    default:
+        return "Mükemmel"
     }
 }
 
-private func scoreColor(_ s: Int) -> Color {
-    switch s {
-    case 0..<40: return .red
-    case 40..<70: return .orange
-    case 70..<85: return .blue
-    default: return .green
+private func scoreColor(_ score: Int) -> Color {
+    switch score {
+    case 0..<40:
+        return .red
+    case 40..<70:
+        return .orange
+    case 70..<85:
+        return .blue
+    default:
+        return .green
     }
 }

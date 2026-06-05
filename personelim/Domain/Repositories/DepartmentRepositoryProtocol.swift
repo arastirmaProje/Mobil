@@ -13,4 +13,8 @@ protocol DepartmentRepositoryProtocol {
     func fetchCategories() async throws -> [JobCategoryDTO]
     func updateDepartment(id: String, name: String, categoryId: Int) async throws
         func deleteDepartment(id: String) async throws
+    func queryDepartmentPerformance(request: DepartmentPerformanceRequestDTO) async throws -> DepartmentPerformanceResponseDTO
+    
+   
+    func fetchDepartmentCharts(businessId: String, startDate: String, endDate: String) async throws -> BusinessDepartmentChartsResponseDTO
 }

@@ -30,7 +30,7 @@ extension OfficeLocationReadDTO {
             let lng = longitude
         else { return nil }
 
-        // ✅ id yoksa identity kullan
+    
         let safeId = id ?? identity
 
         return .office(id: safeId, name: name, lat: lat, lng: lng)

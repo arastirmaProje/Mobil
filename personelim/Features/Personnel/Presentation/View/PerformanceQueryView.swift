@@ -1,9 +1,3 @@
-//
-//  PerformanceQueryView.swift
-//  personelim
-//
-//  Created by Yusuf Kaan USTA on 25.12.2025.
-//
 
 import SwiftUI
 
@@ -32,102 +26,255 @@ struct PerformanceQueryView: View {
 
         let repo = PerformanceRepositoryImpl(network: NetworkManager())
         let useCase = QueryPerformanceUseCase(repo: repo)
-        _vm = StateObject(wrappedValue: PerformanceQueryViewModel(queryUseCase: useCase))
+
+        _vm = StateObject(
+            wrappedValue: PerformanceQueryViewModel(
+                queryUseCase: useCase
+            )
+        )
+    }
+
+    private var canSubmit: Bool {
+        !vm.isLoading && startDate != nil && endDate != nil
     }
 
     var body: some View {
         NavigationStack {
-            ScrollView {
-                VStack(spacing: 24) {
+            ZStack(alignment: .bottom) {
+                Color(.systemBackground)
+                    .ignoresSafeArea()
 
-                    VStack(alignment: .leading, spacing: 6) {
-                        Text(ConstantStrings.performanceQueryTitle)
-                            .font(.title.bold())
-                        
-                        Text(ConstantStrings.performanceQuerySubtitle)
-                            .font(.subheadline)
-                            .foregroundColor(.secondary)
-                    }
-                    .frame(maxWidth: .infinity, alignment: .leading)
-                    .padding(.horizontal)
+                ScrollView(showsIndicators: false) {
+                    VStack(spacing: 16) {
+                        headerSection
 
-                    RangeCalendarCard(
-                        startDate: $startDate,
-                        endDate: $endDate
-                    )
-                    .disabled(vm.isLoading)
+                        calendarSection
 
-                    HStack(spacing: 24) {
-                        VStack(alignment: .leading) {
-                            Text(ConstantStrings.startTitle)
-                                .font(.caption)
-                                .foregroundColor(.secondary)
-                            Text(startDate?.trShortDate() ?? "-")
-                                .font(.body.bold())
+                        if let errorMessage = vm.errorMessage {
+                            errorCard(errorMessage)
                         }
 
-                        VStack(alignment: .leading) {
-                            Text(ConstantStrings.endTitle)
-                                .font(.caption)
-                                .foregroundColor(.secondary)
-                            Text(endDate?.trShortDate() ?? "-")
-                                .font(.body.bold())
-                        }
+                        Spacer(minLength: 100)
                     }
-                    .padding(.horizontal)
-
-                    if let err = vm.errorMessage {
-                        Text(err)
-                            .foregroundColor(.red)
-                            .font(.system(size: 13))
-                            .padding(.horizontal)
-                    }
-
-                    Spacer(minLength: 32)
+                    .padding(.horizontal, 18)
+                    .padding(.top, 14)
+                    .padding(.bottom, 28)
                 }
-                .padding(.vertical, 16)
+
+                bottomSubmitButton
             }
+            .navigationTitle(ConstantStrings.performanceQueryTitle)
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {
-                ToolbarItem(placement: .navigationBarLeading) {
-                    Button { dismiss() } label: {
-                        Image(systemName: "chevron.left")
-                            .font(.headline)
-                    }
-                }
-                ToolbarItem(placement: .navigationBarTrailing) {
+                ToolbarItem(placement: .topBarLeading) {
                     Button {
-                        Task {
-                            guard !vm.isLoading else { return }
-                            guard let s = startDate, let e = endDate else { return }
-                            vm.startDate = s
-                            vm.endDate = e
-                            if let report = await vm.submit(
-                                businessId: businessId,
-                                employeeUserId: employeeUserId
-                            ) {
-                                onCreated(report)
-                                dismiss()
-                            }
-                        }
+                        dismiss()
                     } label: {
-                        toolbarSubmitLabel
+                        Image(systemName: "chevron.left")
+                            .font(.system(size: 16, weight: .semibold))
                     }
-                    .disabled(vm.isLoading || startDate == nil || endDate == nil)
                 }
             }
         }
     }
+}
 
-    @ViewBuilder
-    private var toolbarSubmitLabel: some View {
-        if vm.isLoading {
-            ProgressView()
-                .controlSize(.small)
-                .frame(width: 24, height: 24)
-        } else {
-            Image(systemName: "checkmark")
-                .font(.headline)
+// MARK: - Sections
+
+@available(iOS 17.0, *)
+private extension PerformanceQueryView {
+
+    var headerSection: some View {
+        HStack(spacing: 14) {
+            ZStack {
+                Circle()
+                    .fill(Color.blue.opacity(0.10))
+
+                Image(systemName: "chart.line.uptrend.xyaxis.circle.fill")
+                    .font(.system(size: 25, weight: .semibold))
+                    .foregroundStyle(.blue)
+            }
+            .frame(width: 58, height: 58)
+
+            VStack(alignment: .leading, spacing: 5) {
+                Text(ConstantStrings.performanceQueryTitle)
+                    .font(.system(size: 24, weight: .bold))
+                    .foregroundStyle(.primary)
+                    .lineLimit(1)
+
+                Text(ConstantStrings.performanceQuerySubtitle)
+                    .font(.subheadline)
+                    .foregroundStyle(.secondary)
+                    .lineLimit(2)
+            }
+
+            Spacer()
         }
+        .padding(16)
+        .background(Color(.systemBackground))
+        .clipShape(RoundedRectangle(cornerRadius: 24, style: .continuous))
+        .overlay(
+            RoundedRectangle(cornerRadius: 24, style: .continuous)
+                .stroke(Color.black.opacity(0.06), lineWidth: 1)
+        )
+    }
+
+    var calendarSection: some View {
+        sectionCard(title: "Tarih Aralığı") {
+            VStack(spacing: 14) {
+                RangeCalendarCard(
+                    startDate: $startDate,
+                    endDate: $endDate
+                )
+                .disabled(vm.isLoading)
+
+                HStack(spacing: 0) {
+                    dateSummaryBox(
+                        title: ConstantStrings.startTitle,
+                        value: startDate?.trShortDate() ?? "-",
+                        icon: "calendar.badge.play"
+                    )
+
+                    Divider()
+                        .padding(.vertical, 10)
+
+                    dateSummaryBox(
+                        title: ConstantStrings.endTitle,
+                        value: endDate?.trShortDate() ?? "-",
+                        icon: "calendar.badge.clock"
+                    )
+                }
+                .background(Color(.systemBackground))
+                .clipShape(RoundedRectangle(cornerRadius: 18, style: .continuous))
+                .overlay(
+                    RoundedRectangle(cornerRadius: 18, style: .continuous)
+                        .stroke(Color.black.opacity(0.06), lineWidth: 1)
+                )
+            }
+            .padding(14)
+            .background(Color(.systemBackground))
+        }
+    }
+
+    var bottomSubmitButton: some View {
+        VStack(spacing: 0) {
+            Divider()
+
+            Button {
+                Task {
+                    guard canSubmit else { return }
+                    guard let startDate, let endDate else { return }
+
+                    vm.startDate = startDate
+                    vm.endDate = endDate
+
+                    if let report = await vm.submit(
+                        businessId: businessId,
+                        employeeUserId: employeeUserId
+                    ) {
+                        onCreated(report)
+                        dismiss()
+                    }
+                }
+            } label: {
+                HStack(spacing: 8) {
+                    if vm.isLoading {
+                        ProgressView()
+                            .tint(.white)
+                    } else {
+                        Image(systemName: "sparkle.magnifyingglass")
+                    }
+
+                    Text(vm.isLoading ? "Sorgulanıyor..." : "Sorgu Oluştur")
+                        .font(.headline)
+                }
+                .foregroundStyle(.white)
+                .frame(maxWidth: .infinity)
+                .frame(height: 54)
+                .background(canSubmit ? Color.blue : Color.gray)
+                .clipShape(RoundedRectangle(cornerRadius: 16, style: .continuous))
+            }
+            .buttonStyle(.plain)
+            .disabled(!canSubmit)
+            .padding(.horizontal, 18)
+            .padding(.top, 12)
+            .padding(.bottom, 12)
+            .background(.regularMaterial)
+        }
+    }
+}
+
+// MARK: - UI Pieces
+
+@available(iOS 17.0, *)
+private extension PerformanceQueryView {
+
+    func sectionCard<Content: View>(
+        title: String,
+        @ViewBuilder content: () -> Content
+    ) -> some View {
+        VStack(alignment: .leading, spacing: 10) {
+            Text(title)
+                .font(.system(size: 17, weight: .bold))
+                .foregroundStyle(.primary)
+                .padding(.horizontal, 2)
+
+            VStack(spacing: 0) {
+                content()
+            }
+            .background(Color(.systemBackground))
+            .clipShape(RoundedRectangle(cornerRadius: 18, style: .continuous))
+            .overlay(
+                RoundedRectangle(cornerRadius: 18, style: .continuous)
+                    .stroke(Color.black.opacity(0.06), lineWidth: 1)
+            )
+        }
+    }
+
+    func dateSummaryBox(
+        title: String,
+        value: String,
+        icon: String
+    ) -> some View {
+        HStack(alignment: .top, spacing: 10) {
+            Image(systemName: icon)
+                .font(.system(size: 15, weight: .semibold))
+                .foregroundStyle(.blue)
+
+            VStack(alignment: .leading, spacing: 4) {
+                Text(title)
+                    .font(.caption.weight(.semibold))
+                    .foregroundStyle(.secondary)
+
+                Text(value)
+                    .font(.system(size: 14, weight: .semibold))
+                    .foregroundStyle(value == "-" ? .secondary : .primary)
+                    .lineLimit(2)
+            }
+        }
+        .frame(maxWidth: .infinity, alignment: .leading)
+        .padding(14)
+        .background(Color(.systemBackground))
+    }
+
+    func errorCard(_ message: String) -> some View {
+        HStack(spacing: 12) {
+            Image(systemName: "exclamationmark.triangle.fill")
+                .foregroundStyle(.red)
+
+            Text(message)
+                .font(.caption)
+                .foregroundStyle(.red)
+                .multilineTextAlignment(.leading)
+
+            Spacer()
+        }
+        .padding(14)
+        .background(Color(.systemBackground))
+        .clipShape(RoundedRectangle(cornerRadius: 18, style: .continuous))
+        .overlay(
+            RoundedRectangle(cornerRadius: 18, style: .continuous)
+                .stroke(Color.red.opacity(0.25), lineWidth: 1)
+        )
     }
 }

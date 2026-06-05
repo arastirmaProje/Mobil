@@ -7,6 +7,11 @@ class DepartmentViewModel: ObservableObject {
     @Published var isLoading = false
     @Published var errorMessage: String?
     @Published var categories: [JobCategoryDTO] = []
+    @Published var departmentPerformance: DepartmentPerformanceResponseDTO?
+    @Published var isPerformanceLoading = false
+    @Published var chartData: [DepartmentChartItemDTO] = []
+    @Published var isChartsLoading = false
+    @Published var businessCharts: BusinessDepartmentChartsResponseDTO?
     
     private let repository: DepartmentRepositoryProtocol
     
@@ -83,4 +88,57 @@ class DepartmentViewModel: ObservableObject {
             self.errorMessage = error.localizedDescription
         }
     }
+    
+    func fetchDepartmentPerformance(businessId: String, departmentId: String, startDate: Date, endDate: Date) async {
+        isPerformanceLoading = true
+        errorMessage = nil
+        
+        let formatter = ISO8601DateFormatter()
+        formatter.formatOptions = [.withInternetDateTime, .withFractionalSeconds]
+        
+        let request = DepartmentPerformanceRequestDTO(
+            businessId: businessId,
+            departmentId: departmentId,
+            startDate: formatter.string(from: startDate),
+            endDate: formatter.string(from: endDate)
+        )
+        
+        do {
+            self.departmentPerformance = try await repository.queryDepartmentPerformance(request: request)
+        } catch {
+            self.errorMessage = error.localizedDescription
+        }
+        isPerformanceLoading = false
+    }
+    
+    func fetchDepartmentCharts(businessId: String, startDate: Date, endDate: Date) async {
+            guard !businessId.isEmpty else { return }
+            
+            isChartsLoading = true
+            errorMessage = nil
+            
+            // Backend'in beklediği formatta tarihleri String'e çeviriyoruz
+            let formatter = ISO8601DateFormatter()
+            formatter.formatOptions = [.withInternetDateTime, .withFractionalSeconds]
+            
+            let startStr = formatter.string(from: startDate)
+            let endStr = formatter.string(from: endDate)
+            
+            do {
+                // Protokole tam uyumlu şekilde çağrıyı gerçekleştiriyoruz
+                let response = try await repository.fetchDepartmentCharts(
+                    businessId: businessId,
+                    startDate: startStr,
+                    endDate: endStr
+                )
+                
+                // UI güncelleniyor
+                self.businessCharts = response
+                self.isChartsLoading = false
+            } catch {
+                self.isChartsLoading = false
+                self.errorMessage = "Grafik yüklenemedi: \(error.localizedDescription)"
+                print("Grafik Fetch Hatası:", error)
+            }
+        }
 }

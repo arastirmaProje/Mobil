@@ -15,6 +15,9 @@ struct BusinessMemberDTO: Codable, Identifiable {
     
     let departmentId: String?
     
+    let positionId: Int?
+    
+    
     let phoneNumber: String?
     let role: UserRole
 

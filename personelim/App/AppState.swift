@@ -32,8 +32,10 @@ import SwiftUI
             : full
     }
 
-    var businessId: String? { companyDTO?.id }
-    var userId: String? { userDTO?.id }
+   
+     var isSubscribed: Bool { companyDTO?.isSubscribed ?? false } 
+     var businessId: String? { companyDTO?.id }
+     var userId: String? { userDTO?.id }
 
     func signalActivitiesChanged() {
         activitiesChangeToken = UUID()

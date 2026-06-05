@@ -74,5 +74,38 @@ final class DepartmentRepositoryImpl: DepartmentRepositoryProtocol {
                 throw RepositoryError.api(message: res.message ?? "Silme işlemi başarısız")
             }
         }
+    
+    func queryDepartmentPerformance(request: DepartmentPerformanceRequestDTO) async throws -> DepartmentPerformanceResponseDTO {
+   
+        let response: ServiceResponse<DepartmentPerformanceResponseDTO> = try await network.request(
+            endpoint: .performanceQueryDepartment,
+            method: .post,
+            body: request
+        )
+        
+     
+        if response.success, let performanceData = response.data {
+            return performanceData
+        } else {
+            throw RepositoryError.api(message: response.message ?? "Performans verisi alınamadı")
+        }
+    }
+    func fetchDepartmentCharts(businessId: String, startDate: String, endDate: String) async throws -> BusinessDepartmentChartsResponseDTO {
+            let requestDTO = DepartmentChartsRequestDTO(businessId: businessId, startDate: startDate, endDate: endDate)
+            
+          
+            let response: ServiceResponse<BusinessDepartmentChartsResponseDTO> = try await network.request(
+                endpoint: .queryDepartmentCharts,
+                method: .post,
+                body: requestDTO
+            )
+            
+      
+            if response.success, let chartsData = response.data {
+                return chartsData
+            } else {
+                throw RepositoryError.api(message: response.message ?? "Grafik verileri alınamadı")
+            }
+        }
     }
 

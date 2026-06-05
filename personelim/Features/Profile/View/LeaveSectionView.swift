@@ -6,53 +6,90 @@ struct LeaveSectionView: View {
     let onCreateLeave: () -> Void
 
     var body: some View {
-        VStack(alignment: .leading, spacing: 10) {
+        VStack(alignment: .leading, spacing: 12) {
+            header
+            contentCard
+        }
+    }
 
-            // MARK: - Header (Sorgu ile aynı hizalama)
-            HStack {
+    // MARK: - Header
+
+    private var header: some View {
+        HStack(alignment: .center, spacing: 12) {
+            VStack(alignment: .leading, spacing: 4) {
                 Text("İzinler")
-                    .font(.system(size: 18, weight: .semibold))
+                    .font(.system(size: 21, weight: .bold))
+                    .foregroundStyle(.primary)
 
-                Spacer()
+                Text("İzin durumunu ve kullanımını yönet")
+                    .font(.caption)
+                    .foregroundStyle(.secondary)
+            }
 
-                Button(action: onCreateLeave) {
-                    HStack(spacing: 8) {
-                        Image(systemName: "calendar.badge.plus")
-                            .font(.system(size: 12, weight: .semibold))
-                        Text("İzin kullan")
-                            .font(.system(size: 14, weight: .semibold))
-                    }
+            Spacer()
+
+            Button(action: onCreateLeave) {
+                Label("İzin kullan", systemImage: "calendar.badge.plus")
+                    .font(.caption.weight(.semibold))
                     .foregroundStyle(.blue)
                     .padding(.horizontal, 12)
-                    .padding(.vertical, 7)
-                    .background(Color(.systemGray6))
-                    .clipShape(Capsule())
-                }
-                .buttonStyle(.plain)
+                    .padding(.vertical, 8)
+                    .background(
+                        Capsule()
+                            .fill(Color.blue.opacity(0.10))
+                    )
             }
-            .padding(.top, 6)
-
-            // MARK: - Card (sadece veri yüzeyi)
-            HStack {
-                VStack(alignment: .leading, spacing: 6) {
-                    Text("Kullanılan izin")
-                        .font(.system(size: 11, weight: .medium))
-                        .foregroundColor(.secondary)
-
-                    Text(remainingDaysText)
-                        .font(.system(size: 18, weight: .semibold))
-                        .foregroundStyle(.primary)
-                }
-
-                Spacer()
-            }
-            .padding(.horizontal, 16)
-            .padding(.vertical, 14)
-            .background(
-                RoundedRectangle(cornerRadius: 14)
-                    .fill(Color(.systemBackground))
-                    .shadow(color: .black.opacity(0.04), radius: 8, y: 4)
-            )
+            .buttonStyle(.plain)
         }
+    }
+
+    // MARK: - Content
+
+    private var contentCard: some View {
+        HStack(spacing: 14) {
+            iconBox
+
+            VStack(alignment: .leading, spacing: 5) {
+                Text("Kalan / kullanılan izin")
+                    .font(.caption.weight(.semibold))
+                    .foregroundStyle(.secondary)
+
+                Text(remainingDaysText)
+                    .font(.system(size: 22, weight: .bold))
+                    .foregroundStyle(.primary)
+                    .lineLimit(1)
+                    .minimumScaleFactor(0.85)
+
+                Text("Güncel izin özeti")
+                    .font(.caption2.weight(.medium))
+                    .foregroundStyle(.secondary)
+            }
+
+            Spacer()
+
+            Image(systemName: "chevron.right")
+                .font(.system(size: 12, weight: .semibold))
+                .foregroundStyle(.secondary.opacity(0.8))
+        }
+        .padding(16)
+        .background(Color(.systemBackground))
+        .clipShape(RoundedRectangle(cornerRadius: 22, style: .continuous))
+        .overlay(
+            RoundedRectangle(cornerRadius: 22, style: .continuous)
+                .stroke(Color.black.opacity(0.06), lineWidth: 1)
+        )
+        .shadow(color: .black.opacity(0.025), radius: 8, y: 4)
+    }
+
+    private var iconBox: some View {
+        ZStack {
+            Circle()
+                .fill(Color.blue.opacity(0.10))
+
+            Image(systemName: "calendar")
+                .font(.system(size: 19, weight: .semibold))
+                .foregroundStyle(.blue)
+        }
+        .frame(width: 48, height: 48)
     }
 }

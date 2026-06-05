@@ -1,31 +1,18 @@
-//
-//  OTPInputView.swift
-//  personelim
-//
-//  Created by Tuğberk Acabey on 24.11.2025.
-//
-
 import SwiftUI
 
 struct OTPInputView: View {
 
     @Binding var code: String
-    var onComplete: (String) -> Void
+    let onComplete: (String) -> Void
 
     @FocusState private var isFocused: Bool
 
     var body: some View {
         ZStack {
-            HStack(spacing: 12) {
-                ForEach(0..<6, id: \.self) { index in
-                    ZStack {
-                        RoundedRectangle(cornerRadius: 12)
-                            .stroke(borderColor(for: index), lineWidth: 2)
-                            .frame(width: 50, height: 55)
 
-                        Text(charAt(index))
-                            .font(.title2)
-                    }
+            HStack(spacing: 10) {
+                ForEach(0..<6, id: \.self) { index in
+                    otpBox(index)
                 }
             }
 
@@ -38,33 +25,91 @@ struct OTPInputView: View {
                 .opacity(0.01)
                 .focused($isFocused)
         }
-        .onTapGesture { isFocused = true }
-        .onAppear { isFocused = true }
-        .onChange(of: code) { value in
+        .contentShape(Rectangle())
+        .onTapGesture {
+            isFocused = true
+        }
+        .onAppear {
+            isFocused = true
+        }
+        .onChange(of: code) { _, value in
             if value.count == 6 {
-                DispatchQueue.main.asyncAfter(deadline: .now() + 0.1) {
+                DispatchQueue.main.asyncAfter(deadline: .now() + 0.15) {
                     onComplete(value)
                 }
             }
         }
     }
 
-    private func charAt(_ index: Int) -> String {
-        let chars = Array(code)
-        return index < chars.count ? String(chars[index]) : ""
+    // MARK: - Box
+
+    private func otpBox(_ index: Int) -> some View {
+
+        let isCurrent = code.count == index
+        let hasValue = index < code.count
+
+        return ZStack {
+
+            RoundedRectangle(
+                cornerRadius: 16,
+                style: .continuous
+            )
+            .fill(Color(.systemBackground))
+
+            RoundedRectangle(
+                cornerRadius: 16,
+                style: .continuous
+            )
+            .stroke(
+                isCurrent
+                ? Color.blue
+                : Color.black.opacity(0.08),
+                lineWidth: isCurrent ? 2 : 1
+            )
+
+            if hasValue {
+                Text(character(at: index))
+                    .font(.system(size: 24, weight: .bold))
+                    .foregroundStyle(.primary)
+                    .transition(.scale.combined(with: .opacity))
+            }
+        }
+        .frame(width: 52, height: 62)
+        .scaleEffect(hasValue ? 1 : 0.97)
+        .shadow(
+            color: isCurrent
+            ? Color.blue.opacity(0.18)
+            : .clear,
+            radius: 10
+        )
+        .animation(
+            .spring(response: 0.25, dampingFraction: 0.8),
+            value: code
+        )
     }
 
-    private func borderColor(for index: Int) -> Color {
-        index == code.count ? Color.blue : Color.gray.opacity(0.25)
+    // MARK: - Helpers
+
+    private func character(at index: Int) -> String {
+        let chars = Array(code)
+        return index < chars.count
+        ? String(chars[index])
+        : ""
     }
 }
 
-// MARK: - Limit text helper
+// MARK: - Limit Helper
+
 extension Binding where Value == String {
+
     func limit(_ length: Int) -> Binding<String> {
         Binding(
-            get: { self.wrappedValue },
-            set: { self.wrappedValue = String($0.prefix(length)) }
+            get: {
+                wrappedValue
+            },
+            set: {
+                wrappedValue = String($0.prefix(length))
+            }
         )
     }
 }

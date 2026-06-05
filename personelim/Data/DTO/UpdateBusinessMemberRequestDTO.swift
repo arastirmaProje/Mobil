@@ -9,7 +9,7 @@ import Foundation
 
 struct UpdateBusinessMemberRequestDTO: Encodable {
     let role: Int?
-    let position: String?
+    let positionId: Int?
     let salary: Double?
     let tcIdentityNumber: String?
 }

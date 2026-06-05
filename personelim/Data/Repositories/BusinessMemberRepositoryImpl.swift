@@ -45,7 +45,7 @@ final class BusinessMemberRepositoryImpl: BusinessMemberRepositoryProtocol {
         request: UpdateBusinessMemberRequestDTO
     ) async throws {
 
-        let res: ServiceResponse<Bool> = try await network.request(
+        let res: ServiceResponse<BusinessMemberDTO> = try await network.request(
             endpoint: .updateBusinessMember(memberId: memberId),
             method: .put,
             body: request

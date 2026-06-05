@@ -1,10 +1,3 @@
-//
-//  EditPersonalProfileView.swift
-//  personelim
-//
-//  Created by Yusuf Kaan USTA on 25.12.2025.
-//
-
 import SwiftUI
 import PhotosUI
 import UniformTypeIdentifiers
@@ -20,201 +13,105 @@ struct EditPersonalProfileView: View {
     @State private var showDeleteAccountConfirm = false
 
     init(authRepo: AuthRepositoryProtocol) {
-        _vm = StateObject(wrappedValue: EditPersonalProfileViewModel(authRepo: authRepo))
+        _vm = StateObject(
+            wrappedValue: EditPersonalProfileViewModel(authRepo: authRepo)
+        )
     }
 
     var body: some View {
         NavigationStack {
-            ScrollView(showsIndicators: false) {
-                VStack(alignment: .leading, spacing: 18) {
+            ZStack(alignment: .bottom) {
 
-                    Text("Profil düzenle")
-                        .font(.title2.bold())
-                        .padding(.top, 8)
+                Color(.systemBackground)
+                    .ignoresSafeArea()
 
-                    HStack(spacing: 12) {
-                        profileImage(size: 44)
+                ScrollView(showsIndicators: false) {
+                    VStack(spacing: 18) {
 
-                        Text("Profil Resmi")
-                            .font(.body)
+                        photoSection
 
-                        Spacer()
+                        sectionCard(title: "Kişisel Bilgiler") {
+                            appTextField(
+                                title: "Email",
+                                text: $vm.email,
+                                icon: "envelope",
+                                keyboard: .emailAddress,
+                                autocapitalization: .never
+                            )
 
-                        PhotosPicker(selection: $vm.photoItem, matching: .images) {
-                            Text("Ekle")
-                                .font(.body)
-                                .foregroundColor(.blue)
+                            appTextField(
+                                title: "İsim",
+                                text: $vm.firstName,
+                                icon: "person"
+                            )
+
+                            appTextField(
+                                title: "Soyisim",
+                                text: $vm.lastName,
+                                icon: "person.fill"
+                            )
+
+                            identityRow
                         }
-                        .onChange(of: vm.photoItem) { _, newValue in
-                            Task { await vm.onPickPhoto(newValue) }
-                        }
-                    }
-                    .padding(.vertical, 6)
 
-                    LabeledRoundedField(title: "Email") {
-                        TextField("", text: $vm.email)
-                            .textInputAutocapitalization(.never)
-                            .keyboardType(.emailAddress)
-                            .padding(12)
-                            .background(Color(UIColor.systemGray6))
-                            .clipShape(RoundedRectangle(cornerRadius: 12))
-                    }
+                        sectionCard(title: "CV") {
+                            documentPickerRow(
+                                title: "CV",
+                                selectedFileName: vm.cvURL?.lastPathComponent,
+                                placeholder: "PDF CV seç",
+                                icon: "doc.text.magnifyingglass",
+                                action: { showCVPicker = true }
+                            )
 
-                    LabeledRoundedField(title: "İsim") {
-                        TextField("", text: $vm.firstName)
-                            .padding(12)
-                            .background(Color(UIColor.systemGray6))
-                            .clipShape(RoundedRectangle(cornerRadius: 12))
-                    }
-
-                    LabeledRoundedField(title: "Soyisim") {
-                        TextField("", text: $vm.lastName)
-                            .padding(12)
-                            .background(Color(UIColor.systemGray6))
-                            .clipShape(RoundedRectangle(cornerRadius: 12))
-                    }
-
-                    LabeledRoundedField(title: "Kimlik", trailingTitle: "Tara", trailingAction: {
-                        showIDScanner = true
-                    }) {
-                        TextField("", text: $vm.tcIdentityNumber)
-                            .keyboardType(.numberPad)
-                            .padding(12)
-                            .background(Color(UIColor.systemGray6))
-                            .clipShape(RoundedRectangle(cornerRadius: 12))
-                    }
-
-                    LabeledRoundedField(title: "CV", trailingTitle: "Ekle", trailingAction: {
-                        showCVPicker = true
-                    }) {
-                        TextField("", text: Binding(
-                            get: { vm.cvURL?.lastPathComponent ?? "" },
-                            set: { _ in }
-                        ))
-                        .disabled(true)
-                        .padding(12)
-                        .background(Color(UIColor.systemGray6))
-                        .clipShape(RoundedRectangle(cornerRadius: 12))
-                    }
-
-                    if !vm.existingCVs.isEmpty {
-                        VStack(alignment: .leading, spacing: 8) {
-                            Text("Yüklenmiş CV’ler")
-                                .font(.footnote)
-                                .foregroundColor(.gray)
-
-                            ForEach(vm.existingCVs, id: \.id) { d in
-                                HStack(spacing: 10) {
-                                    Text(d.fileName)
-                                        .font(.callout)
-                                        .frame(maxWidth: .infinity, alignment: .leading)
-
-                                    Button(role: .destructive) {
-                                        Task { await vm.deleteDocument(d) }
-                                    } label: {
-                                        Image(systemName: "trash")
-                                    }
-                                    .disabled(vm.isDeletingDoc || vm.isLoading)
-                                }
-                                .padding()
-                                .background(Color(UIColor.systemGray6))
-                                .cornerRadius(10)
+                            if !vm.existingCVs.isEmpty {
+                                uploadedDocumentsList(vm.existingCVs)
                             }
                         }
-                    }
 
-                    LabeledRoundedField(title: "Belgeler", trailingTitle: "Ekle", trailingAction: {
-                        showDocPicker = true
-                    }) {
-                        TextField("", text: Binding(
-                            get: { vm.documentURL?.lastPathComponent ?? "" },
-                            set: { _ in }
-                        ))
-                        .disabled(true)
-                        .padding(12)
-                        .background(Color(UIColor.systemGray6))
-                        .clipShape(RoundedRectangle(cornerRadius: 12))
-                    }
+                        sectionCard(title: "Belgeler") {
+                            documentPickerRow(
+                                title: "Belgeler",
+                                selectedFileName: vm.documentURL?.lastPathComponent,
+                                placeholder: "PDF belge seç",
+                                icon: "folder.badge.plus",
+                                action: { showDocPicker = true }
+                            )
 
-                    if !vm.existingDocuments.isEmpty {
-                        VStack(alignment: .leading, spacing: 8) {
-                            Text("Yüklenmiş Belgeler")
-                                .font(.footnote)
-                                .foregroundColor(.gray)
-
-                            ForEach(vm.existingDocuments, id: \.id) { d in
-                                HStack(spacing: 10) {
-                                    Text(d.fileName)
-                                        .font(.callout)
-                                        .frame(maxWidth: .infinity, alignment: .leading)
-
-                                    Button(role: .destructive) {
-                                        Task { await vm.deleteDocument(d) }
-                                    } label: {
-                                        Image(systemName: "trash")
-                                    }
-                                    .disabled(vm.isDeletingDoc || vm.isLoading)
-                                }
-                                .padding()
-                                .background(Color(UIColor.systemGray6))
-                                .cornerRadius(10)
+                            if !vm.existingDocuments.isEmpty {
+                                uploadedDocumentsList(vm.existingDocuments)
                             }
                         }
+
+                        dangerZone
+
+                        if let err = vm.errorMessage {
+                            errorRow(err)
+                        }
+
+                        Spacer().frame(height: 92)
                     }
-
-                    if let err = vm.errorMessage {
-                        Text(err)
-                            .foregroundColor(.red)
-                            .font(.footnote)
-                            .padding(.top, 4)
-                    }
-
-                    Divider().padding(.top, 8)
-
-                    Button(role: .destructive) {
-                        showDeleteAccountConfirm = true
-                    } label: {
-                        Text("Hesabı Sil")
-                            .frame(maxWidth: .infinity)
-                            .padding(.vertical, 14)
-                            .background(Color.red.opacity(0.12))
-                            .cornerRadius(12)
-                    }
-                    .disabled(vm.isLoading)
-
-                    Spacer().frame(height: 12)
+                    .padding(.horizontal, 18)
+                    .padding(.top, 14)
                 }
-                .padding(.horizontal, 20)
+
+                bottomSaveButton
             }
-            .navigationTitle("")
+            .navigationTitle("Profili Düzenle")
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {
-                // MARK: - Back Button
-                ToolbarItem(placement: .navigationBarLeading) {
-                    Button { dismiss() } label: {
-                        Image(systemName: "chevron.left")
-                    }
-                }
-
-                // MARK: - Save Button
-                ToolbarItem(placement: .navigationBarTrailing) {
+                ToolbarItem(placement: .topBarLeading) {
                     Button {
-                        Task {
-                            do {
-                                try await vm.save()
-                                dismiss()
-                            } catch {
-                                vm.errorMessage = error.localizedDescription
-                            }
-                        }
+                        dismiss()
                     } label: {
-                        Image(systemName: "checkmark")
+                        Image(systemName: "chevron.left")
+                            .font(.system(size: 16, weight: .semibold))
                     }
-                    .disabled(vm.isLoading)
                 }
             }
         }
-        .task { await vm.load() }
+        .task {
+            await vm.load()
+        }
         .fileImporter(
             isPresented: $showCVPicker,
             allowedContentTypes: [UTType.pdf],
@@ -225,6 +122,7 @@ struct EditPersonalProfileView: View {
                 if let url = urls.first {
                     vm.setCV(url: url)
                 }
+
             case .failure(let error):
                 vm.errorMessage = error.localizedDescription
             }
@@ -239,6 +137,7 @@ struct EditPersonalProfileView: View {
                 if let url = urls.first {
                     vm.setDocument(url: url)
                 }
+
             case .failure(let error):
                 vm.errorMessage = error.localizedDescription
             }
@@ -249,7 +148,9 @@ struct EditPersonalProfileView: View {
                     vm.setTC(tc)
                     showIDScanner = false
                 },
-                onCancel: { showIDScanner = false },
+                onCancel: {
+                    showIDScanner = false
+                },
                 onError: { msg in
                     vm.errorMessage = msg
                     showIDScanner = false
@@ -264,74 +165,394 @@ struct EditPersonalProfileView: View {
             Button("Hesabı Sil", role: .destructive) {
                 Task {
                     await vm.deleteMyAccount()
+
                     if vm.errorMessage == nil {
                         dismiss()
                     }
                 }
             }
+
             Button("Vazgeç", role: .cancel) { }
         }
     }
 
-    // MARK: - Foto preview
+    // MARK: - Photo Section
+
+    private var photoSection: some View {
+        VStack(spacing: 14) {
+            profileImage(size: 96)
+                .overlay(
+                    Circle()
+                        .stroke(Color.black.opacity(0.06), lineWidth: 1)
+                )
+
+            PhotosPicker(selection: $vm.photoItem, matching: .images) {
+                Label("Fotoğraf Değiştir", systemImage: "photo")
+                    .font(.subheadline.weight(.semibold))
+                    .foregroundStyle(.blue)
+                    .padding(.horizontal, 14)
+                    .padding(.vertical, 9)
+                    .background(
+                        Capsule()
+                            .fill(Color.blue.opacity(0.10))
+                    )
+            }
+            .onChange(of: vm.photoItem) { _, newValue in
+                Task {
+                    await vm.onPickPhoto(newValue)
+                }
+            }
+        }
+        .frame(maxWidth: .infinity)
+        .padding(.vertical, 18)
+        .background(Color(.systemBackground))
+        .clipShape(RoundedRectangle(cornerRadius: 24, style: .continuous))
+        .overlay(
+            RoundedRectangle(cornerRadius: 24, style: .continuous)
+                .stroke(Color.black.opacity(0.06), lineWidth: 1)
+        )
+    }
+
+    // MARK: - Identity Row
+
+    private var identityRow: some View {
+        HStack(spacing: 12) {
+            Image(systemName: "person.text.rectangle")
+                .font(.system(size: 16, weight: .semibold))
+                .foregroundStyle(.blue)
+                .frame(width: 32, height: 32)
+
+            VStack(alignment: .leading, spacing: 5) {
+                Text("Kimlik")
+                    .font(.caption.weight(.semibold))
+                    .foregroundStyle(.secondary)
+
+                TextField("Kimlik", text: $vm.tcIdentityNumber)
+                    .font(.system(size: 15, weight: .medium))
+                    .keyboardType(.numberPad)
+            }
+
+            Button {
+                showIDScanner = true
+            } label: {
+                Text("Tara")
+                    .font(.caption.weight(.semibold))
+                    .foregroundStyle(.blue)
+                    .padding(.horizontal, 10)
+                    .padding(.vertical, 7)
+                    .background(
+                        Capsule()
+                            .fill(Color.blue.opacity(0.10))
+                    )
+            }
+            .buttonStyle(.plain)
+        }
+        .formRowBackground()
+    }
+
+    // MARK: - Document Picker Row
+
+    private func documentPickerRow(
+        title: String,
+        selectedFileName: String?,
+        placeholder: String,
+        icon: String,
+        action: @escaping () -> Void
+    ) -> some View {
+        Button(action: action) {
+            HStack(spacing: 12) {
+                Image(systemName: icon)
+                    .font(.system(size: 16, weight: .semibold))
+                    .foregroundStyle(.blue)
+                    .frame(width: 32, height: 32)
+
+                VStack(alignment: .leading, spacing: 3) {
+                    Text(title)
+                        .font(.caption.weight(.semibold))
+                        .foregroundStyle(.secondary)
+
+                    Text(selectedFileName ?? placeholder)
+                        .font(.system(size: 15, weight: .medium))
+                        .foregroundStyle(.primary)
+                        .lineLimit(1)
+                }
+
+                Spacer()
+
+                Image(systemName: "chevron.right")
+                    .font(.system(size: 12, weight: .semibold))
+                    .foregroundStyle(.secondary)
+            }
+            .formRowBackground()
+        }
+        .buttonStyle(.plain)
+    }
+
+    // MARK: - Uploaded Documents
+
+    private func uploadedDocumentsList(_ documents: [BusinessMemberDocumentDTO]) -> some View {
+        VStack(spacing: 0) {
+            ForEach(documents, id: \.id) { document in
+                uploadedDocumentRow(document)
+            }
+        }
+    }
+
+    private func uploadedDocumentRow(_ document: BusinessMemberDocumentDTO) -> some View {
+        HStack(spacing: 12) {
+            Image(systemName: "doc.text")
+                .font(.system(size: 16, weight: .semibold))
+                .foregroundStyle(.secondary)
+                .frame(width: 32, height: 32)
+
+            VStack(alignment: .leading, spacing: 3) {
+                Text("Yüklü Dosya")
+                    .font(.caption.weight(.semibold))
+                    .foregroundStyle(.secondary)
+
+                Text(document.fileName)
+                    .font(.system(size: 15, weight: .medium))
+                    .foregroundStyle(.primary)
+                    .lineLimit(1)
+            }
+
+            Spacer()
+
+            Button(role: .destructive) {
+                Task {
+                    await vm.deleteDocument(document)
+                }
+            } label: {
+                Image(systemName: "trash")
+                    .font(.system(size: 14, weight: .semibold))
+                    .foregroundColor(
+                        (vm.isDeletingDoc || vm.isLoading) ? .secondary : .red
+                    )
+            }
+            .disabled(vm.isDeletingDoc || vm.isLoading)
+        }
+        .formRowBackground()
+    }
+
+    // MARK: - Danger Zone
+
+    private var dangerZone: some View {
+        sectionCard(title: "Tehlikeli İşlemler") {
+            Button(role: .destructive) {
+                showDeleteAccountConfirm = true
+            } label: {
+                HStack(spacing: 12) {
+                    Image(systemName: "trash.fill")
+                        .font(.system(size: 16, weight: .semibold))
+                        .foregroundStyle(.red)
+                        .frame(width: 32, height: 32)
+
+                    VStack(alignment: .leading, spacing: 3) {
+                        Text("Hesabı Sil")
+                            .font(.system(size: 15, weight: .semibold))
+                            .foregroundStyle(.red)
+
+                        Text("Bu işlem geri alınamaz.")
+                            .font(.caption)
+                            .foregroundStyle(.secondary)
+                    }
+
+                    Spacer()
+
+                    Image(systemName: "chevron.right")
+                        .font(.system(size: 12, weight: .semibold))
+                        .foregroundStyle(.secondary)
+                }
+                .padding(.horizontal, 14)
+                .padding(.vertical, 12)
+                .background(Color.red.opacity(0.06))
+            }
+            .buttonStyle(.plain)
+            .disabled(vm.isLoading)
+        }
+    }
+
+    // MARK: - Bottom Save Button
+
+    private var bottomSaveButton: some View {
+        VStack(spacing: 0) {
+            Divider()
+
+            Button {
+                Task {
+                    do {
+                        try await vm.save()
+                        dismiss()
+                    } catch {
+                        vm.errorMessage = error.localizedDescription
+                    }
+                }
+            } label: {
+                HStack {
+                    if vm.isLoading {
+                        ProgressView()
+                            .tint(.white)
+                    }
+
+                    Text(vm.isLoading ? "Kaydediliyor..." : "Değişiklikleri Kaydet")
+                        .font(.headline)
+                }
+                .frame(maxWidth: .infinity)
+                .frame(height: 54)
+                .background(vm.isLoading ? Color.gray : Color.blue)
+                .foregroundStyle(.white)
+                .clipShape(RoundedRectangle(cornerRadius: 16, style: .continuous))
+            }
+            .disabled(vm.isLoading)
+            .padding(.horizontal, 18)
+            .padding(.top, 12)
+            .padding(.bottom, 12)
+            .background(.regularMaterial)
+        }
+    }
+
+    // MARK: - UI Helpers
+
+    private func sectionCard<Content: View>(
+        title: String,
+        @ViewBuilder content: () -> Content
+    ) -> some View {
+        VStack(alignment: .leading, spacing: 10) {
+            Text(title)
+                .font(.system(size: 17, weight: .bold))
+                .foregroundStyle(.primary)
+                .padding(.horizontal, 2)
+
+            VStack(spacing: 0) {
+                content()
+            }
+            .background(Color(.systemBackground))
+            .clipShape(RoundedRectangle(cornerRadius: 18, style: .continuous))
+            .overlay(
+                RoundedRectangle(cornerRadius: 18, style: .continuous)
+                    .stroke(Color.black.opacity(0.06), lineWidth: 1)
+            )
+        }
+    }
+
+    private func appTextField(
+        title: String,
+        text: Binding<String>,
+        icon: String,
+        keyboard: UIKeyboardType = .default,
+        autocapitalization: TextInputAutocapitalization? = .sentences
+    ) -> some View {
+        HStack(spacing: 12) {
+            Image(systemName: icon)
+                .font(.system(size: 16, weight: .semibold))
+                .foregroundStyle(.blue)
+                .frame(width: 32, height: 32)
+
+            VStack(alignment: .leading, spacing: 5) {
+                Text(title)
+                    .font(.caption.weight(.semibold))
+                    .foregroundStyle(.secondary)
+
+                TextField(title, text: text)
+                    .font(.system(size: 15, weight: .medium))
+                    .textInputAutocapitalization(autocapitalization)
+                    .keyboardType(keyboard)
+            }
+        }
+        .formRowBackground()
+    }
+
+    private func errorRow(_ message: String) -> some View {
+        HStack(spacing: 12) {
+            Image(systemName: "exclamationmark.triangle.fill")
+                .foregroundStyle(.red)
+
+            Text(message)
+                .font(.footnote)
+                .foregroundStyle(.red)
+
+            Spacer()
+        }
+        .padding(14)
+        .background(Color.red.opacity(0.08))
+        .clipShape(RoundedRectangle(cornerRadius: 14, style: .continuous))
+    }
+
+    // MARK: - Image Preview
+
     private func profileImage(size: CGFloat) -> some View {
         Group {
-            if let data = vm.photoData, let ui = UIImage(data: data) {
+            if let data = vm.photoData,
+               let ui = UIImage(data: data) {
                 Image(uiImage: ui)
                     .resizable()
                     .scaledToFill()
             } else if let url = absoluteURL(from: vm.remoteImageUrl) {
                 AsyncImage(url: url) { phase in
                     switch phase {
-                    case .success(let img):
-                        img.resizable().scaledToFill()
+                    case .success(let image):
+                        image
+                            .resizable()
+                            .scaledToFill()
+
                     case .failure, .empty:
-                        Circle().fill(Color.gray.opacity(0.25))
+                        placeholderAvatar
+
                     @unknown default:
-                        Circle().fill(Color.gray.opacity(0.25))
+                        placeholderAvatar
                     }
                 }
             } else {
-                Circle().fill(Color.gray.opacity(0.25))
+                placeholderAvatar
             }
         }
         .frame(width: size, height: size)
         .clipShape(Circle())
     }
 
+    private var placeholderAvatar: some View {
+        ZStack {
+            Circle()
+                .fill(Color.blue.opacity(0.10))
+
+            Image(systemName: "person.crop.circle.fill")
+                .font(.system(size: 42, weight: .semibold))
+                .foregroundStyle(.blue)
+        }
+    }
+
     private func absoluteURL(from pathOrUrl: String?) -> URL? {
         let baseURL = "https://personelimapi.onrender.com"
-        guard var s = pathOrUrl, !s.isEmpty else { return nil }
-        if s.lowercased().hasPrefix("http") { return URL(string: s) }
-        if !s.hasPrefix("/") { s = "/" + s }
-        return URL(string: baseURL + s)
+        guard var value = pathOrUrl,
+              !value.isEmpty else {
+            return nil
+        }
+
+        if value.lowercased().hasPrefix("http") {
+            return URL(string: value)
+        }
+
+        if !value.hasPrefix("/") {
+            value = "/" + value
+        }
+
+        return URL(string: baseURL + value)
     }
 }
 
-// MARK: - UI Helper
-private struct LabeledRoundedField<Content: View>: View {
-    let title: String
-    var trailingTitle: String? = nil
-    var trailingAction: (() -> Void)? = nil
-    @ViewBuilder let content: () -> Content
+// MARK: - Shared Row Background
 
-    var body: some View {
-        VStack(alignment: .leading, spacing: 8) {
-            HStack {
-                Text(title).font(.body)
-                Spacer()
-                if let trailingTitle {
-                    Button(trailingTitle) { trailingAction?() }
-                        .foregroundColor(.blue)
-                        .font(.body)
-                }
+private extension View {
+    func formRowBackground() -> some View {
+        self
+            .padding(.horizontal, 14)
+            .padding(.vertical, 12)
+            .background(Color(.systemBackground))
+            .overlay(alignment: .bottom) {
+                Rectangle()
+                    .fill(Color.black.opacity(0.055))
+                    .frame(height: 0.7)
+                    .padding(.leading, 58)
             }
-
-            content()
-                .padding(.vertical, 8)
-                .padding(.horizontal, 8)
-                .background(Color(UIColor.systemGray6))
-                .clipShape(RoundedRectangle(cornerRadius: 12))
-        }
     }
 }

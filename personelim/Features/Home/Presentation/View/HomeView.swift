@@ -1,10 +1,3 @@
-//
-//  HomeView.swift
-//  personelim
-//
-//  Created by Yusuf Kaan USTA on 2.12.2025.
-//
-
 import SwiftUI
 
 struct HomeView: View {
@@ -19,21 +12,28 @@ struct HomeView: View {
 
     var body: some View {
         NavigationStack {
-            ScrollView {
-                VStack(spacing: 18) {
+            ZStack {
+                Color(.systemBackground)
+                    .ignoresSafeArea()
 
-                    headerSection
+                ScrollView(showsIndicators: false) {
+                    VStack(spacing: 18) {
+                        headerSection
 
-                    shiftSection
+                        shiftSection
 
-                    activeDayTableSection
+                        activeDayTableSection
 
-                    activeTasksSection
+                        activeTasksSection
 
-                    Spacer(minLength: 12)
+                        Spacer(minLength: 24)
+                    }
+                    .padding(.top, 12)
+                    .padding(.bottom, 28)
                 }
-                .padding(.bottom, 24)
             }
+            .navigationTitle("")
+            .navigationBarTitleDisplayMode(.inline)
             .task(id: appState.businessId) {
                 guard let bid = appState.businessId else { return }
 
@@ -45,7 +45,6 @@ struct HomeView: View {
                 guard let bid = appState.businessId else { return }
                 await vm.loadActiveTasks(businessId: bid)
             }
-
             .navigationDestination(isPresented: $showTaskList) {
                 TasksListView()
             }
@@ -71,260 +70,393 @@ struct HomeView: View {
 }
 
 // MARK: - Sections
+
 private extension HomeView {
 
     var headerSection: some View {
-        HStack {
-            VStack(alignment: .leading, spacing: 4) {
+        HStack(alignment: .center, spacing: 14) {
+            VStack(alignment: .leading, spacing: 5) {
                 Text(ConstantStrings.welcome)
-                    .font(.system(size: 16, weight: .regular))
-                    .foregroundColor(.secondary)
+                    .font(.subheadline.weight(.medium))
+                    .foregroundStyle(.secondary)
 
                 Text(appState.displayName)
-                    .font(.system(size: 24, weight: .bold))
+                    .font(.system(size: 28, weight: .bold))
+                    .foregroundStyle(.primary)
+                    .lineLimit(1)
             }
+
             Spacer()
+
+          
         }
-        .padding(.horizontal)
-        .padding(.top, 6)
+        .padding(.horizontal, 18)
     }
 
     var shiftSection: some View {
         VStack(alignment: .leading, spacing: 12) {
+            sectionTitle(
+                title: ConstantStrings.shiftHours,
+                subtitle: shiftVM.isRunning ? "Çalışma süren aktif" : "Mesai başlatılmadı"
+            )
 
-            VStack(spacing: 14) {
+            VStack(spacing: 16) {
 
-                HStack(alignment: .top) {
+                Text(shiftVM.elapsedText)
+                    .font(.system(size: 46, weight: .bold))
+                    .monospacedDigit()
+                    .foregroundStyle(.primary)
+                    .frame(maxWidth: .infinity)
+                    .padding(.top, 8)
 
-                    VStack(alignment: .leading, spacing: 8) {
-                        Text(ConstantStrings.shiftHours)
-                            .font(.system(size: 18, weight: .regular))
-                            .foregroundColor(.primary)
+                HStack(spacing: 10) {
+                    Button {
+                        if !shiftVM.isRunning {
+                            shiftVM.openStartSheet()
+                        } else if shiftVM.isPaused {
+                            shiftVM.resume()
+                        } else {
+                            shiftVM.pause()
+                        }
+                    } label: {
+                        HStack(spacing: 8) {
+                            Image(systemName: primaryTimerButtonIcon)
 
-                        Text(shiftVM.elapsedText)
-                            .font(.system(size: 36, weight: .bold))
-                            .monospacedDigit()
-                            .foregroundColor(.primary)
+                            Text(primaryTimerButtonTitle)
+                                .font(.headline)
+                        }
+                        .foregroundStyle(.white)
+                        .frame(maxWidth: .infinity)
+                        .frame(height: 52)
+                        .background(primaryTimerButtonColor)
+                        .clipShape(RoundedRectangle(cornerRadius: 16, style: .continuous))
                     }
-
-                    Spacer()
+                    .buttonStyle(.plain)
 
                     Button {
                         if let bid = appState.businessId {
                             shiftVM.endDay(businessId: bid)
+
                             Task {
-                                await vm.loadMonthlyShifts(businessId: bid, month: Date())
+                                await vm.loadMonthlyShifts(
+                                    businessId: bid,
+                                    month: Date()
+                                )
                             }
                         } else {
                             shiftVM.errorMessage = ConstantStrings.businessIdNotFound
                         }
                     } label: {
-                        Text(ConstantStrings.endDay)
-                            .font(.system(size: 16, weight: .semibold))
-                            .foregroundColor(.primary)
-                            .padding(.horizontal, 18)
-                            .padding(.vertical, 10)
-                            .background(Color.red.opacity(0.22))
-                            .clipShape(Capsule())
+                        Image(systemName: "stop.fill")
+                            .font(.system(size: 16, weight: .bold))
+                            .foregroundStyle(.red)
+                            .frame(width: 52, height: 52)
+                            .background(
+                                RoundedRectangle(cornerRadius: 16, style: .continuous)
+                                    .fill(Color.red.opacity(0.10))
+                            )
                     }
                     .buttonStyle(.plain)
                     .disabled(!shiftVM.isRunning)
-                    .opacity(!shiftVM.isRunning ? 0.55 : 1)
+                    .opacity(!shiftVM.isRunning ? 0.45 : 1)
                 }
-
-                Button {
-                    if !shiftVM.isRunning {
-                        shiftVM.openStartSheet()
-                    } else if shiftVM.isPaused {
-                        shiftVM.resume()
-                    } else {
-                        shiftVM.pause()
-                    }
-                } label: {
-                    Text(primaryTimerButtonTitle)
-                        .font(.system(size: 18, weight: .semibold))
-                        .foregroundColor(.primary)
-                        .frame(maxWidth: .infinity)
-                        .padding(.vertical, 18)
-                        .background(Color(.systemGray5))
-                        .clipShape(RoundedRectangle(cornerRadius: 12))
-                }
-                .buttonStyle(.plain)
-
             }
-            .padding(.horizontal, 18)
-            .padding(.vertical, 16)
-            .background(Color(.systemGray6))
-            .clipShape(RoundedRectangle(cornerRadius: 16))
-            .padding(.horizontal)
-            .padding(.bottom, 6)
+            .padding(16)
+            .background(Color(.systemBackground))
+            .clipShape(RoundedRectangle(cornerRadius: 22, style: .continuous))
+            .overlay(
+                RoundedRectangle(cornerRadius: 22, style: .continuous)
+                    .stroke(Color.black.opacity(0.06), lineWidth: 1)
+            )
 
             if let err = shiftVM.errorMessage, !err.isEmpty {
-                Text(err)
-                    .font(.system(size: 13))
-                    .foregroundColor(.red)
-                    .padding(.horizontal)
+                errorInline(err)
             }
         }
-        .padding(.top, 2)
+        .padding(.horizontal, 18)
     }
-
     var primaryTimerButtonTitle: String {
         if !shiftVM.isRunning { return ConstantStrings.start }
         if shiftVM.isPaused { return ConstantStrings.resume }
         return ConstantStrings.pause
     }
 
+    var primaryTimerButtonIcon: String {
+        if !shiftVM.isRunning { return "play.fill" }
+        if shiftVM.isPaused { return "play.fill" }
+        return "pause.fill"
+    }
+
+    var primaryTimerButtonColor: Color {
+        if !shiftVM.isRunning { return .blue }
+        if shiftVM.isPaused { return .green }
+        return .orange
+    }
+
     var activeDayTableSection: some View {
         VStack(alignment: .leading, spacing: 12) {
-
-            Text(ConstantStrings.activeDayTable)
-                .font(.system(size: 24, weight: .bold))
-                .padding(.horizontal)
-
-            ShiftMonthGridView(
-                month: vm.currentMonth,
-                summaries: vm.currentMonthSummaries,
-                onTapDay: { day in
-                    vm.openDayDetail(day: day)
-                }
+            sectionTitle(
+                title: ConstantStrings.activeDayTable,
+                subtitle: "Aylık mesai takibini görüntüle"
             )
-            .padding(.horizontal)
 
-            Button {
-                showAllTables = true
-            } label: {
-                Text(ConstantStrings.seeDetails)
-                    .font(.headline)
-                    .foregroundColor(.primary)
-                    .frame(maxWidth: .infinity)
-                    .padding()
-                    .background(Color(.systemGray5))
-                    .cornerRadius(14)
+            VStack(spacing: 14) {
+                ShiftMonthGridView(
+                    month: vm.currentMonth,
+                    summaries: vm.currentMonthSummaries,
+                    onTapDay: { day in
+                        vm.openDayDetail(day: day)
+                    }
+                )
+
+                Button {
+                    showAllTables = true
+                } label: {
+                    HStack {
+                        Text(ConstantStrings.seeDetails)
+                            .font(.headline)
+
+                        Spacer()
+
+                        Image(systemName: "chevron.right")
+                            .font(.system(size: 13, weight: .semibold))
+                    }
+                    .foregroundStyle(.blue)
+                    .padding(.horizontal, 14)
+                    .frame(height: 50)
+                    .background(
+                        RoundedRectangle(cornerRadius: 15, style: .continuous)
+                            .fill(Color.blue.opacity(0.10))
+                    )
+                }
+                .buttonStyle(.plain)
             }
-            .padding(.horizontal)
-            .padding(.top, 4)
+            .padding(14)
+            .background(Color(.systemBackground))
+            .clipShape(RoundedRectangle(cornerRadius: 22, style: .continuous))
+            .overlay(
+                RoundedRectangle(cornerRadius: 22, style: .continuous)
+                    .stroke(Color.black.opacity(0.06), lineWidth: 1)
+            )
         }
+        .padding(.horizontal, 18)
     }
 
     var activeTasksSection: some View {
-        VStack(alignment: .leading, spacing: 20) {
-            
-            Text(ConstantStrings.calendarTitle)
-                .font(.system(size: 24, weight: .bold))
-                .padding(.horizontal)
+        VStack(alignment: .leading, spacing: 12) {
+            sectionTitle(
+                title: ConstantStrings.calendarTitle,
+                subtitle: "Haftalık aktivite görünümü"
+            )
 
-            HStack(alignment: .top, spacing: 0) {
-                ForEach(vm.currentWeekDays, id: \.self) { day in
-                    TaskCalendarDayCell(
-                        date: day,
-                        activities: vm.getActivitiesForDay(day),
-                        isSelected: Calendar.current.isDateInToday(day)
+            VStack(spacing: 14) {
+                weekCalendarView
+
+                Button {
+                    showTaskList = true
+                } label: {
+                    HStack {
+                        Text(ConstantStrings.allActivities)
+                            .font(.headline)
+
+                        Spacer()
+
+                        Image(systemName: "chevron.right")
+                            .font(.system(size: 13, weight: .semibold))
+                    }
+                    .foregroundStyle(.blue)
+                    .padding(.horizontal, 14)
+                    .frame(height: 50)
+                    .background(
+                        RoundedRectangle(cornerRadius: 15, style: .continuous)
+                            .fill(Color.blue.opacity(0.10))
                     )
-                    .onTapGesture {
-                        vm.selectDay(day)
-                    }
-                    if day != vm.currentWeekDays.last {
-                        Rectangle()
-                            .fill(Color.secondary.opacity(0.2))
-                            .frame(width: 1, height: 100)
-                            .padding(.top, 5)
-                    }
+                }
+                .buttonStyle(.plain)
+            }
+            .padding(14)
+            .background(Color(.systemBackground))
+            .clipShape(RoundedRectangle(cornerRadius: 22, style: .continuous))
+            .overlay(
+                RoundedRectangle(cornerRadius: 22, style: .continuous)
+                    .stroke(Color.black.opacity(0.06), lineWidth: 1)
+            )
+        }
+        .padding(.horizontal, 18)
+    }
+
+    var weekCalendarView: some View {
+        HStack(alignment: .top, spacing: 0) {
+            ForEach(vm.currentWeekDays, id: \.self) { day in
+                TaskCalendarDayCell(
+                    date: day,
+                    activities: vm.getActivitiesForDay(day),
+                    isSelected: Calendar.current.isDateInToday(day)
+                )
+                .frame(maxWidth: .infinity)
+                .contentShape(Rectangle())
+                .onTapGesture {
+                    vm.selectDay(day)
+                }
+
+                if day != vm.currentWeekDays.last {
+                    Rectangle()
+                        .fill(Color.black.opacity(0.055))
+                        .frame(width: 0.7, height: 96)
+                        .padding(.top, 6)
                 }
             }
-            .padding(.vertical, 10)
-            .background(Color(.systemBackground))
-
-            Button {
-                showTaskList = true
-            } label: {
-                Text(ConstantStrings.allActivities)
-                    .font(.system(size: 17, weight: .semibold))
-                    .foregroundColor(.primary)
-                    .frame(maxWidth: .infinity)
-                    .padding(.vertical, 18)
-                    .background(Color(.systemGray5))
-                    .cornerRadius(16)
-            }
-            .padding(.horizontal)
         }
+        .padding(.vertical, 10)
+        .background(Color(.systemBackground))
+        .clipShape(RoundedRectangle(cornerRadius: 18, style: .continuous))
+        .overlay(
+            RoundedRectangle(cornerRadius: 18, style: .continuous)
+                .stroke(Color.black.opacity(0.06), lineWidth: 1)
+        )
     }
 
     var activityDetailSheet: some View {
-        VStack(alignment: .leading, spacing: 20) {
+        VStack(alignment: .leading, spacing: 18) {
             HStack {
-                Text(ConstantStrings.dailyActivitiesTitle)
-                    .font(.title2.bold())
+                VStack(alignment: .leading, spacing: 4) {
+                    Text(ConstantStrings.dailyActivitiesTitle)
+                        .font(.title2.bold())
+
+                    Text("\(vm.selectedDateTasks.count) aktivite")
+                        .font(.caption)
+                        .foregroundStyle(.secondary)
+                }
+
                 Spacer()
-                Button { vm.showDetailSheet = false } label: {
+
+                Button {
+                    vm.showDetailSheet = false
+                } label: {
                     Image(systemName: "xmark.circle.fill")
-                        .foregroundColor(.secondary)
+                        .foregroundStyle(.secondary)
                         .font(.title2)
                 }
+                .buttonStyle(.plain)
             }
-            .padding(.top)
+            .padding(.top, 4)
 
             if vm.selectedDateTasks.isEmpty {
-                VStack(spacing: 12) {
-                    Image(systemName: "calendar.badge.exclamationmark")
-                        .font(.system(size: 40))
-                        .foregroundColor(.secondary)
-                    Text(ConstantStrings.noActivityFound)
-                        .foregroundColor(.secondary)
-                }
-                .frame(maxWidth: .infinity, maxHeight: .infinity)
+                emptyActivitySheet
             } else {
-                ScrollView {
-                    VStack(spacing: 12) {
+                ScrollView(showsIndicators: false) {
+                    VStack(spacing: 10) {
                         ForEach(vm.selectedDateTasks) { task in
-                            HStack(spacing: 15) {
-                                Rectangle()
-                                    .fill(task.activityType.color)
-                                    .frame(width: 5)
-                                    .cornerRadius(2)
-
-                                VStack(alignment: .leading, spacing: 4) {
-                                    HStack(spacing: 6) {
-                                        Text(task.activityType.rawValue)
-                                            .font(.caption2.bold())
-                                            .textCase(.uppercase)
-                                            .foregroundColor(task.activityType.color)
-                                            .padding(.horizontal, 6)
-                                            .padding(.vertical, 2)
-                                            .background(task.activityType.color.opacity(0.12))
-                                            .cornerRadius(4)
-                                        
-                                        Text(task.title)
-                                            .font(.headline)
-                                    }
-                                    
-                                    if let desc = task.description {
-                                        Text(desc)
-                                            .font(.subheadline)
-                                            .foregroundColor(.secondary)
-                                            .lineLimit(2)
-                                    }
-                                }
-                                
-                                Spacer()
-                    
-                                Text(task.status)
-                                    .font(.caption.bold())
-                                    .padding(.horizontal, 8)
-                                    .padding(.vertical, 4)
-                                    .background(Color.secondary.opacity(0.1))
-                                    .cornerRadius(8)
-                            }
-                            .padding()
-                            .background(Color(.systemGray6))
-                            .cornerRadius(12)
+                            activitySheetRow(task)
                         }
                     }
                 }
             }
         }
-        .padding()
+        .padding(18)
+        .background(Color(.systemBackground))
         .presentationDetents([.medium, .large])
         .presentationDragIndicator(.visible)
+    }
+
+    func activitySheetRow(_ task: TaskEntity) -> some View {
+        HStack(spacing: 12) {
+            Rectangle()
+                .fill(task.activityType.color)
+                .frame(width: 4)
+                .clipShape(Capsule())
+
+            VStack(alignment: .leading, spacing: 6) {
+                HStack(spacing: 7) {
+                    Text(task.activityType.rawValue)
+                        .font(.caption2.weight(.bold))
+                        .textCase(.uppercase)
+                        .foregroundStyle(task.activityType.color)
+                        .padding(.horizontal, 7)
+                        .padding(.vertical, 3)
+                        .background(
+                            Capsule()
+                                .fill(task.activityType.color.opacity(0.12))
+                        )
+
+                    Text(task.title)
+                        .font(.headline)
+                        .lineLimit(1)
+                }
+
+                if let desc = task.description {
+                    Text(desc)
+                        .font(.subheadline)
+                        .foregroundStyle(.secondary)
+                        .lineLimit(2)
+                }
+            }
+
+            Spacer()
+
+            Text(task.status)
+                .font(.caption.weight(.bold))
+                .foregroundStyle(.secondary)
+                .padding(.horizontal, 9)
+                .padding(.vertical, 5)
+                .background(
+                    Capsule()
+                        .fill(Color.black.opacity(0.06))
+                )
+        }
+        .padding(14)
+        .background(Color(.systemBackground))
+        .clipShape(RoundedRectangle(cornerRadius: 16, style: .continuous))
+        .overlay(
+            RoundedRectangle(cornerRadius: 16, style: .continuous)
+                .stroke(Color.black.opacity(0.06), lineWidth: 1)
+        )
+    }
+
+    var emptyActivitySheet: some View {
+        VStack(spacing: 12) {
+            Image(systemName: "calendar.badge.exclamationmark")
+                .font(.system(size: 40, weight: .semibold))
+                .foregroundStyle(.blue)
+
+            Text(ConstantStrings.noActivityFound)
+                .font(.headline)
+                .foregroundStyle(.primary)
+
+            Text("Bu gün için kayıtlı aktivite bulunmuyor.")
+                .font(.caption)
+                .foregroundStyle(.secondary)
+        }
+        .frame(maxWidth: .infinity, maxHeight: .infinity)
+        .padding(.vertical, 40)
+    }
+
+    func sectionTitle(title: String, subtitle: String) -> some View {
+        VStack(alignment: .leading, spacing: 4) {
+            Text(title)
+                .font(.system(size: 21, weight: .bold))
+                .foregroundStyle(.primary)
+
+            Text(subtitle)
+                .font(.caption)
+                .foregroundStyle(.secondary)
+        }
+    }
+
+    func errorInline(_ message: String) -> some View {
+        HStack(spacing: 10) {
+            Image(systemName: "exclamationmark.triangle.fill")
+                .foregroundStyle(.red)
+
+            Text(message)
+                .font(.caption)
+                .foregroundStyle(.red)
+
+            Spacer()
+        }
+        .padding(.horizontal, 12)
+        .padding(.vertical, 10)
+        .background(Color.red.opacity(0.08))
+        .clipShape(RoundedRectangle(cornerRadius: 14, style: .continuous))
     }
 }

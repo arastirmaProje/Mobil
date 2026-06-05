@@ -18,19 +18,18 @@ struct ProfileView: View {
     @State private var showAddSlackIntegration = false
     @State private var showPremiumSubscription = false
     @State private var showQuery = false
+
     @State private var selectedReportId: String?
     @State private var selectedSlackIntegration: SlackIntegration?
     @State private var previewDoc: DocumentToPreview?
     @State private var avatarRefreshToken = UUID()
-    
-    @State private var isInitialLoad = true 
 
-    // MARK: - Repos
+    @State private var isInitialLoad = true
+
     private var authRepo: AuthRepositoryProtocol {
         AuthRepositoryImpl(network: network)
     }
 
-    // MARK: - Init
     init(network: NetworkManager = NetworkManager()) {
         self.network = network
 
@@ -43,6 +42,7 @@ struct ProfileView: View {
 
         let perfRepo = PerformanceRepositoryImpl(network: network)
         let getReports = GetPerformanceReportsUseCase(repo: perfRepo)
+
         _perfVM = StateObject(
             wrappedValue: ProfilePerformanceViewModel(
                 getReportsUseCase: getReports
@@ -56,20 +56,16 @@ struct ProfileView: View {
         )
     }
 
-    // MARK: - Body
     var body: some View {
         ScrollView(showsIndicators: false) {
-            VStack(spacing: 18) {
+            VStack(spacing: 14) {
 
                 if vm.isLoading && isInitialLoad {
-                    ProgressView()
-                        .padding(.top, 28)
+                    loadingCard
                 }
 
                 if let err = vm.errorMessage {
-                    Text(err)
-                        .foregroundColor(.red)
-                        .padding(.horizontal, 16)
+                    errorCard(err)
                 }
 
                 if appState.businessId != nil {
@@ -86,13 +82,16 @@ struct ProfileView: View {
 
                 if let e = vm.employeeUI {
                     employeeProfile(e)
+                        .padding(.horizontal, 16)
                 }
 
                 Spacer().frame(height: 28)
             }
-            .padding(.top, 10)
+            .padding(.top, 12)
         }
-        .background(Color.white.ignoresSafeArea())
+        .background(Color(.systemBackground).ignoresSafeArea())
+        .navigationTitle("Profil")
+        .navigationBarTitleDisplayMode(.large)
         .task {
             await vm.loadIfNeeded(appState: appState)
             await loadReportsIfPossible()
@@ -104,7 +103,6 @@ struct ProfileView: View {
             await loadReportsIfPossible()
             await loadSlackIfPossible()
         }
-        // MARK: - Sheets
         .sheet(isPresented: $showEditPersonalProfile, onDismiss: {
             avatarRefreshToken = UUID()
             Task { await vm.reload(appState: appState) }
@@ -133,7 +131,12 @@ struct ProfileView: View {
                     businessId: bid,
                     employeeUserId: uid,
                     onCreated: { _ in
-                        Task { await perfVM.load(businessId: bid, employeeUserId: uid) }
+                        Task {
+                            await perfVM.load(
+                                businessId: bid,
+                                employeeUserId: uid
+                            )
+                        }
                     }
                 )
                 .presentationDetents([.large])
@@ -149,7 +152,6 @@ struct ProfileView: View {
             )
             .presentationDetents([.large])
         }
-        // MARK: - Navigation
         .navigationDestination(
             isPresented: Binding(
                 get: { selectedReportId != nil },
@@ -198,50 +200,42 @@ struct ProfileView: View {
     }
 
     // MARK: - Employee Profile
+
     private func employeeProfile(_ p: EmployeeProfileUI) -> some View {
         VStack(spacing: 14) {
-            HStack(alignment: .center, spacing: 12) {
 
-                let abs = network.absoluteURL(from: p.imageUrl)
-                AvatarView(url: abs, size: 60, refreshId: avatarRefreshToken)
+            profileHeaderCard(
+                imageUrl: p.imageUrl,
+                title: p.fullName,
+                subtitle: p.position ?? "Ünvan bilgisi yok",
+                detail: "Gelir: \(p.salaryText ?? "-")",
+                editAction: { showEditPersonalProfile = true }
+            )
 
-                VStack(alignment: .leading, spacing: 4) {
-                    Text(p.fullName)
-                        .font(.system(size: 20, weight: .semibold))
+            infoGroup(title: "Kişisel Bilgiler") {
+                infoSection(
+                    title: "Kimlik",
+                    value: p.tcIdentityNumber ?? "-",
+                    icon: "person.text.rectangle"
+                )
 
-                    Text("Ünvan: \(p.position ?? "-")")
-                        .font(.system(size: 14))
-                        .foregroundColor(.secondary)
-
-                    Text("Gelir: \(p.salaryText ?? "-")")
-                        .font(.system(size: 14))
-                        .foregroundColor(.secondary)
-                }
-
-                Spacer()
-
-                Button(action: { showEditPersonalProfile = true }) {
-                    Text("Düzenle")
-                        .font(.system(size: 14, weight: .semibold))
-                        .foregroundStyle(.blue)
-                        .padding(.horizontal, 12)
-                        .padding(.vertical, 7)
-                        .background(Color(.systemGray6))
-                        .clipShape(Capsule())
-                }
-                .buttonStyle(.plain)
+                infoSection(
+                    title: "Email",
+                    value: p.email,
+                    icon: "envelope"
+                )
             }
-            .headerStyle()
-            
-            infoSection(title: "Kimlik", value: p.tcIdentityNumber ?? "-")
-            infoSection(title: "Email", value: p.email)
 
-            documentsSection(title: "Belgeler", documents: p.documentFiles)
-            
+            documentsSection(
+                title: "Belgeler",
+                documents: p.documentFiles
+            )
+
             LeaveSectionView(
                 remainingDaysText: p.remainingLeaveDaysText,
                 onCreateLeave: { showCreateLeave = true }
             )
+            .unifiedCard()
 
             PerformanceSectionView(
                 reports: perfVM.reports,
@@ -250,239 +244,383 @@ struct ProfileView: View {
                 onCreateQuery: { showQuery = true },
                 onSelectReport: { selectedReportId = $0 }
             )
+            .unifiedCard()
         }
     }
 
     // MARK: - Manager Profile
-    private func managerProfile(_ m: ManagerProfileUI) -> some View {
-        VStack(spacing: 16) {
 
-            companyHeaderCard(m)
+    private func managerProfile(_ m: ManagerProfileUI) -> some View {
+        VStack(spacing: 14) {
+
+            profileHeaderCard(
+                imageUrl: m.companyImageUrl,
+                title: m.companyName,
+                subtitle: trimmedOrNil(m.companyDescription) ?? "Şirket açıklaması yok",
+                detail: m.companyCityLine,
+                editAction: { showEditCompany = true }
+            )
+            .padding(.horizontal, 16)
 
             companyDetailsSection(m)
+                .padding(.horizontal, 16)
+
             officesSection(offices: m.offices)
+                .padding(.horizontal, 16)
+
             SlackIntegrationSection(
                 integrations: slackVM.integrations,
                 isLoading: slackVM.isLoading,
                 onAdd: { showAddSlackIntegration = true },
                 onSelect: { selectedSlackIntegration = $0 }
             )
-
-            Divider()
-                .padding(.vertical, 8)
+            .unifiedCard()
+            .padding(.horizontal, 16)
 
             employeeProfile(m.employee)
-
+                .padding(.horizontal, 16)
         }
-        .padding(.horizontal, 16)
     }
 
-    // MARK: - Company Header
-    private func companyHeaderCard(_ m: ManagerProfileUI) -> some View {
-        HStack(spacing: 12) {
+    // MARK: - Header Card
 
-            let abs = network.absoluteURL(from: m.companyImageUrl)
-            AvatarView(url: abs, size: 60, refreshId: avatarRefreshToken)
+    private func profileHeaderCard(
+        imageUrl: String?,
+        title: String,
+        subtitle: String,
+        detail: String?,
+        editAction: @escaping () -> Void
+    ) -> some View {
+        HStack(spacing: 14) {
 
-            VStack(alignment: .leading, spacing: 4) {
-                Text(m.companyName)
-                    .font(.system(size: 20, weight: .semibold))
+            let abs = network.absoluteURL(from: imageUrl)
 
-                if let desc = trimmedOrNil(m.companyDescription) {
-                    Text(desc)
-                        .font(.system(size: 14))
-                        .foregroundColor(.secondary)
-                        .lineLimit(2)
+            AvatarView(url: abs, size: 64, refreshId: avatarRefreshToken)
+                .overlay(
+                    Circle()
+                        .stroke(Color.black.opacity(0.06), lineWidth: 1)
+                )
+
+            VStack(alignment: .leading, spacing: 5) {
+                Text(title)
+                    .font(.system(size: 21, weight: .bold))
+                    .foregroundStyle(.primary)
+                    .lineLimit(1)
+
+                Text(subtitle)
+                    .font(.system(size: 14, weight: .medium))
+                    .foregroundStyle(.secondary)
+                    .lineLimit(2)
+
+                if let detail = trimmedOrNil(detail) {
+                    Text(detail)
+                        .font(.caption)
+                        .foregroundStyle(.secondary)
+                        .lineLimit(1)
                 }
             }
 
             Spacer()
 
-            Button(action: { showEditCompany = true }) {
-                Text("Düzenle")
-                    .font(.system(size: 14, weight: .semibold))
+            Button(action: editAction) {
+                Image(systemName: "square.and.pencil")
+                    .font(.system(size: 15, weight: .semibold))
                     .foregroundStyle(.blue)
-                    .padding(.horizontal, 12)
-                    .padding(.vertical, 7)
-                    .background(Color(.systemGray6))
-                    .clipShape(Capsule())
+                    .frame(width: 36, height: 36)
+                    .background(
+                        Circle()
+                            .fill(Color.blue.opacity(0.10))
+                    )
             }
             .buttonStyle(.plain)
-
         }
-        .headerStyle()
+        .padding(16)
+        .background(Color(.systemBackground))
+        .clipShape(RoundedRectangle(cornerRadius: 22, style: .continuous))
+        .overlay(
+            RoundedRectangle(cornerRadius: 22, style: .continuous)
+                .stroke(Color.black.opacity(0.06), lineWidth: 1)
+        )
     }
 
     // MARK: - Company Details
-    private func companyDetailsSection(_ m: ManagerProfileUI) -> some View {
-        VStack(alignment: .leading, spacing: 10) {
-            Text("Şirket Bilgileri")
-                .font(.system(size: 16, weight: .semibold))
 
-            VStack(alignment: .leading, spacing: 10) {
-                infoSection(title: "Email", value: m.companyEmail, compact: true)
-                if let officeName = trimmedOrNil(m.companyLocationName) {
-                    infoSection(title: "Ana Ofis", value: officeName, compact: true)
-                }
-                if let city = trimmedOrNil(m.companyCityLine), city != "-" {
-                    infoSection(title: "İl / İlçe", value: city, compact: true)
-                }
-                if let phone = trimmedOrNil(m.companyPhoneNumber) {
-                    tappableInfoRow(title: "Telefon", value: phone) {
-                        openPhone(phone)
-                    }
-                }
-                if let addr = trimmedOrNil(m.companyAddress) {
-                    infoSection(title: "Adres", value: addr, compact: true)
+    private func companyDetailsSection(_ m: ManagerProfileUI) -> some View {
+        infoGroup(title: "Şirket Bilgileri") {
+            infoSection(
+                title: "Email",
+                value: m.companyEmail,
+                icon: "envelope"
+            )
+
+            if let officeName = trimmedOrNil(m.companyLocationName) {
+                infoSection(
+                    title: "Ana Ofis",
+                    value: officeName,
+                    icon: "building.2"
+                )
+            }
+
+            if let city = trimmedOrNil(m.companyCityLine), city != "-" {
+                infoSection(
+                    title: "İl / İlçe",
+                    value: city,
+                    icon: "mappin.and.ellipse"
+                )
+            }
+
+            if let phone = trimmedOrNil(m.companyPhoneNumber) {
+                tappableInfoRow(
+                    title: "Telefon",
+                    value: phone,
+                    icon: "phone.fill"
+                ) {
+                    openPhone(phone)
                 }
             }
+
+            if let addr = trimmedOrNil(m.companyAddress) {
+                infoSection(
+                    title: "Adres",
+                    value: addr,
+                    icon: "map"
+                )
+            }
         }
-        .padding(.vertical, 8)
     }
 
     // MARK: - Offices
-    private func officesSection(offices: [OfficeUI]) -> some View {
-        VStack(alignment: .leading, spacing: 10) {
-            Text("Ofisler")
-                .font(.system(size: 16, weight: .semibold))
 
+    private func officesSection(offices: [OfficeUI]) -> some View {
+        infoGroup(title: "Ofisler") {
             if offices.isEmpty {
-                emptyRow(text: "-")
+                emptyRow(
+                    text: "Kayıtlı ofis bulunmuyor",
+                    icon: "building.2.crop.circle"
+                )
             } else {
-                VStack(spacing: 10) {
-                    ForEach(Array(offices.enumerated()), id: \.element.id) { idx, o in
+                VStack(spacing: 0) {
+                    ForEach(Array(offices.enumerated()), id: \.element.id) { idx, office in
                         Button {
-                            openAppleMaps(for: o)
+                            openAppleMaps(for: office)
                         } label: {
-                            HStack(spacing: 10) {
-                                Image(systemName: "building.2")
-                                    .foregroundColor(.secondary)
-                                Text(o.name.isEmpty ? "Ofis \(idx + 1)" : o.name)
-                                    .font(.system(size: 16))
-                                    .foregroundColor(.primary)
-                                    .lineLimit(1)
-                                Spacer()
-                                Image(systemName: "chevron.right")
-                                    .font(.system(size: 12, weight: .semibold))
-                                    .foregroundColor(.secondary)
-                            }
-                            .padding(12)
-                            .frame(maxWidth: .infinity, alignment: .leading)
-                            .background(
-                                RoundedRectangle(cornerRadius: 12)
-                                    .fill(Color(.systemBackground))
-                                    .shadow(color: .black.opacity(0.04), radius: 8, y: 4)
+                            rowCard(
+                                icon: "building.2",
+                                title: office.name.isEmpty ? "Ofis \(idx + 1)" : office.name,
+                                subtitle: office.hasCoordinate ? "Haritada aç" : "Konum bilgisi yok",
+                                trailingIcon: office.hasCoordinate ? "chevron.right" : nil
                             )
                         }
                         .buttonStyle(.plain)
-                        .disabled(!o.hasCoordinate)
+                        .disabled(!office.hasCoordinate)
                     }
                 }
             }
         }
     }
 
-    // MARK: - Helpers
-    private func infoSection(title: String, value: String, compact: Bool = false) -> some View {
-        VStack(alignment: .leading, spacing: compact ? 6 : 8) {
-            Text(title)
-                .font(.system(size: 14, weight: .semibold))
-                .foregroundColor(.secondary)
+    // MARK: - Documents
 
-            Text(value)
-                .font(.system(size: 16))
-                .foregroundColor(.primary)
-                .padding(compact ? 12 : 14)
-                .frame(maxWidth: .infinity, alignment: .leading)
-                .background(
-                    RoundedRectangle(cornerRadius: 12)
-                        .fill(Color(.systemBackground))
-                        .shadow(color: .black.opacity(0.04), radius: 8, y: 4)
+    private func documentsSection(
+        title: String,
+        documents: [BusinessMemberDocumentDTO]?
+    ) -> some View {
+        infoGroup(title: title) {
+            let docs = documents ?? []
+
+            if docs.isEmpty {
+                emptyRow(
+                    text: "Belge bulunmuyor",
+                    icon: "doc"
                 )
+            } else {
+                VStack(spacing: 0) {
+                    ForEach(docs, id: \.id) { document in
+                        Button {
+                            previewDoc = .init(
+                                id: document.id,
+                                title: document.fileName,
+                                documentId: document.id
+                            )
+                        } label: {
+                            rowCard(
+                                icon: "doc.text",
+                                title: document.fileName,
+                                subtitle: "Önizle",
+                                trailingIcon: "chevron.right"
+                            )
+                        }
+                        .buttonStyle(.plain)
+                    }
+                }
+            }
         }
     }
 
-    private func tappableInfoRow(title: String, value: String, onTap: @escaping () -> Void) -> some View {
-        Button(action: onTap) {
-            VStack(alignment: .leading, spacing: 6) {
-                Text(title)
-                    .font(.system(size: 14, weight: .semibold))
-                    .foregroundColor(.secondary)
-                HStack {
-                    Text(value)
-                        .font(.system(size: 16))
-                        .foregroundColor(.primary)
-                        .lineLimit(1)
-                    Spacer()
-                    Image(systemName: "phone.fill")
-                        .foregroundColor(.secondary)
-                }
-                .padding(12)
-                .frame(maxWidth: .infinity, alignment: .leading)
-                .background(
-                    RoundedRectangle(cornerRadius: 12)
-                        .fill(Color(.systemBackground))
-                        .shadow(color: .black.opacity(0.04), radius: 8, y: 4)
-                )
+    // MARK: - Reusable UI
+
+    private func infoGroup<Content: View>(
+        title: String,
+        @ViewBuilder content: () -> Content
+    ) -> some View {
+        VStack(alignment: .leading, spacing: 10) {
+            Text(title)
+                .font(.system(size: 17, weight: .bold))
+                .foregroundStyle(.primary)
+                .padding(.horizontal, 2)
+
+            VStack(spacing: 0) {
+                content()
             }
+            .background(Color(.systemBackground))
+            .clipShape(RoundedRectangle(cornerRadius: 18, style: .continuous))
+            .overlay(
+                RoundedRectangle(cornerRadius: 18, style: .continuous)
+                    .stroke(Color.black.opacity(0.06), lineWidth: 1)
+            )
+        }
+    }
+
+    private func infoSection(
+        title: String,
+        value: String,
+        icon: String
+    ) -> some View {
+        rowCard(
+            icon: icon,
+            title: title,
+            subtitle: value,
+            trailingIcon: nil
+        )
+    }
+
+    private func tappableInfoRow(
+        title: String,
+        value: String,
+        icon: String,
+        onTap: @escaping () -> Void
+    ) -> some View {
+        Button(action: onTap) {
+            rowCard(
+                icon: icon,
+                title: title,
+                subtitle: value,
+                trailingIcon: "phone.circle.fill"
+            )
         }
         .buttonStyle(.plain)
     }
 
-    private func documentsSection(title: String, documents: [BusinessMemberDocumentDTO]?) -> some View {
-        VStack(alignment: .leading, spacing: 8) {
-            Text(title)
-                .font(.system(size: 14, weight: .semibold))
-                .foregroundColor(.secondary)
+    private func rowCard(
+        icon: String,
+        title: String,
+        subtitle: String,
+        trailingIcon: String?
+    ) -> some View {
+        HStack(spacing: 12) {
+            Image(systemName: icon)
+                .font(.system(size: 15, weight: .semibold))
+                .foregroundStyle(.blue)
+                .frame(width: 30, height: 30)
 
-            let docs = documents ?? []
-            if docs.isEmpty {
-                emptyRow(text: "-")
-            } else {
-                VStack(alignment: .leading, spacing: 10) {
-                    ForEach(docs, id: \.id) { d in
-                        Button {
-                            previewDoc = .init(id: d.id, title: d.fileName, documentId: d.id)
-                        } label: {
-                            HStack(spacing: 10) {
-                                Image(systemName: "doc.text")
-                                    .foregroundColor(.secondary)
-                                Text(d.fileName)
-                                    .font(.system(size: 16))
-                                    .foregroundColor(.primary)
-                                    .lineLimit(1)
-                                Spacer()
-                                Image(systemName: "chevron.right")
-                                    .font(.system(size: 12, weight: .semibold))
-                                    .foregroundColor(.secondary)
-                            }
-                            .padding(12)
-                            .frame(maxWidth: .infinity, alignment: .leading)
-                            .background(
-                                RoundedRectangle(cornerRadius: 12)
-                                    .fill(Color(.systemBackground))
-                                    .shadow(color: .black.opacity(0.04), radius: 8, y: 4)
-                            )
-                        }
-                        .buttonStyle(.plain)
-                    }
-                }
+            VStack(alignment: .leading, spacing: 3) {
+                Text(title)
+                    .font(.caption.weight(.semibold))
+                    .foregroundStyle(.secondary)
+                    .lineLimit(1)
+
+                Text(subtitle)
+                    .font(.system(size: 15, weight: .medium))
+                    .foregroundStyle(.primary)
+                    .lineLimit(2)
+                    .multilineTextAlignment(.leading)
             }
+
+            Spacer()
+
+            if let trailingIcon {
+                Image(systemName: trailingIcon)
+                    .font(.system(size: 12, weight: .semibold))
+                    .foregroundStyle(.secondary)
+            }
+        }
+        .padding(.horizontal, 14)
+        .padding(.vertical, 12)
+        .background(Color(.systemBackground))
+        .overlay(alignment: .bottom) {
+            Rectangle()
+                .fill(Color.black.opacity(0.055))
+                .frame(height: 0.7)
+                .padding(.leading, 56)
         }
     }
 
-    private func emptyRow(text: String) -> some View {
-        Text(text)
-            .font(.system(size: 16))
-            .foregroundColor(.secondary)
-            .padding(14)
-            .frame(maxWidth: .infinity, alignment: .leading)
-            .background(
-                RoundedRectangle(cornerRadius: 12)
-                    .fill(Color(.systemBackground))
-                    .shadow(color: .black.opacity(0.04), radius: 8, y: 4)
-            )
+    private func emptyRow(
+        text: String,
+        icon: String
+    ) -> some View {
+        HStack(spacing: 12) {
+            Image(systemName: icon)
+                .font(.system(size: 15, weight: .semibold))
+                .foregroundStyle(.secondary)
+                .frame(width: 30, height: 30)
+
+            Text(text)
+                .font(.system(size: 15, weight: .medium))
+                .foregroundStyle(.secondary)
+
+            Spacer()
+        }
+        .padding(.horizontal, 14)
+        .padding(.vertical, 12)
+        .background(Color(.systemBackground))
     }
+
+    // MARK: - Feedback
+
+    private var loadingCard: some View {
+        HStack(spacing: 12) {
+            ProgressView()
+
+            Text("Profil bilgileri yükleniyor...")
+                .font(.subheadline)
+                .foregroundStyle(.secondary)
+
+            Spacer()
+        }
+        .padding(16)
+        .background(Color(.systemBackground))
+        .clipShape(RoundedRectangle(cornerRadius: 18, style: .continuous))
+        .overlay(
+            RoundedRectangle(cornerRadius: 18, style: .continuous)
+                .stroke(Color.black.opacity(0.06), lineWidth: 1)
+        )
+        .padding(.horizontal, 16)
+    }
+
+    private func errorCard(_ message: String) -> some View {
+        HStack(spacing: 12) {
+            Image(systemName: "exclamationmark.triangle.fill")
+                .foregroundStyle(.red)
+
+            Text(message)
+                .font(.subheadline)
+                .foregroundStyle(.red)
+                .multilineTextAlignment(.leading)
+
+            Spacer()
+        }
+        .padding(16)
+        .background(Color(.systemBackground))
+        .clipShape(RoundedRectangle(cornerRadius: 18, style: .continuous))
+        .overlay(
+            RoundedRectangle(cornerRadius: 18, style: .continuous)
+                .stroke(Color.red.opacity(0.25), lineWidth: 1)
+        )
+        .padding(.horizontal, 16)
+    }
+
+    // MARK: - Helpers
 
     private func trimmedOrNil(_ s: String?) -> String? {
         let t = (s ?? "").trimmingCharacters(in: .whitespacesAndNewlines)
@@ -490,18 +628,26 @@ struct ProfileView: View {
     }
 
     private func loadReportsIfPossible() async {
-        guard let bid = appState.businessId, let uid = appState.userId else { return }
-        await perfVM.load(businessId: bid, employeeUserId: uid)
+        guard let bid = appState.businessId,
+              let uid = appState.userId else { return }
+
+        await perfVM.load(
+            businessId: bid,
+            employeeUserId: uid
+        )
     }
 
     private func loadSlackIfPossible() async {
-        guard appState.role.canSeePersonnelTab, let bid = appState.businessId else { return }
+        guard appState.role.canSeePersonnelTab,
+              let bid = appState.businessId else { return }
+
         await slackVM.load(businessId: bid)
     }
 
     private func openPhone(_ phone: String) {
         let digits = phone.filter { "0123456789+".contains($0) }
         guard let url = URL(string: "tel://\(digits)") else { return }
+
         UIApplication.shared.open(url)
     }
 
@@ -510,27 +656,48 @@ struct ProfileView: View {
               let lat = office.latitude,
               let lng = office.longitude else { return }
 
-        let coordinate = CLLocationCoordinate2D(latitude: lat, longitude: lng)
-        let item = MKMapItem(placemark: MKPlacemark(coordinate: coordinate))
+        let coordinate = CLLocationCoordinate2D(
+            latitude: lat,
+            longitude: lng
+        )
+
+        let item = MKMapItem(
+            placemark: MKPlacemark(coordinate: coordinate)
+        )
+
         item.name = office.name
-        item.openInMaps(launchOptions: [MKLaunchOptionsDirectionsModeKey: MKLaunchOptionsDirectionsModeDriving])
+
+        item.openInMaps(
+            launchOptions: [
+                MKLaunchOptionsDirectionsModeKey:
+                    MKLaunchOptionsDirectionsModeDriving
+            ]
+        )
     }
 
     private func loadingSheet() -> some View {
         VStack(spacing: 12) {
             ProgressView()
+
             Text("Yükleniyor...")
-                .foregroundColor(.gray)
+                .foregroundStyle(.secondary)
         }
         .padding()
         .presentationDetents([.medium])
     }
 }
 
-// MARK: - View Modifier
+// MARK: - View Helper
+
 private extension View {
-    func headerStyle() -> some View {
+    func unifiedCard() -> some View {
         self
-            .background(Color.white)
+            .padding(14)
+            .background(Color(.systemBackground))
+            .clipShape(RoundedRectangle(cornerRadius: 18, style: .continuous))
+            .overlay(
+                RoundedRectangle(cornerRadius: 18, style: .continuous)
+                    .stroke(Color.black.opacity(0.06), lineWidth: 1)
+            )
     }
 }

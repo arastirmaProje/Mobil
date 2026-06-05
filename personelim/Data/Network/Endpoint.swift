@@ -60,6 +60,7 @@ enum Endpoint {
     case performanceReports(businessId: String, employeeUserId: String)
     case performanceReportDetail(reportId: String)
     case performanceQueryBulkScores
+    case performanceQueryDepartment
 
     // MARK: - Shift
     case createShift
@@ -89,6 +90,9 @@ enum Endpoint {
     case updateSlackWebhook(id: String)
     case deleteSlackWebhook(id: String)
     case slackWebhookEventTypes
+    
+    case performanceQueryDepartmentCharts
+    case queryDepartmentCharts
 
     var path: String {
         switch self {
@@ -162,6 +166,15 @@ enum Endpoint {
         case .updateSlackWebhook(let id): return "/api/SlackWebhooks/\(id)"
         case .deleteSlackWebhook(let id): return "/api/SlackWebhooks/\(id)"
         case .slackWebhookEventTypes: return "/api/SlackWebhooks/event-types"
+            
+        case .performanceQueryDepartment: return "/api/Performance/query-department"
+            
+        case .performanceQueryDepartmentCharts:
+            return "/api/Performance/query-department-charts"
+            
+        case .queryDepartmentCharts:
+                return "/api/Performance/query-department-charts"
+            
                 }
         
         
@@ -169,8 +182,9 @@ enum Endpoint {
 
     var method: HTTPMethod {
         switch self {
-        case .login, .register, .forgotPassword, .verifyResetCode, .resetPassword, .verifyBusiness, .createBusiness, .uploadMemberDocuments, .createTask, .createSchedule, .uploadBusinessDocument, .subscribeBusiness, .sendInvitation, .performanceQuery, .createShift, .performanceQueryBulkScores, .createLeave, .createDepartment, .addBusinessMember, .updateMemberDocument, .createSlackWebhook:
-            return .post
+        case .login, .register, .forgotPassword, .verifyResetCode, .resetPassword, .verifyBusiness, .createBusiness, .uploadMemberDocuments, .createTask, .createSchedule, .uploadBusinessDocument, .subscribeBusiness, .sendInvitation, .performanceQuery, .createShift, .performanceQueryBulkScores, .createLeave, .createDepartment, .addBusinessMember, .updateMemberDocument, .createSlackWebhook,
+                .performanceQueryDepartment, .performanceQueryDepartmentCharts, .queryDepartmentCharts: 
+                    return .post
 
         case .businessMembers, .profile, .getBusiness, .provinces, .districts, .business, .businessList, .getBusinessMember, .downloadDocument, .myTasks, .schedules, .getBusinessDocuments, .performanceReports, .performanceReportDetail, .myShifts, .myLeaves, .businessLeaves, .departments, .jobTitleCategories, .jobCategories, .jobTitlesByDepartment, .slackWebhooks, .slackWebhookEventTypes:
             return .get
