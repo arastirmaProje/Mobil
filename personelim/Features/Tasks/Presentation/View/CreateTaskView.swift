@@ -1,4 +1,3 @@
-
 import SwiftUI
 
 @available(iOS 17.0, *)
@@ -48,7 +47,7 @@ struct CreateTaskView: View {
 
                 bottomCreateButton
             }
-            .navigationTitle("Aktivite Oluştur")
+            .navigationTitle(ConstantStrings.createActivityTitle)
             .navigationBarTitleDisplayMode(.inline)
             .navigationBarBackButtonHidden(true)
             .toolbar {
@@ -139,7 +138,11 @@ private extension CreateTaskView {
     }
 
     var calendarSection: some View {
-        sectionCard(title: vm.activityType == .task ? "Tarih Aralığı" : "Tarih") {
+        sectionCard(
+            title: vm.activityType == .task
+            ? ConstantStrings.dateRangeLabel
+            : ConstantStrings.dateTitle
+        ) {
             VStack(spacing: 14) {
 
                 RangeCalendarCard(
@@ -151,7 +154,7 @@ private extension CreateTaskView {
                     HStack(spacing: 0) {
                         dateSummaryBox(
                             title: ConstantStrings.startTitle,
-                            value: vm.startDate?.trShortDate() ?? "-",
+                            value: vm.startDate?.trShortDate() ?? ConstantStrings.dashPlaceholder,
                             icon: "calendar.badge.play"
                         )
 
@@ -160,7 +163,7 @@ private extension CreateTaskView {
 
                         dateSummaryBox(
                             title: ConstantStrings.endTitle,
-                            value: vm.endDate?.trShortDate() ?? "-",
+                            value: vm.endDate?.trShortDate() ?? ConstantStrings.dashPlaceholder,
                             icon: "calendar.badge.clock"
                         )
                     }
@@ -172,8 +175,8 @@ private extension CreateTaskView {
                     )
                 } else {
                     dateSummaryBox(
-                        title: "Seçilen Tarih",
-                        value: vm.startDate?.trShortDate() ?? "-",
+                        title: ConstantStrings.selectedDateTitle,
+                        value: vm.startDate?.trShortDate() ?? ConstantStrings.dashPlaceholder,
                         icon: "calendar"
                     )
                     .background(Color(.systemBackground))
@@ -243,7 +246,7 @@ private extension CreateTaskView {
                     )
                     .clipShape(RoundedRectangle(cornerRadius: 16, style: .continuous))
 
-                Text("\(vm.detail.count) karakter")
+                Text(String(format: ConstantStrings.characterCountFormat, vm.detail.count))
                     .font(.caption)
                     .foregroundStyle(.secondary)
                     .frame(maxWidth: .infinity, alignment: .trailing)
@@ -265,7 +268,7 @@ private extension CreateTaskView {
                         .frame(width: 32, height: 32)
 
                     VStack(alignment: .leading, spacing: 3) {
-                        Text("Atanan kişiler")
+                        Text(ConstantStrings.assignedPeopleTitle)
                             .font(.caption.weight(.semibold))
                             .foregroundStyle(.secondary)
 
@@ -321,7 +324,7 @@ private extension CreateTaskView {
                         Image(systemName: "checkmark.circle.fill")
                     }
 
-                    Text(vm.isLoading ? "Oluşturuluyor..." : ConstantStrings.createTaskButton)
+                    Text(vm.isLoading ? ConstantStrings.activityCreatingText : ConstantStrings.createTaskButton)
                         .font(.headline)
                 }
                 .foregroundStyle(.white)
@@ -443,7 +446,7 @@ private extension CreateTaskView {
 
                 Text(value)
                     .font(.system(size: 14, weight: .semibold))
-                    .foregroundStyle(value == "-" ? .secondary : .primary)
+                    .foregroundStyle(value == ConstantStrings.dashPlaceholder ? .secondary : .primary)
                     .lineLimit(2)
             }
         }
@@ -521,9 +524,9 @@ private extension CreateTaskView {
 
     func activityTypeSubtitle(for type: ActivityType) -> String {
         if type == .task {
-            return "Başlangıç ve bitiş tarihi seçilir"
+            return ConstantStrings.activityTypeTaskDateRangeSubtitle
         } else {
-            return "Tek tarih seçilir"
+            return ConstantStrings.activityTypeSingleDateSubtitle
         }
     }
 }
@@ -531,6 +534,7 @@ private extension CreateTaskView {
 // MARK: - Row Background
 
 private extension View {
+
     func formRowBackground() -> some View {
         self
             .padding(.horizontal, 14)
@@ -544,4 +548,3 @@ private extension View {
             }
     }
 }
-

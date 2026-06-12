@@ -21,18 +21,16 @@ struct EditPersonalProfileView: View {
     var body: some View {
         NavigationStack {
             ZStack(alignment: .bottom) {
-
                 Color(.systemBackground)
                     .ignoresSafeArea()
 
                 ScrollView(showsIndicators: false) {
                     VStack(spacing: 18) {
-
                         photoSection
 
-                        sectionCard(title: "Kişisel Bilgiler") {
+                        sectionCard(title: ConstantStrings.personalInfoSectionHeader) {
                             appTextField(
-                                title: "Email",
+                                title: ConstantStrings.emailLabel,
                                 text: $vm.email,
                                 icon: "envelope",
                                 keyboard: .emailAddress,
@@ -40,13 +38,13 @@ struct EditPersonalProfileView: View {
                             )
 
                             appTextField(
-                                title: "İsim",
+                                title: ConstantStrings.nameLabel,
                                 text: $vm.firstName,
                                 icon: "person"
                             )
 
                             appTextField(
-                                title: "Soyisim",
+                                title: ConstantStrings.surnameLabel,
                                 text: $vm.lastName,
                                 icon: "person.fill"
                             )
@@ -54,13 +52,15 @@ struct EditPersonalProfileView: View {
                             identityRow
                         }
 
-                        sectionCard(title: "CV") {
+                        sectionCard(title: ConstantStrings.resumeLabel) {
                             documentPickerRow(
-                                title: "CV",
+                                title: ConstantStrings.resumeLabel,
                                 selectedFileName: vm.cvURL?.lastPathComponent,
-                                placeholder: "PDF CV seç",
+                                placeholder: ConstantStrings.selectPDFCV,
                                 icon: "doc.text.magnifyingglass",
-                                action: { showCVPicker = true }
+                                action: {
+                                    showCVPicker = true
+                                }
                             )
 
                             if !vm.existingCVs.isEmpty {
@@ -68,13 +68,15 @@ struct EditPersonalProfileView: View {
                             }
                         }
 
-                        sectionCard(title: "Belgeler") {
+                        sectionCard(title: ConstantStrings.documentsLabel) {
                             documentPickerRow(
-                                title: "Belgeler",
+                                title: ConstantStrings.documentsLabel,
                                 selectedFileName: vm.documentURL?.lastPathComponent,
-                                placeholder: "PDF belge seç",
+                                placeholder: ConstantStrings.selectPDFDocument,
                                 icon: "folder.badge.plus",
-                                action: { showDocPicker = true }
+                                action: {
+                                    showDocPicker = true
+                                }
                             )
 
                             if !vm.existingDocuments.isEmpty {
@@ -96,7 +98,7 @@ struct EditPersonalProfileView: View {
 
                 bottomSaveButton
             }
-            .navigationTitle("Profili Düzenle")
+            .navigationTitle(ConstantStrings.editProfileTitle)
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {
                 ToolbarItem(placement: .topBarLeading) {
@@ -123,8 +125,8 @@ struct EditPersonalProfileView: View {
                     vm.setCV(url: url)
                 }
 
-            case .failure(let error):
-                vm.errorMessage = error.localizedDescription
+            case .failure:
+                vm.errorMessage = ConstantStrings.documentSelectFailed
             }
         }
         .fileImporter(
@@ -138,8 +140,8 @@ struct EditPersonalProfileView: View {
                     vm.setDocument(url: url)
                 }
 
-            case .failure(let error):
-                vm.errorMessage = error.localizedDescription
+            case .failure:
+                vm.errorMessage = ConstantStrings.documentSelectFailed
             }
         }
         .sheet(isPresented: $showIDScanner) {
@@ -158,11 +160,11 @@ struct EditPersonalProfileView: View {
             )
         }
         .confirmationDialog(
-            "Hesabınızı silmek istiyor musunuz?",
+            ConstantStrings.deleteAccountConfirmationTitle,
             isPresented: $showDeleteAccountConfirm,
             titleVisibility: .visible
         ) {
-            Button("Hesabı Sil", role: .destructive) {
+            Button(ConstantStrings.deleteAccountButton, role: .destructive) {
                 Task {
                     await vm.deleteMyAccount()
 
@@ -172,7 +174,7 @@ struct EditPersonalProfileView: View {
                 }
             }
 
-            Button("Vazgeç", role: .cancel) { }
+            Button(ConstantStrings.cancelAction, role: .cancel) { }
         }
     }
 
@@ -187,7 +189,7 @@ struct EditPersonalProfileView: View {
                 )
 
             PhotosPicker(selection: $vm.photoItem, matching: .images) {
-                Label("Fotoğraf Değiştir", systemImage: "photo")
+                Label(ConstantStrings.changePhotoButton, systemImage: "photo")
                     .font(.subheadline.weight(.semibold))
                     .foregroundStyle(.blue)
                     .padding(.horizontal, 14)
@@ -223,11 +225,11 @@ struct EditPersonalProfileView: View {
                 .frame(width: 32, height: 32)
 
             VStack(alignment: .leading, spacing: 5) {
-                Text("Kimlik")
+                Text(ConstantStrings.identityLabel)
                     .font(.caption.weight(.semibold))
                     .foregroundStyle(.secondary)
 
-                TextField("Kimlik", text: $vm.tcIdentityNumber)
+                TextField(ConstantStrings.identityLabel, text: $vm.tcIdentityNumber)
                     .font(.system(size: 15, weight: .medium))
                     .keyboardType(.numberPad)
             }
@@ -235,7 +237,7 @@ struct EditPersonalProfileView: View {
             Button {
                 showIDScanner = true
             } label: {
-                Text("Tara")
+                Text(ConstantStrings.scanButton)
                     .font(.caption.weight(.semibold))
                     .foregroundStyle(.blue)
                     .padding(.horizontal, 10)
@@ -306,7 +308,7 @@ struct EditPersonalProfileView: View {
                 .frame(width: 32, height: 32)
 
             VStack(alignment: .leading, spacing: 3) {
-                Text("Yüklü Dosya")
+                Text(ConstantStrings.uploadedFileTitle)
                     .font(.caption.weight(.semibold))
                     .foregroundStyle(.secondary)
 
@@ -337,7 +339,7 @@ struct EditPersonalProfileView: View {
     // MARK: - Danger Zone
 
     private var dangerZone: some View {
-        sectionCard(title: "Tehlikeli İşlemler") {
+        sectionCard(title: ConstantStrings.dangerousActionsTitle) {
             Button(role: .destructive) {
                 showDeleteAccountConfirm = true
             } label: {
@@ -348,11 +350,11 @@ struct EditPersonalProfileView: View {
                         .frame(width: 32, height: 32)
 
                     VStack(alignment: .leading, spacing: 3) {
-                        Text("Hesabı Sil")
+                        Text(ConstantStrings.deleteAccountButton)
                             .font(.system(size: 15, weight: .semibold))
                             .foregroundStyle(.red)
 
-                        Text("Bu işlem geri alınamaz.")
+                        Text(ConstantStrings.deleteAlertMessage)
                             .font(.caption)
                             .foregroundStyle(.secondary)
                     }
@@ -383,8 +385,12 @@ struct EditPersonalProfileView: View {
                     do {
                         try await vm.save()
                         dismiss()
-                    } catch {
-                        vm.errorMessage = error.localizedDescription
+                    }  catch {
+                        if case let RepositoryError.api(message) = error {
+                            vm.errorMessage = message
+                        } else {
+                            vm.errorMessage = ConstantStrings.profileUpdateFail
+                        }
                     }
                 }
             } label: {
@@ -394,7 +400,7 @@ struct EditPersonalProfileView: View {
                             .tint(.white)
                     }
 
-                    Text(vm.isLoading ? "Kaydediliyor..." : "Değişiklikleri Kaydet")
+                    Text(vm.isLoading ? ConstantStrings.registerLoading : ConstantStrings.saveChangesButton)
                         .font(.headline)
                 }
                 .frame(maxWidth: .infinity)
@@ -523,6 +529,7 @@ struct EditPersonalProfileView: View {
 
     private func absoluteURL(from pathOrUrl: String?) -> URL? {
         let baseURL = "https://personelimapi.onrender.com"
+
         guard var value = pathOrUrl,
               !value.isEmpty else {
             return nil
@@ -543,6 +550,7 @@ struct EditPersonalProfileView: View {
 // MARK: - Shared Row Background
 
 private extension View {
+
     func formRowBackground() -> some View {
         self
             .padding(.horizontal, 14)

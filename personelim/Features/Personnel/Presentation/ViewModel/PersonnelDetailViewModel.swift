@@ -1,10 +1,3 @@
-//
-//  PersonnelDetailViewModel.swift
-//  personelim
-//
-//  Created by Yusuf Kaan USTA on 25.12.2025.
-//
-
 import SwiftUI
 
 @MainActor
@@ -32,25 +25,55 @@ final class PersonnelDetailViewModel: ObservableObject {
     func load(memberId: String) async {
         errorMessage = nil
         isLoading = true
-        defer { isLoading = false }
+
+        defer {
+            isLoading = false
+        }
 
         do {
-            member = try await getMemberUseCase.execute(memberId: memberId)
+            member = try await getMemberUseCase.execute(
+                memberId: memberId
+            )
         } catch {
-            errorMessage = error.localizedDescription
+            errorMessage = userMessage(
+                from: error,
+                fallback: ConstantStrings.memberDetailFail
+            )
         }
     }
 
-    func loadReports(businessId: String, employeeUserId: String) async {
+    func loadReports(
+        businessId: String,
+        employeeUserId: String
+    ) async {
         reportsError = nil
         isReportsLoading = true
-        defer { isReportsLoading = false }
+
+        defer {
+            isReportsLoading = false
+        }
 
         do {
-            let list = try await getReportsUseCase.execute(businessId: businessId, employeeUserId: employeeUserId)
-            self.reports = list
+            reports = try await getReportsUseCase.execute(
+                businessId: businessId,
+                employeeUserId: employeeUserId
+            )
         } catch {
-            reportsError = error.localizedDescription
+            reportsError = userMessage(
+                from: error,
+                fallback: ConstantStrings.reportsLoadFailed
+            )
         }
+    }
+
+    private func userMessage(
+        from error: Error,
+        fallback: String
+    ) -> String {
+        if case let RepositoryError.api(message) = error {
+            return message
+        }
+
+        return fallback
     }
 }

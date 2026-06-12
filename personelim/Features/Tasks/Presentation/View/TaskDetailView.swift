@@ -1,27 +1,19 @@
+
+
 import SwiftUI
-
 struct TaskDetailView: View {
-
-    // MARK: - Properties
-
     let task: TaskEntity
     let currentUserId: String?
     private let updateStatusUseCase: UpdateActivityStatusUseCase
-
     @EnvironmentObject private var appState: AppState
     @Environment(\.dismiss) private var dismiss
-
-    // MARK: - UI State
-
     @State private var showStatusPicker = false
     @State private var selectedStatus: TaskStatus?
     @State private var navigateToFeedback = false
     @State private var errorMessage: String?
-
     enum TaskStatus: String {
         case done = "DONE"
         case closed = "CLOSED"
-
         var displayName: String {
             switch self {
             case .done:
@@ -30,7 +22,6 @@ struct TaskDetailView: View {
                 return ConstantStrings.closedText
             }
         }
-
         var icon: String {
             switch self {
             case .done:
@@ -39,7 +30,6 @@ struct TaskDetailView: View {
                 return "xmark.circle.fill"
             }
         }
-
         var color: Color {
             switch self {
             case .done:
@@ -49,7 +39,6 @@ struct TaskDetailView: View {
             }
         }
     }
-
     init(
         task: TaskEntity,
         currentUserId: String?,
@@ -62,76 +51,57 @@ struct TaskDetailView: View {
         self.currentUserId = currentUserId
         self.updateStatusUseCase = updateStatusUseCase
     }
-
-    // MARK: - Derived States
-
     private var isCompleted: Bool {
         selectedStatus == .done || task.statusEnum == .done
     }
-
     private var isClosed: Bool {
         selectedStatus == .closed || task.statusEnum == .closed
     }
-
     private var isExpired: Bool {
         !isCompleted && !isClosed && task.endDate < Date()
     }
-
     private var statusText: String {
         if isCompleted { return TaskStatus.done.displayName }
         if isClosed { return TaskStatus.closed.displayName }
         if isExpired { return ConstantStrings.expiredText }
         return ConstantStrings.pendingText
     }
-
     private var statusColor: Color {
         if isCompleted { return .green }
         if isClosed { return .gray }
         if isExpired { return .red }
         return .orange
     }
-
     private var statusIcon: String {
         if isCompleted { return "checkmark.circle.fill" }
         if isClosed { return "xmark.circle.fill" }
         if isExpired { return "exclamationmark.triangle.fill" }
         return "clock.circle.fill"
     }
-
     private var canContinue: Bool {
         selectedStatus == .done || selectedStatus == .closed
     }
-
-    // MARK: - Body
-
     var body: some View {
         NavigationStack {
             ZStack(alignment: .bottom) {
                 Color(.systemBackground)
                     .ignoresSafeArea()
-
                 ScrollView(showsIndicators: false) {
                     VStack(spacing: 16) {
                         heroSection
-
                         dateSection
-
                         descriptionSection
-
                         statusSection
-
                         footerSection
-
                         Spacer(minLength: 100)
                     }
                     .padding(.horizontal, 18)
                     .padding(.top, 14)
                     .padding(.bottom, 28)
                 }
-
                 bottomContinueButton
             }
-            .navigationTitle("Aktivite Detayı")
+            .navigationTitle(ConstantStrings.activityDetailTitle)
             .navigationBarTitleDisplayMode(.inline)
             .navigationBarBackButtonHidden(true)
             .navigationDestination(isPresented: $navigateToFeedback) {
@@ -165,39 +135,30 @@ struct TaskDetailView: View {
         }
     }
 }
-
-// MARK: - Sections
-
 private extension TaskDetailView {
-
     var heroSection: some View {
         VStack(alignment: .leading, spacing: 14) {
             HStack(alignment: .top, spacing: 14) {
                 ZStack {
                     Circle()
                         .fill(task.activityType.color.opacity(0.12))
-
                     Image(systemName: activityIcon)
                         .font(.system(size: 22, weight: .semibold))
                         .foregroundStyle(task.activityType.color)
                 }
                 .frame(width: 54, height: 54)
-
                 VStack(alignment: .leading, spacing: 8) {
                     Text(task.title)
                         .font(.system(size: 24, weight: .bold))
                         .foregroundStyle(.primary)
                         .lineLimit(3)
-
                     HStack(spacing: 8) {
                         activityBadge
                         statusBadge
                     }
                 }
-
                 Spacer()
             }
-
             if let assignedBy = task.assignedByName {
                 infoLine(
                     icon: "person.fill",
@@ -213,7 +174,6 @@ private extension TaskDetailView {
                 .stroke(Color.black.opacity(0.06), lineWidth: 1)
         )
     }
-
     var dateSection: some View {
         sectionCard(title: ConstantStrings.dateRangeLabel) {
             HStack(spacing: 0) {
@@ -222,10 +182,8 @@ private extension TaskDetailView {
                     date: task.startDate,
                     icon: "calendar.badge.play"
                 )
-
                 Divider()
                     .padding(.vertical, 10)
-
                 dateBox(
                     title: ConstantStrings.endDateLabel,
                     date: task.endDate,
@@ -234,7 +192,6 @@ private extension TaskDetailView {
             }
         }
     }
-
     var descriptionSection: some View {
         sectionCard(title: ConstantStrings.activityDetailLabel) {
             HStack(alignment: .top, spacing: 12) {
@@ -242,7 +199,6 @@ private extension TaskDetailView {
                     .font(.system(size: 16, weight: .semibold))
                     .foregroundStyle(.blue)
                     .frame(width: 32, height: 32)
-
                 Text(task.description ?? ConstantStrings.noDetailText)
                     .font(.system(size: 15, weight: .medium))
                     .foregroundStyle(
@@ -254,7 +210,6 @@ private extension TaskDetailView {
             .formRowBackground()
         }
     }
-
     @ViewBuilder
     var statusSection: some View {
         if task.activityType == .task {
@@ -269,19 +224,15 @@ private extension TaskDetailView {
                             .font(.system(size: 16, weight: .semibold))
                             .foregroundStyle(selectedStatus?.color ?? .secondary)
                             .frame(width: 32, height: 32)
-
                         VStack(alignment: .leading, spacing: 3) {
-                            Text("Seçili Durum")
+                            Text(ConstantStrings.selectedStatusTitle)
                                 .font(.caption.weight(.semibold))
                                 .foregroundStyle(.secondary)
-
                             Text(selectedStatus?.displayName ?? ConstantStrings.pickerSelect)
                                 .font(.system(size: 15, weight: .semibold))
                                 .foregroundStyle(selectedStatus == nil ? .secondary : .primary)
                         }
-
                         Spacer()
-
                         Image(systemName: showStatusPicker ? "chevron.up" : "chevron.down")
                             .font(.system(size: 12, weight: .semibold))
                             .foregroundStyle(.secondary)
@@ -289,14 +240,11 @@ private extension TaskDetailView {
                     .formRowBackground()
                 }
                 .buttonStyle(.plain)
-
                 if showStatusPicker {
                     VStack(spacing: 0) {
                         statusOption(.done)
-
                         Divider()
                             .padding(.leading, 58)
-
                         statusOption(.closed)
                     }
                     .background(Color(.systemBackground))
@@ -305,7 +253,6 @@ private extension TaskDetailView {
             }
         }
     }
-
     @ViewBuilder
     var footerSection: some View {
         if isCompleted {
@@ -328,21 +275,17 @@ private extension TaskDetailView {
             )
         }
     }
-
     var bottomContinueButton: some View {
         VStack(spacing: 0) {
             Divider()
-
             Button {
                 guard canContinue else { return }
-
                 appState.signalActivitiesChanged()
                 navigateToFeedback = true
             } label: {
                 HStack(spacing: 8) {
                     Image(systemName: "arrow.right.circle.fill")
-
-                    Text("Devam Et")
+                    Text(ConstantStrings.continueButton)
                         .font(.headline)
                 }
                 .foregroundStyle(.white)
@@ -360,11 +303,7 @@ private extension TaskDetailView {
         }
     }
 }
-
-// MARK: - UI Pieces
-
 private extension TaskDetailView {
-
     var activityIcon: String {
         switch task.activityType.rawValue.lowercased() {
         case let value where value.contains("görev") || value.contains("task"):
@@ -379,13 +318,11 @@ private extension TaskDetailView {
             return "tray.full.fill"
         }
     }
-
     var activityBadge: some View {
         HStack(spacing: 6) {
             Circle()
                 .fill(task.activityType.color)
                 .frame(width: 6, height: 6)
-
             Text(task.activityType.rawValue)
                 .font(.caption.weight(.semibold))
                 .foregroundStyle(task.activityType.color)
@@ -397,12 +334,10 @@ private extension TaskDetailView {
                 .fill(task.activityType.color.opacity(0.10))
         )
     }
-
     var statusBadge: some View {
         HStack(spacing: 5) {
             Image(systemName: statusIcon)
                 .font(.system(size: 11, weight: .semibold))
-
             Text(statusText)
                 .font(.caption.weight(.bold))
         }
@@ -414,7 +349,6 @@ private extension TaskDetailView {
                 .fill(statusColor.opacity(0.12))
         )
     }
-
     func sectionCard<Content: View>(
         title: String,
         @ViewBuilder content: () -> Content
@@ -424,7 +358,6 @@ private extension TaskDetailView {
                 .font(.system(size: 17, weight: .bold))
                 .foregroundStyle(.primary)
                 .padding(.horizontal, 2)
-
             VStack(spacing: 0) {
                 content()
             }
@@ -436,7 +369,6 @@ private extension TaskDetailView {
             )
         }
     }
-
     func dateBox(
         title: String,
         date: Date,
@@ -446,12 +378,10 @@ private extension TaskDetailView {
             Image(systemName: icon)
                 .font(.system(size: 15, weight: .semibold))
                 .foregroundStyle(.blue)
-
             VStack(alignment: .leading, spacing: 4) {
                 Text(title)
                     .font(.caption.weight(.semibold))
                     .foregroundStyle(.secondary)
-
                 Text(date.formatted(date: .long, time: .omitted))
                     .font(.system(size: 14, weight: .semibold))
                     .foregroundStyle(.primary)
@@ -462,7 +392,6 @@ private extension TaskDetailView {
         .padding(14)
         .background(Color(.systemBackground))
     }
-
     func statusOption(_ status: TaskStatus) -> some View {
         Button {
             withAnimation(.spring(response: 0.3, dampingFraction: 0.85)) {
@@ -475,13 +404,10 @@ private extension TaskDetailView {
                     .font(.system(size: 16, weight: .semibold))
                     .foregroundStyle(status.color)
                     .frame(width: 32, height: 32)
-
                 Text(status.displayName)
                     .font(.system(size: 15, weight: .semibold))
                     .foregroundStyle(.primary)
-
                 Spacer()
-
                 if selectedStatus == status {
                     Image(systemName: "checkmark.circle.fill")
                         .foregroundStyle(.blue)
@@ -491,7 +417,6 @@ private extension TaskDetailView {
         }
         .buttonStyle(.plain)
     }
-
     func footerMessage(
         text: String,
         icon: String,
@@ -500,18 +425,15 @@ private extension TaskDetailView {
         HStack(spacing: 10) {
             Image(systemName: icon)
                 .foregroundStyle(color)
-
             Text(text)
                 .font(.caption.weight(.semibold))
                 .foregroundStyle(color)
-
             Spacer()
         }
         .padding(14)
         .background(color.opacity(0.08))
         .clipShape(RoundedRectangle(cornerRadius: 16, style: .continuous))
     }
-
     func infoLine(
         icon: String,
         text: String
@@ -521,7 +443,6 @@ private extension TaskDetailView {
                 .font(.system(size: 11, weight: .semibold))
                 .foregroundStyle(.secondary)
                 .frame(width: 14)
-
             Text(text)
                 .font(.caption)
                 .foregroundStyle(.secondary)
@@ -529,9 +450,6 @@ private extension TaskDetailView {
         }
     }
 }
-
-// MARK: - Row Background
-
 private extension View {
     func formRowBackground() -> some View {
         self

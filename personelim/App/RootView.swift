@@ -25,6 +25,15 @@ struct RootView: View {
             if appState.isLoggedIn {
                 if appState.isBootstrapping {
                     ProgressView()
+                } else if appState.needsCompanyCreation {
+                    NavigationStack {
+                        CreateCompanyView(
+                            onVerified: {
+
+                                appState.needsCompanyCreation = false
+                            }
+                        )
+                    }
                 } else {
                     MainTabView()
                 }

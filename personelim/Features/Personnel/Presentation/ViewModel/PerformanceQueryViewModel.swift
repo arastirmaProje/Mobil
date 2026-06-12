@@ -1,16 +1,15 @@
-//
-//  PerformanceQueryViewModel.swift
-//  personelim
-//
-//  Created by Yusuf Kaan USTA on 25.12.2025.
-//
-
 import Foundation
 
 @MainActor
 final class PerformanceQueryViewModel: ObservableObject {
 
-    @Published var startDate: Date = Calendar.current.date(byAdding: .day, value: -7, to: Date()) ?? Date()
+    @Published var startDate: Date =
+        Calendar.current.date(
+            byAdding: .day,
+            value: -7,
+            to: Date()
+        ) ?? Date()
+
     @Published var endDate: Date = Date()
 
     @Published var isLoading = false
@@ -18,14 +17,23 @@ final class PerformanceQueryViewModel: ObservableObject {
 
     private let queryUseCase: QueryPerformanceUseCaseProtocol
 
-    init(queryUseCase: QueryPerformanceUseCaseProtocol) {
+    init(
+        queryUseCase: QueryPerformanceUseCaseProtocol
+    ) {
         self.queryUseCase = queryUseCase
     }
 
-    func submit(businessId: String, employeeUserId: String) async -> PerformanceReportDTO? {
+    func submit(
+        businessId: String,
+        employeeUserId: String
+    ) async -> PerformanceReportDTO? {
+
         errorMessage = nil
         isLoading = true
-        defer { isLoading = false }
+
+        defer {
+            isLoading = false
+        }
 
         let s = min(startDate, endDate)
         let e = max(startDate, endDate)
@@ -34,13 +42,57 @@ final class PerformanceQueryViewModel: ObservableObject {
             let body = PerformanceQueryRequestDTO(
                 businessId: businessId,
                 employeeUserId: employeeUserId,
-                startDate: ISODate.string(from: s),
-                endDate: ISODate.string(from: e)
+                startDate: Self.utcDateOnlyString(from: s),
+                endDate: Self.utcDateOnlyString(from: e)
             )
-            return try await queryUseCase.execute(body: body)
+
+            return try await queryUseCase.execute(
+                body: body
+            )
+
         } catch {
-            errorMessage = error.localizedDescription
+            errorMessage = userMessage(
+                from: error,
+                fallback: ConstantStrings.performanceReportCreateFailed
+            )
+
             return nil
         }
+    }
+
+    // MARK: - Date Formatter
+
+    private static func utcDateOnlyString(from date: Date) -> String {
+        let calendar = Calendar.current
+
+        let components = calendar.dateComponents(
+            [.year, .month, .day],
+            from: date
+        )
+
+        let year = components.year ?? 1970
+        let month = components.month ?? 1
+        let day = components.day ?? 1
+
+        return String(
+            format: "%04d-%02d-%02dT00:00:00.000Z",
+            year,
+            month,
+            day
+        )
+    }
+
+    // MARK: - Error
+
+    private func userMessage(
+        from error: Error,
+        fallback: String
+    ) -> String {
+
+        if case let RepositoryError.api(message) = error {
+            return message
+        }
+
+        return fallback
     }
 }

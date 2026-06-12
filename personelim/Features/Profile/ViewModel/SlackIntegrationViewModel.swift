@@ -1,14 +1,8 @@
-//
-//  SlackIntegrationViewModel.swift
-//  personelim
-//
-//  Created by Tuğberk Acabey on 06.05.2026.
-//
-
 import Foundation
 
 @MainActor
 final class SlackIntegrationViewModel: ObservableObject {
+
     @Published var integrations: [SlackIntegration] = []
     @Published var isLoading = false
     @Published var errorMessage: String?
@@ -26,12 +20,20 @@ final class SlackIntegrationViewModel: ObservableObject {
     func load(businessId: String) async {
         isLoading = true
         errorMessage = nil
-        defer { isLoading = false }
+
+        defer {
+            isLoading = false
+        }
 
         do {
-            integrations = try await getIntegrationsUseCase.execute(businessId: businessId)
+            integrations = try await getIntegrationsUseCase.execute(
+                businessId: businessId
+            )
         } catch {
-            errorMessage = error.localizedDescription
+            errorMessage = userMessage(
+                from: error,
+                fallback: ConstantStrings.slackIntegrationLoadFailed
+            )
         }
     }
 
@@ -41,13 +43,20 @@ final class SlackIntegrationViewModel: ObservableObject {
         webhookUrl: String,
         eventTypes: [SlackActivityType]
     ) async -> Bool {
-        guard validate(label: label, webhookUrl: webhookUrl, eventTypes: eventTypes) else {
+        guard validate(
+            label: label,
+            webhookUrl: webhookUrl,
+            eventTypes: eventTypes
+        ) else {
             return false
         }
 
         isLoading = true
         errorMessage = nil
-        defer { isLoading = false }
+
+        defer {
+            isLoading = false
+        }
 
         do {
             try await createIntegrationUseCase.execute(
@@ -56,10 +65,15 @@ final class SlackIntegrationViewModel: ObservableObject {
                 webhookUrl: trimmed(webhookUrl),
                 eventTypes: eventTypes
             )
+
             await load(businessId: businessId)
             return true
+
         } catch {
-            errorMessage = error.localizedDescription
+            errorMessage = userMessage(
+                from: error,
+                fallback: ConstantStrings.slackIntegrationCreateFailed
+            )
             return false
         }
     }
@@ -71,13 +85,20 @@ final class SlackIntegrationViewModel: ObservableObject {
         webhookUrl: String,
         eventTypes: [SlackActivityType]
     ) async -> Bool {
-        guard validate(label: label, webhookUrl: webhookUrl, eventTypes: eventTypes) else {
+        guard validate(
+            label: label,
+            webhookUrl: webhookUrl,
+            eventTypes: eventTypes
+        ) else {
             return false
         }
 
         isLoading = true
         errorMessage = nil
-        defer { isLoading = false }
+
+        defer {
+            isLoading = false
+        }
 
         do {
             try await updateIntegrationUseCase.execute(
@@ -87,10 +108,15 @@ final class SlackIntegrationViewModel: ObservableObject {
                 webhookUrl: trimmed(webhookUrl),
                 eventTypes: eventTypes
             )
+
             await load(businessId: businessId)
             return true
+
         } catch {
-            errorMessage = error.localizedDescription
+            errorMessage = userMessage(
+                from: error,
+                fallback: ConstantStrings.slackIntegrationUpdateFailed
+            )
             return false
         }
     }
@@ -121,5 +147,16 @@ final class SlackIntegrationViewModel: ObservableObject {
 
     private func trimmed(_ value: String) -> String {
         value.trimmingCharacters(in: .whitespacesAndNewlines)
+    }
+
+    private func userMessage(
+        from error: Error,
+        fallback: String
+    ) -> String {
+        if case let RepositoryError.api(message) = error {
+            return message
+        }
+
+        return fallback
     }
 }

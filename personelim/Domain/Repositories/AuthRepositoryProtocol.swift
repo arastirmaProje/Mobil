@@ -17,4 +17,5 @@ protocol AuthRepositoryProtocol {
     func getProfile() async throws -> UserProfileDTO
     func updateProfile(email: String, firstName: String, lastName: String, imageData: Data?) async throws -> UserProfileDTO
     func deleteAccount() async throws
+    func logout() async throws
 }

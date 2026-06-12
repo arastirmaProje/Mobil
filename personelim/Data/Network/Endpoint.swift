@@ -93,6 +93,8 @@ enum Endpoint {
     
     case performanceQueryDepartmentCharts
     case queryDepartmentCharts
+    
+    case logout
 
     var path: String {
         switch self {
@@ -174,7 +176,9 @@ enum Endpoint {
             
         case .queryDepartmentCharts:
                 return "/api/Performance/query-department-charts"
-            
+
+        case .logout:
+            return "/api/Auth/logout"
                 }
         
         
@@ -183,7 +187,7 @@ enum Endpoint {
     var method: HTTPMethod {
         switch self {
         case .login, .register, .forgotPassword, .verifyResetCode, .resetPassword, .verifyBusiness, .createBusiness, .uploadMemberDocuments, .createTask, .createSchedule, .uploadBusinessDocument, .subscribeBusiness, .sendInvitation, .performanceQuery, .createShift, .performanceQueryBulkScores, .createLeave, .createDepartment, .addBusinessMember, .updateMemberDocument, .createSlackWebhook,
-                .performanceQueryDepartment, .performanceQueryDepartmentCharts, .queryDepartmentCharts: 
+                .performanceQueryDepartment, .performanceQueryDepartmentCharts, .queryDepartmentCharts, .logout: 
                     return .post
 
         case .businessMembers, .profile, .getBusiness, .provinces, .districts, .business, .businessList, .getBusinessMember, .downloadDocument, .myTasks, .schedules, .getBusinessDocuments, .performanceReports, .performanceReportDetail, .myShifts, .myLeaves, .businessLeaves, .departments, .jobTitleCategories, .jobCategories, .jobTitlesByDepartment, .slackWebhooks, .slackWebhookEventTypes:

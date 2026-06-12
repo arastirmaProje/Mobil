@@ -58,7 +58,7 @@ struct PersonnelDetailView: View {
                 .padding(.bottom, 28)
             }
         }
-        .navigationTitle("Personel Detayı")
+        .navigationTitle(ConstantStrings.personnelDetailTitle)
         .navigationBarTitleDisplayMode(.inline)
         .navigationBarBackButtonHidden(true)
         .toolbar {
@@ -161,12 +161,11 @@ struct PersonnelDetailView: View {
                         .foregroundStyle(.primary)
                         .lineLimit(1)
 
-                    Text("\(ConstantStrings.positionPrefix)\(member.positionName ?? "-")")
-                        .font(.system(size: 14, weight: .medium))
+                    Text("\(ConstantStrings.positionPrefix)\(member.positionName ?? ConstantStrings.dashPlaceholder)")                        .font(.system(size: 14, weight: .medium))
                         .foregroundStyle(.secondary)
                         .lineLimit(1)
 
-                    let salaryText = member.salary.map { "\(Int($0)) TL" } ?? "-"
+                    let salaryText = member.salary.map { "\(Int($0)) TL" } ?? ConstantStrings.dashPlaceholder
 
                     Text("\(ConstantStrings.incomePrefix)\(salaryText)")
                         .font(.caption)
@@ -179,7 +178,7 @@ struct PersonnelDetailView: View {
 
             HStack(spacing: 8) {
                 miniInfoPill(
-                    text: member.positionName ?? "-",
+                    text: member.positionName ?? ConstantStrings.dashPlaceholder,
                     icon: "briefcase.fill",
                     color: .blue
                 )
@@ -240,7 +239,7 @@ struct PersonnelDetailView: View {
 
     private func detailFields(_ member: BusinessMemberDTO) -> some View {
         VStack(alignment: .leading, spacing: 10) {
-            Text("Personel Bilgileri")
+            Text(ConstantStrings.personnelInfoTitle)
                 .font(.system(size: 17, weight: .bold))
                 .foregroundStyle(.primary)
                 .padding(.horizontal, 2)
@@ -254,7 +253,7 @@ struct PersonnelDetailView: View {
             ) {
                 PersonnelStatCard(
                     title: ConstantStrings.identityLabel,
-                    value: member.tcIdentityNumber ?? "-",
+                    value: member.tcIdentityNumber ?? ConstantStrings.dashPlaceholder,
                     icon: "person.text.rectangle"
                 )
 
@@ -272,7 +271,7 @@ struct PersonnelDetailView: View {
 
                 PersonnelStatCard(
                     title: ConstantStrings.documentsLabel,
-                    value: member.documents?.first?.fileName ?? "-",
+                    value: member.documents?.first?.fileName ?? ConstantStrings.dashPlaceholder,
                     icon: "folder"
                 )
             }
@@ -289,7 +288,11 @@ struct PersonnelDetailView: View {
                         .font(.system(size: 17, weight: .bold))
                         .foregroundStyle(.primary)
 
-                    Text(vm.reports.isEmpty ? "Rapor geçmişi bulunmuyor" : "\(vm.reports.count) rapor listeleniyor")
+                    Text(
+                        vm.reports.isEmpty
+                        ? ConstantStrings.reportHistoryEmpty
+                        : String(format: ConstantStrings.reportListedCountFormat, vm.reports.count)
+                    )
                         .font(.caption)
                         .foregroundStyle(.secondary)
                 }
@@ -299,7 +302,7 @@ struct PersonnelDetailView: View {
                 Button {
                     showQuery = true
                 } label: {
-                    Label("Sorgu", systemImage: "sparkle.magnifyingglass")
+                    Label(ConstantStrings.querySectionTitle, systemImage: "sparkle.magnifyingglass")
                         .font(.caption.weight(.semibold))
                         .foregroundStyle(.blue)
                         .padding(.horizontal, 12)
@@ -353,7 +356,7 @@ struct PersonnelDetailView: View {
         HStack(spacing: 12) {
             ProgressView()
 
-            Text("Raporlar yükleniyor...")
+            Text(ConstantStrings.reportsLoading)
                 .font(.subheadline)
                 .foregroundStyle(.secondary)
 
@@ -401,7 +404,7 @@ struct PersonnelDetailView: View {
         HStack(spacing: 12) {
             ProgressView()
 
-            Text("Personel bilgileri yükleniyor...")
+            Text(ConstantStrings.personnelInfoLoading)
                 .font(.subheadline)
                 .foregroundStyle(.secondary)
 

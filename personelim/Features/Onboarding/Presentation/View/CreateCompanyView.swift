@@ -27,13 +27,9 @@ struct CreateCompanyView: View {
                 ScrollView(showsIndicators: false) {
                     VStack(spacing: 16) {
                         headerSection
-
                         companyInfoSection
-
                         officeSection
-
                         locationSection
-
                         addressSection
 
                         if vm.isLoading {
@@ -73,8 +69,12 @@ struct CreateCompanyView: View {
                                 dismiss()
                                 onVerified()
                             }
-                        } catch {
-                            vm.errorMessage = error.localizedDescription
+                        }  catch {
+                            if case let RepositoryError.api(message) = error {
+                                vm.errorMessage = message
+                            } else {
+                                vm.errorMessage = ConstantStrings.businessVerifyFailed
+                            }
                         }
                     }
                 }
@@ -119,7 +119,7 @@ private extension CreateCompanyView {
                     .font(.system(size: 24, weight: .bold))
                     .foregroundStyle(.primary)
 
-                Text("Şirket bilgilerini tamamlayarak işletmeni oluştur.")
+                Text(ConstantStrings.createCompanyDescription)
                     .font(.subheadline)
                     .foregroundStyle(.secondary)
                     .lineLimit(2)
@@ -137,10 +137,10 @@ private extension CreateCompanyView {
     }
 
     var companyInfoSection: some View {
-        sectionCard(title: "Şirket Bilgileri") {
+        sectionCard(title: ConstantStrings.companyInfoSectionTitle) {
             inputRow(
-                title: "Şirket İsmi",
-                placeholder: "Şirket adı",
+                title: ConstantStrings.companyNameLabel,
+                placeholder: ConstantStrings.companyNamePlaceholder,
                 text: $vm.companyName,
                 icon: "building.2.fill"
             )
@@ -170,7 +170,7 @@ private extension CreateCompanyView {
                         .font(.system(size: 17, weight: .bold))
                         .foregroundStyle(.primary)
 
-                    Text("\(vm.offices.count) ofis bilgisi")
+                    Text(String(format: ConstantStrings.officeInfoCountFormat, vm.offices.count))
                         .font(.caption)
                         .foregroundStyle(.secondary)
                 }
@@ -222,7 +222,7 @@ private extension CreateCompanyView {
                         .font(.system(size: 15, weight: .bold))
                         .foregroundStyle(.primary)
 
-                    Text(hasLocation(office.wrappedValue) ? ConstantStrings.selectedLocation : "Konum seçilmedi")
+                    Text(hasLocation(office.wrappedValue) ? ConstantStrings.selectedLocation : ConstantStrings.locationNotSelected)
                         .font(.caption)
                         .foregroundStyle(.secondary)
                 }
@@ -281,7 +281,7 @@ private extension CreateCompanyView {
                                 .foregroundStyle(.secondary)
                                 .lineLimit(1)
                         } else {
-                            Text("Haritadan ofis konumu seç")
+                            Text(ConstantStrings.pickOfficeLocationFromMap)
                                 .font(.caption)
                                 .foregroundStyle(.secondary)
                         }
@@ -307,7 +307,7 @@ private extension CreateCompanyView {
     }
 
     var locationSection: some View {
-        sectionCard(title: "Konum Bilgileri") {
+        sectionCard(title: ConstantStrings.locationInfoSectionTitle) {
             provincePicker
 
             if vm.selectedProvinceId != nil {
@@ -357,7 +357,7 @@ private extension CreateCompanyView {
     }
 
     var addressSection: some View {
-        sectionCard(title: "Adres Detayı") {
+        sectionCard(title: ConstantStrings.addressDetailSectionTitle) {
             inputRow(
                 title: ConstantStrings.detailedAddressLabel,
                 placeholder: ConstantStrings.detailedAddressPlaceholder,
@@ -371,7 +371,7 @@ private extension CreateCompanyView {
         HStack(spacing: 12) {
             ProgressView()
 
-            Text("Şirket oluşturuluyor...")
+            Text(ConstantStrings.companyCreatingLoading)
                 .font(.subheadline)
                 .foregroundStyle(.secondary)
 
@@ -403,7 +403,7 @@ private extension CreateCompanyView {
                         Image(systemName: "checkmark.circle.fill")
                     }
 
-                    Text(vm.isLoading ? "Oluşturuluyor..." : ConstantStrings.createCompanyButton)
+                    Text(vm.isLoading ? ConstantStrings.createButtonLoading : ConstantStrings.createCompanyButton)
                         .font(.headline)
                 }
                 .foregroundStyle(.white)

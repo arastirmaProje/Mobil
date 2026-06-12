@@ -18,9 +18,15 @@ struct PerformanceReportDetailView: View {
 
     init(reportId: String) {
         self.reportId = reportId
+
         let repo = PerformanceRepositoryImpl(network: NetworkManager())
         let useCase = GetPerformanceReportDetailUseCase(repo: repo)
-        _vm = StateObject(wrappedValue: PerformanceReportDetailViewModel(detailUseCase: useCase))
+
+        _vm = StateObject(
+            wrappedValue: PerformanceReportDetailViewModel(
+                detailUseCase: useCase
+            )
+        )
     }
 
     var body: some View {
@@ -30,7 +36,6 @@ struct PerformanceReportDetailView: View {
 
             ScrollView(showsIndicators: false) {
                 VStack(alignment: .leading, spacing: 18) {
-
                     if vm.isLoading {
                         loadingView
                     } else if let err = vm.errorMessage {
@@ -41,13 +46,15 @@ struct PerformanceReportDetailView: View {
                         textCard(
                             icon: "text.alignleft",
                             title: ConstantStrings.summaryTitle,
-                            text: (r.summaryText ?? "-").cleanedMarkdownAndRedactedIDs
+                            text: (r.summaryText ?? ConstantStrings.dashPlaceholder)
+                                .cleanedMarkdownAndRedactedIDs
                         )
 
                         textCard(
                             icon: "doc.text.magnifyingglass",
                             title: ConstantStrings.detailTitle,
-                            text: (r.detailText ?? "-").cleanedMarkdownAndRedactedIDs
+                            text: (r.detailText ?? ConstantStrings.dashPlaceholder)
+                                .cleanedMarkdownAndRedactedIDs
                         )
                     }
 
@@ -59,7 +66,7 @@ struct PerformanceReportDetailView: View {
                 .offset(y: animateIn ? 0 : 14)
             }
         }
-        .navigationTitle("Performans Raporu")
+        .navigationTitle(ConstantStrings.performanceReportTitle)
         .navigationBarTitleDisplayMode(.inline)
         .navigationBarBackButtonHidden(true)
         .toolbar {
@@ -95,7 +102,7 @@ struct PerformanceReportDetailView: View {
             ProgressView()
                 .scaleEffect(1.1)
 
-            Text("Rapor yükleniyor...")
+            Text(ConstantStrings.reportLoading)
                 .font(.subheadline.weight(.medium))
                 .foregroundStyle(.secondary)
         }
@@ -111,7 +118,7 @@ struct PerformanceReportDetailView: View {
                 .font(.system(size: 38))
                 .foregroundStyle(.orange)
 
-            Text("Rapor yüklenemedi")
+            Text(ConstantStrings.reportLoadFailed)
                 .font(.headline)
 
             Text(message)
@@ -130,7 +137,6 @@ struct PerformanceReportDetailView: View {
         let score = r.score ?? 0
 
         return VStack(spacing: 20) {
-
             HStack {
                 VStack(alignment: .leading, spacing: 6) {
                     Text(ConstantStrings.performanceScoreTitle)
@@ -143,7 +149,7 @@ struct PerformanceReportDetailView: View {
 
                 Spacer()
 
-                Text("\(score)/100")
+                Text(String(format: ConstantStrings.performanceScoreFormat, score))
                     .font(.caption.weight(.bold))
                     .foregroundStyle(scoreColor(score))
                     .padding(.horizontal, 12)
@@ -178,20 +184,20 @@ struct PerformanceReportDetailView: View {
             }
             .frame(width: 178, height: 178)
             .padding(.vertical, 4)
-
         }
         .frame(maxWidth: .infinity)
         .padding(20)
         .background(cardBackground(cornerRadius: 26))
     }
 
-    
-
     // MARK: - Text Cards
 
-    private func textCard(icon: String, title: String, text: String) -> some View {
+    private func textCard(
+        icon: String,
+        title: String,
+        text: String
+    ) -> some View {
         VStack(alignment: .leading, spacing: 14) {
-
             HStack(spacing: 10) {
                 Image(systemName: icon)
                     .font(.system(size: 15, weight: .semibold))
@@ -208,7 +214,7 @@ struct PerformanceReportDetailView: View {
                 Spacer()
             }
 
-            Text(text.isEmpty ? "-" : text)
+            Text(text.isEmpty ? ConstantStrings.dashPlaceholder : text)
                 .font(.system(size: 15))
                 .foregroundStyle(.primary)
                 .lineSpacing(5)
@@ -235,10 +241,13 @@ private func scoreLevel(_ s: Int) -> String {
     switch s {
     case 0..<40:
         return ConstantStrings.levelPoor
+
     case 40..<70:
         return ConstantStrings.levelAverage
+
     case 70..<85:
         return ConstantStrings.levelGood
+
     default:
         return ConstantStrings.levelExcellent
     }
@@ -248,10 +257,13 @@ private func scoreColor(_ s: Int) -> Color {
     switch s {
     case 0..<40:
         return .red
+
     case 40..<70:
         return .orange
+
     case 70..<85:
         return .blue
+
     default:
         return .green
     }
@@ -260,8 +272,10 @@ private func scoreColor(_ s: Int) -> Color {
 // MARK: - Extensions
 
 private extension String {
+
     var cleanedMarkdownAndRedactedIDs: String {
         var s = self
+
         s = s.replacingOccurrences(of: "**", with: "")
         s = s.replacingOccurrences(of: "\n---\n", with: "\n")
         s = s.replacingOccurrences(of: "---", with: "")
@@ -283,7 +297,10 @@ private extension String {
 
         let filtered = lines.filter { line in
             let trimmed = line.trimmingCharacters(in: .whitespacesAndNewlines)
-            guard !trimmed.isEmpty else { return true }
+
+            guard !trimmed.isEmpty else {
+                return true
+            }
 
             return !needles.contains {
                 trimmed.localizedCaseInsensitiveContains($0)

@@ -196,6 +196,21 @@ final class AuthRepositoryImpl: AuthRepositoryProtocol {
             }
         }
     
+    // MARK: - LOGOUT
+    func logout() async throws {
+        let response: ServiceResponse<Bool> = try await network.request(
+            endpoint: .logout,
+            method: .post,
+            body: nil
+        )
+
+        guard response.success else {
+            throw RepositoryError.api(
+                message: response.message ?? ConstantStrings.unknownError
+            )
+        }
+    }
+    
 
 
 }

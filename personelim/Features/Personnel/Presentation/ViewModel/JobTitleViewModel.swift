@@ -1,32 +1,43 @@
-//
-//  JobTitleViewModel.swift
-//  personelim
-//
-//  Created by Yusuf Kaan USTA on 27.04.2026.
-//
-
 import Foundation
 
 @MainActor
 class JobTitleViewModel: ObservableObject {
+
     @Published var jobTitles: [JobTitleDTO] = []
     @Published var isLoading = false
-    
+    @Published var errorMessage: String?
+
     private let repository: JobTitleRepositoryProtocol
 
-    init(repository: JobTitleRepositoryProtocol = JobTitleRepositoryImpl(network: NetworkManager.shared)) {
+    init(
+        repository: JobTitleRepositoryProtocol =
+            JobTitleRepositoryImpl(network: NetworkManager.shared)
+    ) {
         self.repository = repository
     }
 
-    func fetchJobTitlesByDepartment(departmentId: String) async {
+    func fetchJobTitlesByDepartment(
+        departmentId: String
+    ) async {
+
         isLoading = true
-        defer { isLoading = false }
-        
+        errorMessage = nil
+
+        defer {
+            isLoading = false
+        }
+
         do {
-            let titles = try await repository.getTitlesByDepartment(departmentId: departmentId)
-            self.jobTitles = titles
+            jobTitles = try await repository
+                .getTitlesByDepartment(
+                    departmentId: departmentId
+                )
         } catch {
-            print("\(ConstantStrings.jobTitlesFetchError): \(error)")
+            errorMessage = ConstantStrings.jobTitlesFetchError
+
+            print(
+                "\(ConstantStrings.jobTitlesFetchError): \(error)"
+            )
         }
     }
 }

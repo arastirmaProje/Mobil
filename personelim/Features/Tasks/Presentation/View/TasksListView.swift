@@ -37,7 +37,10 @@ struct TasksListView: View {
                 if !vm.activeTasks.isEmpty {
                     section(
                         title: ConstantStrings.activeTasksTitle,
-                        subtitle: "\(vm.activeTasks.count) aktif kayıt",
+                        subtitle: String(
+                            format: ConstantStrings.activeRecordCountFormat,
+                            vm.activeTasks.count
+                        ),
                         tasks: vm.activeTasks
                     )
                 }
@@ -45,7 +48,10 @@ struct TasksListView: View {
                 if !vm.pastTasks.isEmpty {
                     section(
                         title: ConstantStrings.pastTasksTitle,
-                        subtitle: "\(vm.pastTasks.count) geçmiş kayıt",
+                        subtitle: String(
+                            format: ConstantStrings.pastRecordCountFormat,
+                            vm.pastTasks.count
+                        ),
                         tasks: vm.pastTasks
                     )
                 }
@@ -129,8 +135,6 @@ struct TasksListView: View {
         }
     }
 
-    // MARK: - Load / Refresh
-
     private func initialLoad() async {
         guard let businessId = appState.businessId else { return }
 
@@ -145,13 +149,11 @@ struct TasksListView: View {
         await vm.refresh(businessId: businessId)
     }
 
-    // MARK: - Loading
-
     private var loadingSection: some View {
         HStack(spacing: 12) {
             ProgressView()
 
-            Text("Aktiviteler yükleniyor...")
+            Text(ConstantStrings.activitiesLoading)
                 .font(.subheadline)
                 .foregroundStyle(.secondary)
 
@@ -175,8 +177,6 @@ struct TasksListView: View {
         .listRowSeparator(.hidden)
         .listRowBackground(Color.clear)
     }
-
-    // MARK: - Section
 
     private func section(
         title: String,
@@ -215,7 +215,7 @@ struct TasksListView: View {
                             }
                         }
                     } label: {
-                        Label("Sil", systemImage: "trash")
+                        Label(ConstantStrings.deleteButton, systemImage: "trash")
                     }
                     .tint(.red)
                 }
@@ -261,8 +261,6 @@ struct TasksListView: View {
         )
     }
 
-    // MARK: - Empty State
-
     private var emptyState: some View {
         VStack(spacing: 14) {
             Image(systemName: "tray")
@@ -305,8 +303,6 @@ struct TasksListView: View {
                 .stroke(Color.black.opacity(0.06), lineWidth: 1)
         )
     }
-
-    // MARK: - Bottom Button
 
     private var bottomCreateButton: some View {
         VStack(spacing: 0) {

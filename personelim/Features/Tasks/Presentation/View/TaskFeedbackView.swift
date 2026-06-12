@@ -2,13 +2,9 @@ import SwiftUI
 
 struct TaskFeedbackView: View {
 
-    // MARK: - State
-
     @StateObject private var vm: TaskFeedbackViewModel
     @EnvironmentObject private var appState: AppState
     @Environment(\.dismiss) private var dismiss
-
-    // MARK: - Init
 
     init(task: TaskEntity, finalStatus: String) {
         let network = NetworkManager()
@@ -27,8 +23,6 @@ struct TaskFeedbackView: View {
             )
         )
     }
-
-    // MARK: - Body
 
     var body: some View {
         NavigationStack {
@@ -53,7 +47,7 @@ struct TaskFeedbackView: View {
 
                 bottomSubmitButton
             }
-            .navigationTitle("Geri Bildirim")
+            .navigationTitle(ConstantStrings.feedbackNavTitle)
             .navigationBarTitleDisplayMode(.inline)
             .navigationBarBackButtonHidden(true)
             .toolbar {
@@ -136,7 +130,7 @@ private extension TaskFeedbackView {
                     )
                     .clipShape(RoundedRectangle(cornerRadius: 16, style: .continuous))
 
-                Text("\(vm.feedbackText.count) karakter")
+                Text(String(format: ConstantStrings.characterCountFormat, vm.feedbackText.count))
                     .font(.caption)
                     .foregroundStyle(.secondary)
                     .frame(maxWidth: .infinity, alignment: .trailing)
@@ -157,7 +151,7 @@ private extension TaskFeedbackView {
                             .font(.system(size: 17, weight: .bold))
                             .foregroundStyle(difficultyColor)
 
-                        Text("Seviye \(vm.difficulty) / 5")
+                        Text(String(format: ConstantStrings.levelFormat, vm.difficulty))
                             .font(.caption)
                             .foregroundStyle(.secondary)
                     }
@@ -212,7 +206,7 @@ private extension TaskFeedbackView {
                         Image(systemName: "checkmark.circle.fill")
                     }
 
-                    Text(vm.isSaving ? "Kaydediliyor..." : "Kaydet")
+                    Text(vm.isSaving ? ConstantStrings.savingText : ConstantStrings.saveButtonShort)
                         .font(.headline)
                 }
                 .foregroundStyle(.white)
@@ -285,11 +279,11 @@ private extension TaskFeedbackView {
         case 1:
             return ConstantStrings.feedbackVeryEasy
         case 2:
-            return "Kolay"
+            return ConstantStrings.difficultyEasy
         case 3:
-            return "Orta"
+            return ConstantStrings.difficultyMedium
         case 4:
-            return "Zor"
+            return ConstantStrings.difficultyHard
         default:
             return ConstantStrings.feedbackVeryHard
         }

@@ -105,7 +105,7 @@ struct SignupView: View {
                     .font(.system(size: 26, weight: .bold))
                     .foregroundStyle(.primary)
 
-                Text("Önce hesabını oluştur, ardından şirket bilgilerini tamamla.")
+                Text(ConstantStrings.signupDescription)
                     .font(.subheadline)
                     .foregroundStyle(.secondary)
                     .multilineTextAlignment(.center)
@@ -125,7 +125,7 @@ struct SignupView: View {
     // MARK: - Form
 
     private var formSection: some View {
-        sectionCard(title: "Hesap Bilgileri") {
+        sectionCard(title: ConstantStrings.accountInfoTitle) {
             inputRow(
                 title: ConstantStrings.firstNameLabel,
                 placeholder: ConstantStrings.firstNamePlaceholder,
@@ -182,7 +182,7 @@ struct SignupView: View {
             Button {
                 showPassword.toggle()
             } label: {
-                Image(systemName: showPassword ? "eye.slash.fill" : "eye.fill")
+                Image(systemName: showPassword ? "eye.fill" : "eye.slash.fill")
                     .foregroundStyle(.secondary)
             }
             .buttonStyle(.plain)
@@ -199,11 +199,11 @@ struct SignupView: View {
                 .foregroundStyle(.blue)
 
             VStack(alignment: .leading, spacing: 4) {
-                Text("Sonraki adım")
+                Text(ConstantStrings.nextStepTitle)
                     .font(.system(size: 14, weight: .bold))
                     .foregroundStyle(.primary)
 
-                Text("Kayıttan sonra şirket oluşturma ekranına yönlendirileceksin.")
+                Text(ConstantStrings.signupNextStepDescription)
                     .font(.caption)
                     .foregroundStyle(.secondary)
                     .lineLimit(2)
@@ -239,7 +239,7 @@ struct SignupView: View {
                         Image(systemName: "arrow.right.circle.fill")
                     }
 
-                    Text(vm.isLoading ? "Kaydediliyor..." : ConstantStrings.continueButton)
+                    Text(vm.isLoading ? ConstantStrings.registerLoading : ConstantStrings.continueButton)
                         .font(.headline)
                 }
                 .foregroundStyle(.white)

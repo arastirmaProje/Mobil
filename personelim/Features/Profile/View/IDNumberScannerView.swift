@@ -43,13 +43,17 @@ struct IDNumberScannerView: UIViewControllerRepresentable {
         private var isProcessingFrame = false
         private var lastHitAt: CFTimeInterval = 0
 
-        private let topBlurView = UIVisualEffectView(effect: UIBlurEffect(style: .systemUltraThinMaterialDark))
+        private let topBlurView = UIVisualEffectView(
+            effect: UIBlurEffect(style: .systemUltraThinMaterialDark)
+        )
         private let closeButton = UIButton(type: .system)
         private let titleLabel = UILabel()
         private let subtitleLabel = UILabel()
         private let scanFrameView = UIView()
         private let scanLineView = UIView()
-        private let hintContainer = UIVisualEffectView(effect: UIBlurEffect(style: .systemUltraThinMaterialDark))
+        private let hintContainer = UIVisualEffectView(
+            effect: UIBlurEffect(style: .systemUltraThinMaterialDark)
+        )
         private let hintLabel = UILabel()
 
         private var scanLineTopConstraint: NSLayoutConstraint?
@@ -94,14 +98,14 @@ struct IDNumberScannerView: UIViewControllerRepresentable {
                         if granted {
                             self.setupPreferredScanner()
                         } else {
-                            self.onError?("Kamera izni verilmedi.")
+                            self.onError?(ConstantStrings.cameraPermissionDenied)
                             self.onCancel?()
                         }
                     }
                 }
 
             default:
-                onError?("Kamera izni kapalı. Ayarlar > Gizlilik > Kamera bölümünden açabilirsin.")
+                onError?(ConstantStrings.cameraPermissionDisabled)
                 onCancel?()
             }
         }
@@ -122,17 +126,24 @@ struct IDNumberScannerView: UIViewControllerRepresentable {
 
             view.addSubview(topBlurView)
 
-            closeButton.setImage(UIImage(systemName: "xmark"), for: .normal)
+            closeButton.setImage(
+                UIImage(systemName: "xmark"),
+                for: .normal
+            )
             closeButton.tintColor = .white
             closeButton.backgroundColor = UIColor.white.withAlphaComponent(0.14)
             closeButton.layer.cornerRadius = 18
-            closeButton.addTarget(self, action: #selector(closeTapped), for: .touchUpInside)
+            closeButton.addTarget(
+                self,
+                action: #selector(closeTapped),
+                for: .touchUpInside
+            )
 
-            titleLabel.text = "Kimlik Tara"
+            titleLabel.text = ConstantStrings.idScannerTitle
             titleLabel.textColor = .white
             titleLabel.font = .systemFont(ofSize: 18, weight: .bold)
 
-            subtitleLabel.text = "11 haneli TC otomatik algılanır"
+            subtitleLabel.text = ConstantStrings.idScannerSubtitle
             subtitleLabel.textColor = UIColor.white.withAlphaComponent(0.72)
             subtitleLabel.font = .systemFont(ofSize: 12, weight: .medium)
 
@@ -168,9 +179,9 @@ struct IDNumberScannerView: UIViewControllerRepresentable {
             scanFrameView.layer.cornerRadius = 26
             scanFrameView.layer.borderWidth = 2
             scanFrameView.layer.borderColor = UIColor.white.withAlphaComponent(0.92).cgColor
-            scanFrameView.backgroundColor = UIColor.clear
+            scanFrameView.backgroundColor = .clear
 
-            scanLineView.backgroundColor = UIColor.systemBlue
+            scanLineView.backgroundColor = .systemBlue
             scanLineView.layer.cornerRadius = 2
             scanLineView.layer.shadowColor = UIColor.systemBlue.cgColor
             scanLineView.layer.shadowOpacity = 0.8
@@ -203,6 +214,7 @@ struct IDNumberScannerView: UIViewControllerRepresentable {
         private func addCornerGuides() {
             let guideLength: CGFloat = 34
             let guideWidth: CGFloat = 4
+
             let positions: [(CGFloat, CGFloat, CGFloat)] = [
                 (0, 0, 0),
                 (1, 0, 90),
@@ -247,18 +259,32 @@ struct IDNumberScannerView: UIViewControllerRepresentable {
                 ])
 
                 if x == 0 {
-                    corner.leadingAnchor.constraint(equalTo: scanFrameView.leadingAnchor, constant: -1).isActive = true
+                    corner.leadingAnchor.constraint(
+                        equalTo: scanFrameView.leadingAnchor,
+                        constant: -1
+                    ).isActive = true
                 } else {
-                    corner.trailingAnchor.constraint(equalTo: scanFrameView.trailingAnchor, constant: 1).isActive = true
+                    corner.trailingAnchor.constraint(
+                        equalTo: scanFrameView.trailingAnchor,
+                        constant: 1
+                    ).isActive = true
                 }
 
                 if y == 0 {
-                    corner.topAnchor.constraint(equalTo: scanFrameView.topAnchor, constant: -1).isActive = true
+                    corner.topAnchor.constraint(
+                        equalTo: scanFrameView.topAnchor,
+                        constant: -1
+                    ).isActive = true
                 } else {
-                    corner.bottomAnchor.constraint(equalTo: scanFrameView.bottomAnchor, constant: 1).isActive = true
+                    corner.bottomAnchor.constraint(
+                        equalTo: scanFrameView.bottomAnchor,
+                        constant: 1
+                    ).isActive = true
                 }
 
-                corner.transform = CGAffineTransform(rotationAngle: rotation * .pi / 180)
+                corner.transform = CGAffineTransform(
+                    rotationAngle: rotation * .pi / 180
+                )
             }
         }
 
@@ -269,7 +295,7 @@ struct IDNumberScannerView: UIViewControllerRepresentable {
             hintContainer.layer.cornerRadius = 18
             hintContainer.layer.masksToBounds = true
 
-            hintLabel.text = "Kimliğini çerçeve içine hizala.\nTC numarası göründüğünde otomatik yakalanır."
+            hintLabel.text = ConstantStrings.idScannerHint
             hintLabel.textColor = .white
             hintLabel.font = .systemFont(ofSize: 13, weight: .semibold)
             hintLabel.numberOfLines = 2
@@ -316,7 +342,8 @@ struct IDNumberScannerView: UIViewControllerRepresentable {
         // MARK: - Scanner Selection
 
         private func setupPreferredScanner() {
-            if DataScannerViewController.isSupported && DataScannerViewController.isAvailable {
+            if DataScannerViewController.isSupported &&
+                DataScannerViewController.isAvailable {
                 setupDataScanner()
             } else {
                 setupOCRFallback()
@@ -356,7 +383,7 @@ struct IDNumberScannerView: UIViewControllerRepresentable {
                     do {
                         try scanner.startScanning()
                     } catch {
-                        onError?("VisionKit tarama başlatılamadı, OCR moduna geçiliyor.")
+                        onError?(ConstantStrings.visionKitFallbackMessage)
                         teardownDataScanner()
                         setupOCRFallback()
                         startOCRIfNeeded()
@@ -398,7 +425,7 @@ struct IDNumberScannerView: UIViewControllerRepresentable {
             _ dataScanner: DataScannerViewController,
             didFailWithError error: Error
         ) {
-            onError?("VisionKit hata verdi, OCR moduna geçiliyor.")
+            onError?(ConstantStrings.visionKitErrorFallbackMessage)
             teardownDataScanner()
             setupOCRFallback()
             startOCRIfNeeded()
@@ -421,6 +448,7 @@ struct IDNumberScannerView: UIViewControllerRepresentable {
 
         private func setupOCRFallback() {
             guard !isUsingOCR else { return }
+
             isUsingOCR = true
 
             captureSession.beginConfiguration()
@@ -435,7 +463,7 @@ struct IDNumberScannerView: UIViewControllerRepresentable {
                 let input = try? AVCaptureDeviceInput(device: device),
                 captureSession.canAddInput(input)
             else {
-                onError?("Kamera başlatılamadı.")
+                onError?(ConstantStrings.cameraStartFailed)
                 onCancel?()
                 captureSession.commitConfiguration()
                 return
@@ -445,12 +473,16 @@ struct IDNumberScannerView: UIViewControllerRepresentable {
 
             videoOutput.alwaysDiscardsLateVideoFrames = true
             videoOutput.videoSettings = [
-                kCVPixelBufferPixelFormatTypeKey as String: kCVPixelFormatType_32BGRA
+                kCVPixelBufferPixelFormatTypeKey as String:
+                    kCVPixelFormatType_32BGRA
             ]
-            videoOutput.setSampleBufferDelegate(self, queue: captureQueue)
+            videoOutput.setSampleBufferDelegate(
+                self,
+                queue: captureQueue
+            )
 
             guard captureSession.canAddOutput(videoOutput) else {
-                onError?("Kamera çıktısı eklenemedi.")
+                onError?(ConstantStrings.cameraOutputFailed)
                 onCancel?()
                 captureSession.commitConfiguration()
                 return
@@ -496,7 +528,10 @@ struct IDNumberScannerView: UIViewControllerRepresentable {
 
         static func extract11Digits(from string: String) -> String? {
             let digits = string.filter(\.isNumber)
-            guard digits.count >= 11 else { return nil }
+
+            guard digits.count >= 11 else {
+                return nil
+            }
 
             let tc = String(digits.prefix(11))
             return tc.count == 11 ? tc : nil
@@ -531,9 +566,9 @@ extension IDNumberScannerView.ScannerHostViewController: AVCaptureVideoDataOutpu
                 self.isProcessingFrame = false
             }
 
-            if let error {
+            if error != nil {
                 DispatchQueue.main.async {
-                    self.onError?("OCR hata: \(error.localizedDescription)")
+                    self.onError?(ConstantStrings.ocrReadFailed)
                 }
                 return
             }
@@ -543,7 +578,9 @@ extension IDNumberScannerView.ScannerHostViewController: AVCaptureVideoDataOutpu
             }
 
             let text = observations
-                .compactMap { $0.topCandidates(1).first?.string }
+                .compactMap {
+                    $0.topCandidates(1).first?.string
+                }
                 .joined(separator: " ")
 
             if let tc = Self.extract11Digits(from: text) {
@@ -573,7 +610,7 @@ extension IDNumberScannerView.ScannerHostViewController: AVCaptureVideoDataOutpu
             isProcessingFrame = false
 
             DispatchQueue.main.async { [weak self] in
-                self?.onError?("OCR başlatılamadı: \(error.localizedDescription)")
+                self?.onError?(ConstantStrings.ocrStartFailed)
             }
         }
     }

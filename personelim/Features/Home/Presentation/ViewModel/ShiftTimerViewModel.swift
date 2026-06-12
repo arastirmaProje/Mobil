@@ -1,10 +1,3 @@
-//
-//  ShiftTimerViewModel.swift
-//  personelim
-//
-//  Created by Yusuf Kaan USTA on 25.12.2025.
-//
-
 import Foundation
 import CoreLocation
 
@@ -50,19 +43,24 @@ final class ShiftTimerViewModel: ObservableObject {
     }
 
     func confirmStart(option: ShiftStartOption) {
-        Task { await startFlow(option: option) }
+        Task {
+            await startFlow(option: option)
+        }
     }
 
     func pause() {
         guard isRunning, !isPaused else { return }
+
         isPaused = true
         pausedAt = Date()
+
         stopTimer()
         persist()
     }
 
     func resume() {
         guard isRunning, isPaused else { return }
+
         isPaused = false
 
         if let pausedAt {
@@ -71,16 +69,20 @@ final class ShiftTimerViewModel: ObservableObject {
         }
 
         self.pausedAt = nil
+
         startTimer()
         persist()
     }
 
     func endDay(businessId: String) {
-        Task { await endFlow(businessId: businessId) }
+        Task {
+            await endFlow(businessId: businessId)
+        }
     }
 
     func resetLocal() {
         stopTimer()
+
         isRunning = false
         isPaused = false
         elapsedText = "00:00:00"
@@ -98,30 +100,15 @@ final class ShiftTimerViewModel: ObservableObject {
     private func startFlow(option: ShiftStartOption) async {
         errorMessage = nil
 
-        print("SHIFT START FLOW")
-        print("Option:", option)
-
         do {
             if option.isOffice {
-                print("Office selected – validating location")
-
                 let current = try await locationManager.requestCoordinate()
-                print("Current location:",
-                      current.latitude,
-                      current.longitude)
 
                 guard let target = option.coordinate else {
-                    print("Target office coordinate is nil")
-                    throw NSError(
-                        domain: "shift",
-                        code: 9,
-                        userInfo: [NSLocalizedDescriptionKey: "Ofis koordinatı bulunamadı."]
+                    throw RepositoryError.api(
+                        message: ConstantStrings.officeCoordinateNotFound
                     )
                 }
-
-                print("Target office location:",
-                      target.latitude,
-                      target.longitude)
 
                 let ok = LocationValidator.isWithinTolerance(
                     user: current,
@@ -129,23 +116,16 @@ final class ShiftTimerViewModel: ObservableObject {
                     toleranceMeters: toleranceMeters
                 )
 
-                print("Distance OK?", ok, "| tolerance:", toleranceMeters, "m")
-
                 guard ok else {
-                    let msg = "Seçilen ofise yeterince yakın değilsin."
-                    print("SHIFT START FAILED:", msg)
-                    throw NSError(domain: "shift", code: 10, userInfo: [
-                        NSLocalizedDescriptionKey: msg
-                    ])
+                    throw RepositoryError.api(
+                        message: ConstantStrings.notCloseEnoughToOffice
+                    )
                 }
-            } else {
-                print("Home selected – skipping location validation")
             }
-
-            print("SHIFT START SUCCESS")
 
             startedAt = Date()
             startOption = option
+
             isRunning = true
             isPaused = false
             pausedAt = nil
@@ -155,11 +135,14 @@ final class ShiftTimerViewModel: ObservableObject {
             persist()
 
         } catch {
-            print("SHIFT START ERROR:", error.localizedDescription)
-            errorMessage = error.localizedDescription
+            print("SHIFT START ERROR:", error)
+
+            errorMessage = userMessage(
+                from: error,
+                fallback: ConstantStrings.shiftStartFailed
+            )
         }
     }
-
 
     // MARK: - End
 
@@ -167,7 +150,7 @@ final class ShiftTimerViewModel: ObservableObject {
         errorMessage = nil
 
         guard let startedAt else {
-            errorMessage = "Mesai başlatılmadan gün sonlandırılamaz."
+            errorMessage = ConstantStrings.shiftEndWithoutStart
             return
         }
 
@@ -175,12 +158,19 @@ final class ShiftTimerViewModel: ObservableObject {
             if isPaused, let pausedAt {
                 let add = Int(Date().timeIntervalSince(pausedAt))
                 pausedTotalSeconds += max(0, add)
+
                 self.pausedAt = nil
                 isPaused = false
             }
+
             if let opt = startOption, opt.isOffice {
                 let current = try await locationManager.requestCoordinate()
-                guard let target = opt.coordinate else { return }
+
+                guard let target = opt.coordinate else {
+                    throw RepositoryError.api(
+                        message: ConstantStrings.officeCoordinateNotFound
+                    )
+                }
 
                 let ok = LocationValidator.isWithinTolerance(
                     user: current,
@@ -189,16 +179,18 @@ final class ShiftTimerViewModel: ObservableObject {
                 )
 
                 guard ok else {
-                    throw NSError(domain: "shift", code: 11, userInfo: [
-                        NSLocalizedDescriptionKey: "Mesaiyi aynı ofiste bitirmelisin."
-                    ])
+                    throw RepositoryError.api(
+                        message: ConstantStrings.mustEndShiftAtSameOffice
+                    )
                 }
             }
 
             let now = Date()
             let rawSeconds = Int(now.timeIntervalSince(startedAt))
             let workedSeconds = max(0, rawSeconds - pausedTotalSeconds)
-            let endAt = startedAt.addingTimeInterval(TimeInterval(workedSeconds))
+            let endAt = startedAt.addingTimeInterval(
+                TimeInterval(workedSeconds)
+            )
 
             let body = CreateShiftRequestDTO(
                 businessId: businessId,
@@ -211,7 +203,10 @@ final class ShiftTimerViewModel: ObservableObject {
             resetLocal()
 
         } catch {
-            errorMessage = error.localizedDescription
+            errorMessage = userMessage(
+                from: error,
+                fallback: ConstantStrings.shiftEndFailed
+            )
         }
     }
 
@@ -220,8 +215,12 @@ final class ShiftTimerViewModel: ObservableObject {
     private func startTimer() {
         timer?.invalidate()
 
-        timer = Timer.scheduledTimer(withTimeInterval: 1, repeats: true) { [weak self] _ in
+        timer = Timer.scheduledTimer(
+            withTimeInterval: 1,
+            repeats: true
+        ) { [weak self] _ in
             guard let self else { return }
+
             Task { @MainActor in
                 self.updateElapsed()
             }
@@ -229,7 +228,6 @@ final class ShiftTimerViewModel: ObservableObject {
 
         updateElapsed()
     }
-
 
     private func stopTimer() {
         timer?.invalidate()
@@ -243,8 +241,12 @@ final class ShiftTimerViewModel: ObservableObject {
         let raw = Int(now.timeIntervalSince(startedAt))
 
         var pausedTotal = pausedTotalSeconds
+
         if isPaused, let pausedAt {
-            pausedTotal += max(0, Int(now.timeIntervalSince(pausedAt)))
+            pausedTotal += max(
+                0,
+                Int(now.timeIntervalSince(pausedAt))
+            )
         }
 
         let worked = max(0, raw - pausedTotal)
@@ -252,13 +254,21 @@ final class ShiftTimerViewModel: ObservableObject {
     }
 
     private static func format(seconds: Int) -> String {
-        String(format: "%02d:%02d:%02d", seconds/3600, (seconds%3600)/60, seconds%60)
+        String(
+            format: "%02d:%02d:%02d",
+            seconds / 3600,
+            (seconds % 3600) / 60,
+            seconds % 60
+        )
     }
 
     // MARK: - Persist / Restore
 
     private func persist() {
-        guard let startedAt, let startOption else { return }
+        guard let startedAt,
+              let startOption else {
+            return
+        }
 
         let state = ShiftPauseStateDTO(
             startedAtTs: startedAt.timeIntervalSince1970,
@@ -267,20 +277,22 @@ final class ShiftTimerViewModel: ObservableObject {
             pausedAtTs: pausedAt?.timeIntervalSince1970,
             option: StoredShiftOption.from(startOption)
         )
+
         store.save(state)
     }
-
 
     private func restoreIfNeeded() {
         guard let s = store.load() else { return }
 
-        self.startedAt = Date(timeIntervalSince1970: s.startedAtTs)
-        self.pausedTotalSeconds = s.pausedTotalSeconds
-        self.isPaused = s.isPaused
-        self.pausedAt = s.pausedAtTs.map { Date(timeIntervalSince1970: $0) }
+        startedAt = Date(timeIntervalSince1970: s.startedAtTs)
+        pausedTotalSeconds = s.pausedTotalSeconds
+        isPaused = s.isPaused
+        pausedAt = s.pausedAtTs.map {
+            Date(timeIntervalSince1970: $0)
+        }
 
-        self.startOption = s.option.toDomain()
-        self.isRunning = (self.startOption != nil)
+        startOption = s.option.toDomain()
+        isRunning = startOption != nil
 
         if isRunning && !isPaused {
             startTimer()
@@ -289,6 +301,18 @@ final class ShiftTimerViewModel: ObservableObject {
         }
     }
 
+    // MARK: - Helpers
+
+    private func userMessage(
+        from error: Error,
+        fallback: String
+    ) -> String {
+        if case let RepositoryError.api(message) = error {
+            return message
+        }
+
+        return fallback
+    }
 }
 
 protocol LocationManaging {

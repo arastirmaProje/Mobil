@@ -103,7 +103,7 @@ struct DocumentPreviewSheet: View {
                     .foregroundStyle(.primary)
                     .lineLimit(1)
 
-                Text("PDF belge önizlemesi")
+                Text(ConstantStrings.pdfPreviewSubtitle)
                     .font(.caption)
                     .foregroundStyle(.secondary)
             }
@@ -131,10 +131,10 @@ struct DocumentPreviewSheet: View {
             .frame(width: 64, height: 64)
 
             VStack(spacing: 5) {
-                Text("Belge yükleniyor")
+                Text(ConstantStrings.documentLoadingTitle)
                     .font(.headline)
 
-                Text("PDF önizlemesi hazırlanıyor.")
+                Text(ConstantStrings.pdfPreviewPreparing)
                     .font(.subheadline)
                     .foregroundStyle(.secondary)
             }
@@ -164,11 +164,11 @@ struct DocumentPreviewSheet: View {
             .frame(width: 72, height: 72)
 
             VStack(spacing: 6) {
-                Text("Belge açılamadı")
+                Text(ConstantStrings.documentOpenFailed)
                     .font(.title3.weight(.bold))
                     .foregroundStyle(.primary)
 
-                Text(errorText ?? "Bilinmeyen hata")
+                Text(errorText ?? ConstantStrings.unknownErrorShort)
                     .font(.caption)
                     .foregroundStyle(.red)
                     .multilineTextAlignment(.center)
@@ -177,7 +177,7 @@ struct DocumentPreviewSheet: View {
             Button {
                 dismiss()
             } label: {
-                Text("Kapat")
+                Text(ConstantStrings.closeButton)
                     .font(.headline)
                     .foregroundStyle(.white)
                     .frame(maxWidth: .infinity)
@@ -214,32 +214,27 @@ struct DocumentPreviewSheet: View {
                 endpoint: .downloadDocument(documentId: documentId)
             )
 
-            if data.count < 4 || String(data: data.prefix(4), encoding: .ascii) != "%PDF" {
-                let sample = String(data: data.prefix(600), encoding: .utf8) ?? "binary/utf8 değil"
-
-                throw NSError(
-                    domain: "pdf",
-                    code: -1,
-                    userInfo: [
-                        NSLocalizedDescriptionKey:
-                            "İndirilen içerik PDF değil.\nÖrnek yanıt:\n\(sample)"
-                    ]
+            if data.count < 4 ||
+                String(data: data.prefix(4), encoding: .ascii) != "%PDF" {
+                throw RepositoryError.api(
+                    message: ConstantStrings.downloadedContentNotPDF
                 )
             }
 
             guard let document = PDFDocument(data: data) else {
-                throw NSError(
-                    domain: "pdf",
-                    code: -2,
-                    userInfo: [
-                        NSLocalizedDescriptionKey: "PDFDocument oluşturulamadı."
-                    ]
+                throw RepositoryError.api(
+                    message: ConstantStrings.pdfDocumentCreateFailed
                 )
             }
 
             pdfDocument = document
+
         } catch {
-            errorText = error.localizedDescription
+            if case let RepositoryError.api(message) = error {
+                errorText = message
+            } else {
+                errorText = ConstantStrings.documentPreviewLoadFailed
+            }
         }
     }
 }

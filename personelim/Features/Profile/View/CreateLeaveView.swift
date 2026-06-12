@@ -8,6 +8,7 @@ struct CreateLeaveView: View {
 
     init(businessId: String) {
         let repo = LeaveRepositoryImpl(network: NetworkManager())
+
         _vm = StateObject(
             wrappedValue: CreateLeaveViewModel(
                 businessId: businessId,
@@ -42,7 +43,7 @@ struct CreateLeaveView: View {
 
                 bottomCreateButton
             }
-            .navigationTitle("İzin oluştur")
+            .navigationTitle(ConstantStrings.createLeaveTitle)
             .navigationBarTitleDisplayMode(.inline)
             .navigationBarBackButtonHidden(true)
             .toolbar {
@@ -112,15 +113,33 @@ private extension CreateLeaveView {
     var calendarSection: some View {
         sectionCard(title: ConstantStrings.dateRangeLabel) {
             VStack(spacing: 14) {
-                MultiDatePicker(
-                    ConstantStrings.dateRangeLabel,
-                    selection: $vm.selectedDates
+                RangeCalendarCard(
+                    startDate: leaveStartDateBinding,
+                    endDate: leaveEndDateBinding
                 )
-                .labelsHidden()
-                .environment(\.locale, Locale(identifier: "tr_TR"))
-                .tint(.blue)
-                .padding(10)
+
+                HStack(spacing: 0) {
+                    dateSummaryBox(
+                        title: ConstantStrings.startTitle,
+                        value: selectedStartDate?.trShortDate() ?? ConstantStrings.dashPlaceholder,
+                        icon: "calendar"
+                    )
+
+                    Divider()
+                        .padding(.vertical, 10)
+
+                    dateSummaryBox(
+                        title: ConstantStrings.endTitle,
+                        value: selectedEndDate?.trShortDate() ?? ConstantStrings.dashPlaceholder,
+                        icon: "calendar.badge.clock"
+                    )
+                }
                 .background(Color(.systemBackground))
+                .clipShape(RoundedRectangle(cornerRadius: 18, style: .continuous))
+                .overlay(
+                    RoundedRectangle(cornerRadius: 18, style: .continuous)
+                        .stroke(Color.black.opacity(0.06), lineWidth: 1)
+                )
 
                 selectedDatesSummary
             }
@@ -137,11 +156,11 @@ private extension CreateLeaveView {
                 .frame(width: 32, height: 32)
 
             VStack(alignment: .leading, spacing: 3) {
-                Text("Seçilen gün")
+                Text(ConstantStrings.selectedDayTitle)
                     .font(.caption.weight(.semibold))
                     .foregroundStyle(.secondary)
 
-                Text("\(vm.selectedDates.count) gün seçildi")
+                Text(String(format: ConstantStrings.selectedDayCountFormat, vm.selectedDates.count))
                     .font(.system(size: 15, weight: .semibold))
                     .foregroundStyle(vm.selectedDates.isEmpty ? .secondary : .primary)
             }
@@ -177,7 +196,7 @@ private extension CreateLeaveView {
                     )
                     .clipShape(RoundedRectangle(cornerRadius: 16, style: .continuous))
 
-                Text("\(vm.description.count) karakter")
+                Text(String(format: ConstantStrings.characterCountFormat, vm.description.count))
                     .font(.caption)
                     .foregroundStyle(.secondary)
                     .frame(maxWidth: .infinity, alignment: .trailing)
@@ -208,7 +227,7 @@ private extension CreateLeaveView {
                         Image(systemName: "checkmark.circle.fill")
                     }
 
-                    Text(vm.isLoading ? "Oluşturuluyor..." : "İzin Oluştur")
+                    Text(vm.isLoading ? ConstantStrings.createButtonLoading : ConstantStrings.leaveCreateButton)
                         .font(.headline)
                 }
                 .foregroundStyle(.white)
@@ -224,6 +243,92 @@ private extension CreateLeaveView {
             .padding(.bottom, 12)
             .background(.regularMaterial)
         }
+    }
+}
+
+// MARK: - Calendar Bindings
+
+@available(iOS 17.0, *)
+private extension CreateLeaveView {
+
+    var selectedDatesSorted: [Date] {
+        vm.selectedDates
+            .compactMap { Calendar.current.date(from: $0) }
+            .sorted()
+    }
+
+    var selectedStartDate: Date? {
+        selectedDatesSorted.first
+    }
+
+    var selectedEndDate: Date? {
+        selectedDatesSorted.last
+    }
+
+    var leaveStartDateBinding: Binding<Date?> {
+        Binding(
+            get: {
+                selectedStartDate
+            },
+            set: { newDate in
+                applyDateRange(
+                    start: newDate,
+                    end: selectedEndDate ?? newDate
+                )
+            }
+        )
+    }
+
+    var leaveEndDateBinding: Binding<Date?> {
+        Binding(
+            get: {
+                selectedEndDate
+            },
+            set: { newDate in
+                applyDateRange(
+                    start: selectedStartDate ?? newDate,
+                    end: newDate
+                )
+            }
+        )
+    }
+
+    func applyDateRange(
+        start: Date?,
+        end: Date?
+    ) {
+        guard let start, let end else {
+            vm.selectedDates = []
+            return
+        }
+
+        let calendar = Calendar.current
+        let lower = calendar.startOfDay(for: min(start, end))
+        let upper = calendar.startOfDay(for: max(start, end))
+
+        var result = Set<DateComponents>()
+        var current = lower
+
+        while current <= upper {
+            let components = calendar.dateComponents(
+                [.year, .month, .day],
+                from: current
+            )
+
+            result.insert(components)
+
+            guard let next = calendar.date(
+                byAdding: .day,
+                value: 1,
+                to: current
+            ) else {
+                break
+            }
+
+            current = next
+        }
+
+        vm.selectedDates = result
     }
 }
 
@@ -252,6 +357,32 @@ private extension CreateLeaveView {
                     .stroke(Color.black.opacity(0.06), lineWidth: 1)
             )
         }
+    }
+
+    func dateSummaryBox(
+        title: String,
+        value: String,
+        icon: String
+    ) -> some View {
+        HStack(alignment: .top, spacing: 10) {
+            Image(systemName: icon)
+                .font(.system(size: 15, weight: .semibold))
+                .foregroundStyle(.blue)
+
+            VStack(alignment: .leading, spacing: 4) {
+                Text(title)
+                    .font(.caption.weight(.semibold))
+                    .foregroundStyle(.secondary)
+
+                Text(value)
+                    .font(.system(size: 14, weight: .semibold))
+                    .foregroundStyle(value == ConstantStrings.dashPlaceholder ? .secondary : .primary)
+                    .lineLimit(2)
+            }
+        }
+        .frame(maxWidth: .infinity, alignment: .leading)
+        .padding(14)
+        .background(Color(.systemBackground))
     }
 
     func inputRow(
@@ -303,6 +434,7 @@ private extension CreateLeaveView {
 // MARK: - Row Background
 
 private extension View {
+
     func formRowBackground() -> some View {
         self
             .padding(.horizontal, 14)

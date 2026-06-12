@@ -2,12 +2,13 @@ import Foundation
 import SwiftUI
 
 @MainActor
- class AppState: ObservableObject {
+class AppState: ObservableObject {
 
     // MARK: - Auth / App Status
     @Published private(set) var isLoggedIn: Bool = false
     @Published var isBootstrapping: Bool = false
     @Published var bootstrapError: String?
+    @Published var needsCompanyCreation: Bool = false
 
     // MARK: - User & Business Context
     @Published var userDTO: UserProfileDTO?
@@ -32,18 +33,16 @@ import SwiftUI
             : full
     }
 
-   
-     var isSubscribed: Bool { companyDTO?.isSubscribed ?? false } 
-     var businessId: String? { companyDTO?.id }
-     var userId: String? { userDTO?.id }
+    var isSubscribed: Bool { companyDTO?.isSubscribed ?? false }
+    var businessId: String? { companyDTO?.id }
+    var userId: String? { userDTO?.id }
+
+    init() {
+        isLoggedIn = TokenStore.shared.hasValidToken()
+    }
 
     func signalActivitiesChanged() {
         activitiesChangeToken = UUID()
-    }
-
-    // MARK: - Init
-    init() {
-        isLoggedIn = TokenStore.shared.hasValidToken()
     }
 
     // MARK: - LOGIN
@@ -51,6 +50,7 @@ import SwiftUI
         self.userDTO = userDTO
         self.role = role
         self.isLoggedIn = true
+        self.needsCompanyCreation = false
     }
 
     // MARK: - LOGOUT
@@ -59,6 +59,7 @@ import SwiftUI
         isLoggedIn = false
         isBootstrapping = false
         bootstrapError = nil
+        needsCompanyCreation = false
         userDTO = nil
         role = .default
         companyDTO = nil
@@ -88,13 +89,18 @@ import SwiftUI
             self.userDTO = profile
 
             let businesses = try await businessRepository.getBusinesses()
+
             guard let firstBusiness = businesses.first else {
                 role = .default
+                companyDTO = nil
                 businessMembers = []
+                TokenStore.shared.selectedBusinessId = nil
+                needsCompanyCreation = true
                 return
             }
 
-            self.companyDTO = firstBusiness
+            needsCompanyCreation = false
+            companyDTO = firstBusiness
             TokenStore.shared.selectedBusinessId = firstBusiness.id
 
             let members = try await businessMemberRepository
@@ -128,10 +134,7 @@ import SwiftUI
             let members = try await repository.getMembers(businessId: businessId)
             businessMembers = members.filter { $0.isActive ?? false }
         } catch {
-            print(
-                ConstantStrings.membersLoadFailed,
-                error.localizedDescription
-            )
+            print(ConstantStrings.membersLoadFailed, error.localizedDescription)
         }
     }
 
@@ -144,11 +147,9 @@ import SwiftUI
         do {
             let members = try await repository.getMembers(businessId: businessId)
             businessMembers = members.filter { $0.isActive ?? false }
-        } catch {
-            print(
-                ConstantStrings.refreshMembersFailed,
-                error.localizedDescription
-            )
+        }   catch {
+            logout()
+            bootstrapError = ConstantStrings.sessionLoadFailed
         }
     }
 }

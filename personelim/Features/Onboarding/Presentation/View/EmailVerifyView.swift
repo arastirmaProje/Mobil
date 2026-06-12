@@ -83,11 +83,11 @@ struct EmailVerifyView: View {
     private var codeSection: some View {
         VStack(spacing: 14) {
             VStack(alignment: .leading, spacing: 6) {
-                Text("Doğrulama kodu")
+                Text(ConstantStrings.verificationCodeTitle)
                     .font(.system(size: 17, weight: .bold))
                     .foregroundStyle(.primary)
 
-                Text("E-postana gelen kodu gir.")
+                Text(ConstantStrings.verificationCodeDescription)
                     .font(.caption)
                     .foregroundStyle(.secondary)
             }
@@ -102,7 +102,7 @@ struct EmailVerifyView: View {
                     .font(.system(size: 13, weight: .semibold))
                     .foregroundStyle(.blue)
 
-                Text("Kod tamamlandığında doğrulama otomatik başlar.")
+                Text(ConstantStrings.codeAutoVerifyHint)
                     .font(.caption)
                     .foregroundStyle(.secondary)
 

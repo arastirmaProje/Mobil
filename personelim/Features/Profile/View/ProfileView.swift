@@ -85,12 +85,15 @@ struct ProfileView: View {
                         .padding(.horizontal, 16)
                 }
 
+                logoutSection
+                    .padding(.horizontal, 16)
+
                 Spacer().frame(height: 28)
             }
             .padding(.top, 12)
         }
         .background(Color(.systemBackground).ignoresSafeArea())
-        .navigationTitle("Profil")
+        .navigationTitle(ConstantStrings.tabProfileTitle)
         .navigationBarTitleDisplayMode(.large)
         .task {
             await vm.loadIfNeeded(appState: appState)
@@ -197,6 +200,17 @@ struct ProfileView: View {
                 loadingSheet()
             }
         }
+        .alert(
+            ConstantStrings.errorTitle,
+            isPresented: Binding(
+                get: { vm.logoutErrorMessage != nil },
+                set: { if !$0 { vm.logoutErrorMessage = nil } }
+            )
+        ) {
+            Button(ConstantStrings.okButton, role: .cancel) { }
+        } message: {
+            Text(vm.logoutErrorMessage ?? ConstantStrings.unknownError)
+        }
     }
 
     // MARK: - Employee Profile
@@ -207,27 +221,30 @@ struct ProfileView: View {
             profileHeaderCard(
                 imageUrl: p.imageUrl,
                 title: p.fullName,
-                subtitle: p.position ?? "Ünvan bilgisi yok",
-                detail: "Gelir: \(p.salaryText ?? "-")",
+                subtitle: p.position ?? ConstantStrings.noPositionInfo,
+                detail: String(
+                    format: ConstantStrings.incomeFormat,
+                    p.salaryText ?? ConstantStrings.dashPlaceholder
+                ),
                 editAction: { showEditPersonalProfile = true }
             )
 
-            infoGroup(title: "Kişisel Bilgiler") {
+            infoGroup(title: ConstantStrings.personalInfoSectionHeader) {
                 infoSection(
-                    title: "Kimlik",
-                    value: p.tcIdentityNumber ?? "-",
+                    title: ConstantStrings.identityLabel,
+                    value: p.tcIdentityNumber ?? ConstantStrings.dashPlaceholder,
                     icon: "person.text.rectangle"
                 )
 
                 infoSection(
-                    title: "Email",
+                    title: ConstantStrings.emailLabel,
                     value: p.email,
                     icon: "envelope"
                 )
             }
 
             documentsSection(
-                title: "Belgeler",
+                title: ConstantStrings.documentsLabel,
                 documents: p.documentFiles
             )
 
@@ -256,7 +273,7 @@ struct ProfileView: View {
             profileHeaderCard(
                 imageUrl: m.companyImageUrl,
                 title: m.companyName,
-                subtitle: trimmedOrNil(m.companyDescription) ?? "Şirket açıklaması yok",
+                subtitle: trimmedOrNil(m.companyDescription) ?? ConstantStrings.companyNoDescription,
                 detail: m.companyCityLine,
                 editAction: { showEditCompany = true }
             )
@@ -346,24 +363,25 @@ struct ProfileView: View {
     // MARK: - Company Details
 
     private func companyDetailsSection(_ m: ManagerProfileUI) -> some View {
-        infoGroup(title: "Şirket Bilgileri") {
+        infoGroup(title: ConstantStrings.companyInfoSectionTitle) {
             infoSection(
-                title: "Email",
+                title: ConstantStrings.emailLabel,
                 value: m.companyEmail,
                 icon: "envelope"
             )
 
             if let officeName = trimmedOrNil(m.companyLocationName) {
                 infoSection(
-                    title: "Ana Ofis",
+                    title: ConstantStrings.mainOfficeTitle,
                     value: officeName,
                     icon: "building.2"
                 )
             }
 
-            if let city = trimmedOrNil(m.companyCityLine), city != "-" {
+            if let city = trimmedOrNil(m.companyCityLine),
+               city != ConstantStrings.dashPlaceholder {
                 infoSection(
-                    title: "İl / İlçe",
+                    title: ConstantStrings.cityDistrictTitle,
                     value: city,
                     icon: "mappin.and.ellipse"
                 )
@@ -371,7 +389,7 @@ struct ProfileView: View {
 
             if let phone = trimmedOrNil(m.companyPhoneNumber) {
                 tappableInfoRow(
-                    title: "Telefon",
+                    title: ConstantStrings.phoneLabel,
                     value: phone,
                     icon: "phone.fill"
                 ) {
@@ -381,7 +399,7 @@ struct ProfileView: View {
 
             if let addr = trimmedOrNil(m.companyAddress) {
                 infoSection(
-                    title: "Adres",
+                    title: ConstantStrings.addressPlaceholder,
                     value: addr,
                     icon: "map"
                 )
@@ -392,10 +410,10 @@ struct ProfileView: View {
     // MARK: - Offices
 
     private func officesSection(offices: [OfficeUI]) -> some View {
-        infoGroup(title: "Ofisler") {
+        infoGroup(title: ConstantStrings.officesTitle) {
             if offices.isEmpty {
                 emptyRow(
-                    text: "Kayıtlı ofis bulunmuyor",
+                    text: ConstantStrings.noRegisteredOffice,
                     icon: "building.2.crop.circle"
                 )
             } else {
@@ -406,8 +424,12 @@ struct ProfileView: View {
                         } label: {
                             rowCard(
                                 icon: "building.2",
-                                title: office.name.isEmpty ? "Ofis \(idx + 1)" : office.name,
-                                subtitle: office.hasCoordinate ? "Haritada aç" : "Konum bilgisi yok",
+                                title: office.name.isEmpty
+                                    ? String(format: ConstantStrings.officeDefaultNameFormat, idx + 1)
+                                    : office.name,
+                                subtitle: office.hasCoordinate
+                                    ? ConstantStrings.openInMap
+                                    : ConstantStrings.noLocationInfo,
                                 trailingIcon: office.hasCoordinate ? "chevron.right" : nil
                             )
                         }
@@ -430,7 +452,7 @@ struct ProfileView: View {
 
             if docs.isEmpty {
                 emptyRow(
-                    text: "Belge bulunmuyor",
+                    text: ConstantStrings.noDocumentFound,
                     icon: "doc"
                 )
             } else {
@@ -446,7 +468,7 @@ struct ProfileView: View {
                             rowCard(
                                 icon: "doc.text",
                                 title: document.fileName,
-                                subtitle: "Önizle",
+                                subtitle: ConstantStrings.previewText,
                                 trailingIcon: "chevron.right"
                             )
                         }
@@ -575,6 +597,57 @@ struct ProfileView: View {
         .padding(.vertical, 12)
         .background(Color(.systemBackground))
     }
+    
+    // MARK: - Logout
+
+    private var logoutSection: some View {
+        Button {
+            Task {
+                await vm.logout(appState: appState)
+            }
+        } label: {
+            HStack(spacing: 12) {
+                ZStack {
+                    Circle()
+                        .fill(Color.red.opacity(0.10))
+
+                    Image(systemName: "rectangle.portrait.and.arrow.right")
+                        .font(.system(size: 17, weight: .semibold))
+                        .foregroundStyle(.red)
+                }
+                .frame(width: 42, height: 42)
+
+                VStack(alignment: .leading, spacing: 4) {
+                    Text(ConstantStrings.logoutButtonTitle)
+                        .font(.system(size: 15, weight: .bold))
+                        .foregroundStyle(.red)
+
+                    Text(ConstantStrings.logoutButtonDescription)
+                        .font(.caption)
+                        .foregroundStyle(.secondary)
+                }
+
+                Spacer()
+
+                if vm.isLoggingOut {
+                    ProgressView()
+                } else {
+                    Image(systemName: "chevron.right")
+                        .font(.system(size: 12, weight: .semibold))
+                        .foregroundStyle(.secondary)
+                }
+            }
+            .padding(14)
+            .background(Color(.systemBackground))
+            .clipShape(RoundedRectangle(cornerRadius: 18, style: .continuous))
+            .overlay(
+                RoundedRectangle(cornerRadius: 18, style: .continuous)
+                    .stroke(Color.red.opacity(0.18), lineWidth: 1)
+            )
+        }
+        .buttonStyle(.plain)
+        .disabled(vm.isLoggingOut)
+    }
 
     // MARK: - Feedback
 
@@ -582,7 +655,7 @@ struct ProfileView: View {
         HStack(spacing: 12) {
             ProgressView()
 
-            Text("Profil bilgileri yükleniyor...")
+            Text(ConstantStrings.profileLoading)
                 .font(.subheadline)
                 .foregroundStyle(.secondary)
 
@@ -679,7 +752,7 @@ struct ProfileView: View {
         VStack(spacing: 12) {
             ProgressView()
 
-            Text("Yükleniyor...")
+            Text(ConstantStrings.loadingText)
                 .foregroundStyle(.secondary)
         }
         .padding()
@@ -690,6 +763,7 @@ struct ProfileView: View {
 // MARK: - View Helper
 
 private extension View {
+
     func unifiedCard() -> some View {
         self
             .padding(14)

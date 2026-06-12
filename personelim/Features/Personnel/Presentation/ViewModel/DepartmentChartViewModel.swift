@@ -40,7 +40,7 @@ final class DepartmentChartViewModel: ObservableObject {
         businessGraph = data
     }
 
-    // MARK: - SAFE
+    // MARK: - SAFE VALUE HELPERS
 
     private func safeDouble(_ value: Double?) -> Double {
         guard let value, value.isFinite else { return 0 }
@@ -150,6 +150,8 @@ final class DepartmentChartViewModel: ObservableObject {
         return Array(sorted.prefix(departmentLimit))
     }
 
+    // MARK: - SUMMARY VALUES
+
     var averageValue: Double {
         let values = limitedChartData.map(\.value)
         guard !values.isEmpty else { return 0 }
@@ -173,33 +175,15 @@ final class DepartmentChartViewModel: ObservableObject {
         chartData.min { $0.value < $1.value }
     }
 
+    // MARK: - FORMAT
+
     var metricSuffix: String {
         switch selectedMetric {
         case .mesai, .tamamlanma, .verimlilik, .zorluk, .mesaiKullanim:
             return "%"
+
         case .gorev, .calisan, .skor:
             return ""
-        }
-    }
-
-    var resolvedChartType: ChartTypeOption {
-        switch selectedMetric {
-        case .skor:
-            return .bar
-        case .mesai:
-            return .pie
-        case .gorev:
-            return .horizontalBar
-        case .verimlilik:
-            return .line
-        case .tamamlanma:
-            return .area
-        case .zorluk:
-            return .bar
-        case .calisan:
-            return .donut
-        case .mesaiKullanim:
-            return .bar
         }
     }
 
@@ -208,6 +192,36 @@ final class DepartmentChartViewModel: ObservableObject {
             return "\(Int(value))\(metricSuffix)"
         } else {
             return "\(String(format: "%.1f", value))\(metricSuffix)"
+        }
+    }
+
+    // MARK: - CHART TYPE
+
+    var resolvedChartType: ChartTypeOption {
+        switch selectedMetric {
+        case .skor:
+            return .bar
+
+        case .mesai:
+            return .pie
+
+        case .gorev:
+            return .horizontalBar
+
+        case .verimlilik:
+            return .line
+
+        case .tamamlanma:
+            return .area
+
+        case .zorluk:
+            return .bar
+
+        case .calisan:
+            return .donut
+
+        case .mesaiKullanim:
+            return .bar
         }
     }
 }

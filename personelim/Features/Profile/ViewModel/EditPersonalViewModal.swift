@@ -49,7 +49,10 @@ final class EditPersonalProfileViewModel: ObservableObject {
     func load() async {
         isLoading = true
         errorMessage = nil
-        defer { isLoading = false }
+
+        defer {
+            isLoading = false
+        }
 
         do {
             let p = try await authRepo.getProfile()
@@ -67,24 +70,24 @@ final class EditPersonalProfileViewModel: ObservableObject {
             let businesses = try await businessRepo.getBusinesses()
 
             guard let business = businesses.first else {
-                existingCVs = []
-                existingDocuments = []
-                tcIdentityNumber = ""
-                initialTCIdentityNumber = ""
+                clearDocumentsAndTC()
                 return
             }
 
-            let members = try await memberRepo.getMembers(businessId: business.id)
+            let members = try await memberRepo.getMembers(
+                businessId: business.id
+            )
 
-            guard let me = members.first(where: { $0.userId.lowercased() == p.id.lowercased() }) else {
-                existingCVs = []
-                existingDocuments = []
-                tcIdentityNumber = ""
-                initialTCIdentityNumber = ""
+            guard let me = members.first(
+                where: { $0.userId.lowercased() == p.id.lowercased() }
+            ) else {
+                clearDocumentsAndTC()
                 return
             }
 
-            let detail = try await memberRepo.getMember(memberId: me.id)
+            let detail = try await memberRepo.getMember(
+                memberId: me.id
+            )
 
             tcIdentityNumber = detail.tcIdentityNumber ?? ""
             initialTCIdentityNumber = tcIdentityNumber
@@ -94,7 +97,10 @@ final class EditPersonalProfileViewModel: ObservableObject {
             existingDocuments = docs.filter { $0.documentType.uppercased() != "CV" }
 
         } catch {
-            errorMessage = error.localizedDescription
+            errorMessage = userMessage(
+                from: error,
+                fallback: ConstantStrings.profileNotRetrivied
+            )
         }
     }
 
@@ -108,7 +114,7 @@ final class EditPersonalProfileViewModel: ObservableObject {
                 photoData = data
             }
         } catch {
-            errorMessage = error.localizedDescription
+            errorMessage = ConstantStrings.profileImageLoadFailed
         }
     }
 
@@ -129,44 +135,52 @@ final class EditPersonalProfileViewModel: ObservableObject {
     func save() async throws {
         isLoading = true
         errorMessage = nil
-        defer { isLoading = false }
+
+        defer {
+            isLoading = false
+        }
 
         var didChangeAnything = false
 
-        if shouldUpdateProfile() {
-            _ = try await authRepo.updateProfile(
-                email: email.trimmed,
-                firstName: firstName.trimmed,
-                lastName: lastName.trimmed,
-                imageData: photoData
-            )
-
-            didChangeAnything = true
-        }
-
         do {
+            if shouldUpdateProfile() {
+                _ = try await authRepo.updateProfile(
+                    email: email.trimmed,
+                    firstName: firstName.trimmed,
+                    lastName: lastName.trimmed,
+                    imageData: photoData
+                )
+
+                didChangeAnything = true
+            }
+
             let tcUpdated = try await updateTCIdentityIfNeeded()
 
             if tcUpdated {
                 didChangeAnything = true
             }
+
+            let uploaded = try await uploadSelectedPDFsIfNeeded()
+
+            if uploaded {
+                didChangeAnything = true
+            }
+
+            if didChangeAnything {
+                photoData = nil
+                photoItem = nil
+                cvURL = nil
+                documentURL = nil
+
+                await load()
+            }
+
         } catch {
-            self.errorMessage = error.localizedDescription
-        }
-
-        let uploaded = try await uploadSelectedPDFsIfNeeded()
-
-        if uploaded {
-            didChangeAnything = true
-        }
-
-        if didChangeAnything {
-            photoData = nil
-            photoItem = nil
-            cvURL = nil
-            documentURL = nil
-
-            await load()
+            errorMessage = userMessage(
+                from: error,
+                fallback: ConstantStrings.profileUpdateFail
+            )
+            throw error
         }
     }
 
@@ -175,13 +189,19 @@ final class EditPersonalProfileViewModel: ObservableObject {
     func deleteMyAccount() async {
         isLoading = true
         errorMessage = nil
-        defer { isLoading = false }
+
+        defer {
+            isLoading = false
+        }
 
         do {
             try await authRepo.deleteAccount()
             TokenStore.shared.clear()
         } catch {
-            errorMessage = error.localizedDescription
+            errorMessage = userMessage(
+                from: error,
+                fallback: ConstantStrings.deleteAccountFail
+            )
         }
     }
 
@@ -190,18 +210,27 @@ final class EditPersonalProfileViewModel: ObservableObject {
     func deleteDocument(_ doc: BusinessMemberDocumentDTO) async {
         isDeletingDoc = true
         errorMessage = nil
-        defer { isDeletingDoc = false }
+
+        defer {
+            isDeletingDoc = false
+        }
 
         do {
-            try await memberRepo.deleteMemberDocument(documentId: doc.id)
+            try await memberRepo.deleteMemberDocument(
+                documentId: doc.id
+            )
 
             if doc.documentType.uppercased() == "CV" {
                 existingCVs.removeAll { $0.id == doc.id }
             } else {
                 existingDocuments.removeAll { $0.id == doc.id }
             }
+
         } catch {
-            errorMessage = error.localizedDescription
+            errorMessage = userMessage(
+                from: error,
+                fallback: ConstantStrings.memberDocumentDeleteFail
+            )
         }
     }
 
@@ -215,7 +244,6 @@ final class EditPersonalProfileViewModel: ObservableObject {
         if e != initialEmail { return true }
         if f != initialFirstName { return true }
         if l != initialLastName { return true }
-
         if photoData != nil { return true }
 
         return false
@@ -234,9 +262,13 @@ final class EditPersonalProfileViewModel: ObservableObject {
         let businesses = try await businessRepo.getBusinesses()
         guard let business = businesses.first else { return false }
 
-        let members = try await memberRepo.getMembers(businessId: business.id)
+        let members = try await memberRepo.getMembers(
+            businessId: business.id
+        )
 
-        guard let me = members.first(where: { $0.userId.lowercased() == myUserId.lowercased() }) else {
+        guard let me = members.first(
+            where: { $0.userId.lowercased() == myUserId.lowercased() }
+        ) else {
             return false
         }
 
@@ -267,9 +299,13 @@ final class EditPersonalProfileViewModel: ObservableObject {
         let businesses = try await businessRepo.getBusinesses()
         guard let business = businesses.first else { return false }
 
-        let members = try await memberRepo.getMembers(businessId: business.id)
+        let members = try await memberRepo.getMembers(
+            businessId: business.id
+        )
 
-        guard let me = members.first(where: { $0.userId.lowercased() == myUserId.lowercased() }) else {
+        guard let me = members.first(
+            where: { $0.userId.lowercased() == myUserId.lowercased() }
+        ) else {
             return false
         }
 
@@ -282,7 +318,9 @@ final class EditPersonalProfileViewModel: ObservableObject {
                 memberId: me.id,
                 documentType: "CV",
                 fileData: data,
-                fileName: url.lastPathComponent.isEmpty ? "cv.pdf" : url.lastPathComponent
+                fileName: url.lastPathComponent.isEmpty
+                    ? "cv.pdf"
+                    : url.lastPathComponent
             )
 
             didUpload = true
@@ -295,7 +333,9 @@ final class EditPersonalProfileViewModel: ObservableObject {
                 memberId: me.id,
                 documentType: "DOCUMENT",
                 fileData: data,
-                fileName: url.lastPathComponent.isEmpty ? "document.pdf" : url.lastPathComponent
+                fileName: url.lastPathComponent.isEmpty
+                    ? "document.pdf"
+                    : url.lastPathComponent
             )
 
             didUpload = true
@@ -314,6 +354,24 @@ final class EditPersonalProfileViewModel: ObservableObject {
         }
 
         return try Data(contentsOf: url)
+    }
+
+    private func clearDocumentsAndTC() {
+        existingCVs = []
+        existingDocuments = []
+        tcIdentityNumber = ""
+        initialTCIdentityNumber = ""
+    }
+
+    private func userMessage(
+        from error: Error,
+        fallback: String
+    ) -> String {
+        if case let RepositoryError.api(message) = error {
+            return message
+        }
+
+        return fallback
     }
 }
 

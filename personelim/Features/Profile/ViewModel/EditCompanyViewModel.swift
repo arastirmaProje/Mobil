@@ -57,15 +57,19 @@ final class EditCompanyViewModel: ObservableObject {
     func load() async {
         isLoading = true
         errorMessage = nil
-        defer { isLoading = false }
+
+        defer {
+            isLoading = false
+        }
 
         do {
             let me = try await authRepo.getProfile()
             companyEmail = me.email
 
             let businesses = try await businessRepo.getBusinesses()
+
             guard let b = businesses.first else {
-                errorMessage = "Şirket bulunamadı."
+                errorMessage = ConstantStrings.businessNotFound
                 return
             }
 
@@ -80,36 +84,57 @@ final class EditCompanyViewModel: ObservableObject {
 
             if let list = b.offices, !list.isEmpty {
                 offices = list.enumerated().map { idx, o in
-                    let n = (o.officeName ?? "").trimmingCharacters(in: .whitespacesAndNewlines)
+                    let n = (o.officeName ?? "")
+                        .trimmingCharacters(in: .whitespacesAndNewlines)
+
                     return CompanyOfficeForm(
                         index: idx + 1,
-                        name: n.isEmpty ? "Ofis \(idx + 1)" : n,
-                        latitude: (o.latitude == 0 ? nil : o.latitude),
-                        longitude: (o.longitude == 0 ? nil : o.longitude)
+                        name: n.isEmpty
+                            ? String(
+                                format: ConstantStrings.officeDefaultNameFormat,
+                                idx + 1
+                            )
+                            : n,
+                        latitude: o.latitude == 0 ? nil : o.latitude,
+                        longitude: o.longitude == 0 ? nil : o.longitude
                     )
                 }
             } else {
-                offices = [.init(index: 1, name: "", latitude: nil, longitude: nil)]
+                offices = [
+                    .init(
+                        index: 1,
+                        name: "",
+                        latitude: nil,
+                        longitude: nil
+                    )
+                ]
             }
 
             provinces = try await locationRepo.getProvinces()
+
             if let pid = selectedProvinceId {
-                districts = try await locationRepo.getDistricts(provinceId: pid)
+                districts = try await locationRepo.getDistricts(
+                    provinceId: pid
+                )
             }
 
         } catch {
-            errorMessage = error.localizedDescription
+            errorMessage = userMessage(
+                from: error,
+                fallback: ConstantStrings.businessFetchFail
+            )
         }
     }
 
     func onPickPhoto(_ item: PhotosPickerItem?) async {
         guard let item else { return }
+
         do {
             if let data = try await item.loadTransferable(type: Data.self) {
                 photoData = data
             }
         } catch {
-            errorMessage = error.localizedDescription
+            errorMessage = ConstantStrings.profileImageLoadFailed
         }
     }
 
@@ -117,22 +142,40 @@ final class EditCompanyViewModel: ObservableObject {
         selectedProvinceId = id
         selectedDistrictId = nil
         districts = []
+        errorMessage = nil
+
         do {
-            districts = try await locationRepo.getDistricts(provinceId: id)
+            districts = try await locationRepo.getDistricts(
+                provinceId: id
+            )
         } catch {
-            errorMessage = error.localizedDescription
+            errorMessage = userMessage(
+                from: error,
+                fallback: ConstantStrings.districtLoadFailed
+            )
         }
     }
 
     // MARK: - Office ops
+
     func addOffice() {
-        let next = (offices.count) + 1
-        offices.append(.init(index: next, name: "", latitude: nil, longitude: nil))
+        let next = offices.count + 1
+
+        offices.append(
+            .init(
+                index: next,
+                name: "",
+                latitude: nil,
+                longitude: nil
+            )
+        )
     }
 
     func removeLastOffice() {
         guard offices.count > 1 else { return }
+
         offices.removeLast()
+
         for i in offices.indices {
             offices[i].index = i + 1
         }
@@ -145,7 +188,9 @@ final class EditCompanyViewModel: ObservableObject {
 
     func setLocation(_ coordinate: CLLocationCoordinate2D) {
         guard let oid = selectingOfficeUUID,
-              let i = offices.firstIndex(where: { $0.id == oid }) else { return }
+              let i = offices.firstIndex(where: { $0.id == oid }) else {
+            return
+        }
 
         offices[i].latitude = coordinate.latitude
         offices[i].longitude = coordinate.longitude
@@ -159,13 +204,21 @@ final class EditCompanyViewModel: ObservableObject {
     }
 
     // MARK: - Save
+
     func save() async throws {
         guard let businessId else {
-            throw NSError(domain: "company", code: -1, userInfo: [NSLocalizedDescriptionKey: "businessId yok"])
+            errorMessage = ConstantStrings.businessInfoNotFoundError
+            throw RepositoryError.api(
+                message: ConstantStrings.businessInfoNotFoundError
+            )
         }
 
         isLoading = true
-        defer { isLoading = false }
+        errorMessage = nil
+
+        defer {
+            isLoading = false
+        }
 
         let mainOffice = offices.first
 
@@ -182,7 +235,30 @@ final class EditCompanyViewModel: ObservableObject {
             imageData: photoData
         )
 
-        _ = try await businessRepo.updateBusiness(businessId: businessId, request: req)
+        do {
+            _ = try await businessRepo.updateBusiness(
+                businessId: businessId,
+                request: req
+            )
+        } catch {
+            errorMessage = userMessage(
+                from: error,
+                fallback: ConstantStrings.profileUpdateFail
+            )
+            throw error
+        }
+    }
+
+    // MARK: - Helpers
+
+    private func userMessage(
+        from error: Error,
+        fallback: String
+    ) -> String {
+        if case let RepositoryError.api(message) = error {
+            return message
+        }
+
+        return fallback
     }
 }
- 

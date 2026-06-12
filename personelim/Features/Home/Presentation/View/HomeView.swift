@@ -97,7 +97,9 @@ private extension HomeView {
         VStack(alignment: .leading, spacing: 12) {
             sectionTitle(
                 title: ConstantStrings.shiftHours,
-                subtitle: shiftVM.isRunning ? "Çalışma süren aktif" : "Mesai başlatılmadı"
+                subtitle: shiftVM.isRunning
+                    ? ConstantStrings.shiftActiveSubtitle
+                    : ConstantStrings.shiftNotStartedSubtitle
             )
 
             VStack(spacing: 16) {
@@ -197,7 +199,7 @@ private extension HomeView {
         VStack(alignment: .leading, spacing: 12) {
             sectionTitle(
                 title: ConstantStrings.activeDayTable,
-                subtitle: "Aylık mesai takibini görüntüle"
+                subtitle: ConstantStrings.monthlyShiftTrackingSubtitle
             )
 
             VStack(spacing: 14) {
@@ -246,7 +248,7 @@ private extension HomeView {
         VStack(alignment: .leading, spacing: 12) {
             sectionTitle(
                 title: ConstantStrings.calendarTitle,
-                subtitle: "Haftalık aktivite görünümü"
+                subtitle: ConstantStrings.weeklyActivityViewSubtitle
             )
 
             VStack(spacing: 14) {
@@ -323,9 +325,7 @@ private extension HomeView {
                     Text(ConstantStrings.dailyActivitiesTitle)
                         .font(.title2.bold())
 
-                    Text("\(vm.selectedDateTasks.count) aktivite")
-                        .font(.caption)
-                        .foregroundStyle(.secondary)
+                    Text(String(format: ConstantStrings.activityCountFormat, vm.selectedDateTasks.count))
                 }
 
                 Spacer()
@@ -423,7 +423,7 @@ private extension HomeView {
                 .font(.headline)
                 .foregroundStyle(.primary)
 
-            Text("Bu gün için kayıtlı aktivite bulunmuyor.")
+            Text(ConstantStrings.noActivityForSelectedDay)
                 .font(.caption)
                 .foregroundStyle(.secondary)
         }

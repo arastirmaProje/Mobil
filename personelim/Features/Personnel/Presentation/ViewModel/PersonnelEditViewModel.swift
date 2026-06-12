@@ -56,21 +56,29 @@ final class PersonnelEditViewModel: ObservableObject {
             if let departmentId,
                !departmentId.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty {
 
-                await loadJobTitlesFromSingleDepartment(departmentId: departmentId)
+                await loadJobTitlesFromSingleDepartment(
+                    departmentId: departmentId
+                )
 
             } else {
-
-                try await loadJobTitlesFromAllDepartments(businessId: businessId)
+                try await loadJobTitlesFromAllDepartments(
+                    businessId: businessId
+                )
             }
 
             syncSelectedPositionNameIfNeeded()
 
         } catch {
-            errorMessage = error.localizedDescription
+            errorMessage = userMessage(
+                from: error,
+                fallback: ConstantStrings.jobTitlesFetchError
+            )
         }
     }
 
-    private func loadJobTitlesFromSingleDepartment(departmentId: String) async {
+    private func loadJobTitlesFromSingleDepartment(
+        departmentId: String
+    ) async {
         let jobTitleVM = JobTitleViewModel()
 
         await jobTitleVM.fetchJobTitlesByDepartment(
@@ -80,8 +88,12 @@ final class PersonnelEditViewModel: ObservableObject {
         jobTitles = uniqueJobTitles(jobTitleVM.jobTitles)
     }
 
-    private func loadJobTitlesFromAllDepartments(businessId: String) async throws {
-        let departmentRepo = DepartmentRepositoryImpl(network: NetworkManager())
+    private func loadJobTitlesFromAllDepartments(
+        businessId: String
+    ) async throws {
+        let departmentRepo = DepartmentRepositoryImpl(
+            network: NetworkManager()
+        )
 
         let departments = try await departmentRepo.fetchDepartments(
             businessId: businessId
@@ -156,7 +168,7 @@ final class PersonnelEditViewModel: ObservableObject {
         }()
 
         guard selectedPositionId != 0 else {
-            errorMessage = "Lütfen bir ünvan seç."
+            errorMessage = ConstantStrings.titleRequiredError
             return
         }
 
@@ -177,7 +189,10 @@ final class PersonnelEditViewModel: ObservableObject {
             didUpdate = true
 
         } catch {
-            errorMessage = error.localizedDescription
+            errorMessage = userMessage(
+                from: error,
+                fallback: ConstantStrings.memberUpdateFail
+            )
         }
     }
 
@@ -200,7 +215,23 @@ final class PersonnelEditViewModel: ObservableObject {
             didDelete = true
 
         } catch {
-            errorMessage = error.localizedDescription
+            errorMessage = userMessage(
+                from: error,
+                fallback: ConstantStrings.memberDeleteFail
+            )
         }
+    }
+
+    // MARK: - Helpers
+
+    private func userMessage(
+        from error: Error,
+        fallback: String
+    ) -> String {
+        if case let RepositoryError.api(message) = error {
+            return message
+        }
+
+        return fallback
     }
 }

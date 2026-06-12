@@ -1,10 +1,3 @@
-//
-//  TaskFeedbackViewModel.swift
-//  personelim
-//
-//  Created by Tuğberk Acabey on 19.12.2025.
-//
-
 import Foundation
 
 @MainActor
@@ -18,6 +11,7 @@ final class TaskFeedbackViewModel: ObservableObject {
     let taskId: String
     let activityType: ActivityType
     let finalStatus: String
+
     private let updateStatusUseCase: UpdateActivityStatusUseCase
 
     init(
@@ -33,42 +27,77 @@ final class TaskFeedbackViewModel: ObservableObject {
     }
 
     var isValid: Bool {
-        !feedbackText.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty
+        !feedbackText
+            .trimmingCharacters(in: .whitespacesAndNewlines)
+            .isEmpty
     }
 
     var difficultyText: String {
         switch difficulty {
-        case 1: return ConstantStrings.difficultyVeryEasy
-        case 2: return ConstantStrings.difficultyEasy
-        case 3: return ConstantStrings.difficultyMedium
-        case 4: return ConstantStrings.difficultyHard
-        case 5: return ConstantStrings.difficultyVeryHard
-        default: return ConstantStrings.difficultyMedium
+        case 1:
+            return ConstantStrings.difficultyVeryEasy
+        case 2:
+            return ConstantStrings.difficultyEasy
+        case 3:
+            return ConstantStrings.difficultyMedium
+        case 4:
+            return ConstantStrings.difficultyHard
+        case 5:
+            return ConstantStrings.difficultyVeryHard
+        default:
+            return ConstantStrings.difficultyMedium
         }
     }
 
     func submit() async -> Bool {
-        guard isValid else { return false }
+
+        guard isValid else {
+            errorMessage = ConstantStrings.feedbackRequiredError
+            return false
+        }
+
         guard activityType == .task else {
             errorMessage = ConstantStrings.feedbackNotSupportedError
             return false
         }
 
         isSaving = true
-        defer { isSaving = false }
+        errorMessage = nil
+
+        defer {
+            isSaving = false
+        }
 
         do {
             try await updateStatusUseCase.execute(
                 activityId: taskId,
                 activityType: activityType,
                 status: finalStatus,
-                thoughts: feedbackText,
+                thoughts: feedbackText.trimmingCharacters(
+                    in: .whitespacesAndNewlines
+                ),
                 difficulty: difficultyText
             )
+
             return true
+
         } catch {
-            errorMessage = error.localizedDescription
+            errorMessage = userMessage(
+                from: error,
+                fallback: ConstantStrings.feedbackSaveFailed
+            )
             return false
         }
+    }
+
+    private func userMessage(
+        from error: Error,
+        fallback: String
+    ) -> String {
+        if case let RepositoryError.api(message) = error {
+            return message
+        }
+
+        return fallback
     }
 }

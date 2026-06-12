@@ -21,14 +21,13 @@ final class CreateTaskViewModel: ObservableObject {
     }
 
     var isFormValid: Bool {
-        !title.trimmingCharacters(in: .whitespaces).isEmpty &&
+        !title.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty &&
         startDate != nil &&
         endDate != nil &&
         (activityType != .task || !selectedAssignees.isEmpty)
     }
 
     func createTask(businessId: String) async -> Bool {
-
         guard let startDate,
               let endDate else {
             errorMessage = ConstantStrings.dateRangeNotSelectedError
@@ -39,15 +38,19 @@ final class CreateTaskViewModel: ObservableObject {
         let normalizedEndDate = max(startDate, endDate)
 
         isLoading = true
-        defer { isLoading = false }
+        errorMessage = nil
+
+        defer {
+            isLoading = false
+        }
 
         do {
             if activityType == .task {
                 for userId in selectedAssignees {
                     try await createActivityUseCase.execute(
                         businessId: businessId,
-                        title: title,
-                        description: detail,
+                        title: title.trimmingCharacters(in: .whitespacesAndNewlines),
+                        description: detail.trimmingCharacters(in: .whitespacesAndNewlines),
                         startDate: normalizedStartDate,
                         endDate: normalizedEndDate,
                         assignedToUserId: userId,
@@ -57,8 +60,8 @@ final class CreateTaskViewModel: ObservableObject {
             } else {
                 try await createActivityUseCase.execute(
                     businessId: businessId,
-                    title: title,
-                    description: detail,
+                    title: title.trimmingCharacters(in: .whitespacesAndNewlines),
+                    description: detail.trimmingCharacters(in: .whitespacesAndNewlines),
                     startDate: normalizedStartDate,
                     endDate: normalizedEndDate,
                     assignedToUserId: "",
@@ -69,8 +72,22 @@ final class CreateTaskViewModel: ObservableObject {
             return true
 
         } catch {
-            errorMessage = error.localizedDescription
+            errorMessage = userMessage(
+                from: error,
+                fallback: ConstantStrings.createActivityFailed
+            )
             return false
         }
+    }
+
+    private func userMessage(
+        from error: Error,
+        fallback: String
+    ) -> String {
+        if case let RepositoryError.api(message) = error {
+            return message
+        }
+
+        return fallback
     }
 }

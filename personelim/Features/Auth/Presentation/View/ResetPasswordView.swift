@@ -26,7 +26,8 @@ struct ResetPasswordView: View {
     private var canSubmit: Bool {
         !vm.newPassword.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty &&
         !vm.confirmPassword.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty &&
-        vm.newPassword == vm.confirmPassword
+        vm.newPassword == vm.confirmPassword &&
+        !vm.isLoading
     }
 
     var body: some View {
@@ -38,9 +39,7 @@ struct ResetPasswordView: View {
                 ScrollView(showsIndicators: false) {
                     VStack(spacing: 16) {
                         headerSection
-
                         formSection
-
                         passwordInfoCard
 
                         Spacer(minLength: 100)
@@ -67,7 +66,7 @@ struct ResetPasswordView: View {
             }
             .alert(isPresented: $vm.showError) {
                 Alert(
-                    title: Text(ConstantStrings.leaveErrorTitle),
+                    title: Text(ConstantStrings.errorTitle),
                     message: Text(vm.errorMessage),
                     dismissButton: .default(Text(ConstantStrings.okButton))
                 )
@@ -95,7 +94,7 @@ struct ResetPasswordView: View {
                     .foregroundStyle(.primary)
                     .multilineTextAlignment(.center)
 
-                Text("Yeni şifreni belirleyerek hesabına tekrar giriş yapabilirsin.")
+                Text(ConstantStrings.resetPasswordDescription)
                     .font(.subheadline)
                     .foregroundStyle(.secondary)
                     .multilineTextAlignment(.center)
@@ -115,7 +114,7 @@ struct ResetPasswordView: View {
     // MARK: - Form
 
     private var formSection: some View {
-        sectionCard(title: "Yeni Şifre") {
+        sectionCard(title: ConstantStrings.newPasswordLabel) {
             passwordRow(
                 title: ConstantStrings.newPasswordLabel,
                 placeholder: ConstantStrings.newPasswordPlaceholder,
@@ -164,7 +163,7 @@ struct ResetPasswordView: View {
             Button {
                 isVisible.wrappedValue.toggle()
             } label: {
-                Image(systemName: isVisible.wrappedValue ? "eye.slash.fill" : "eye.fill")
+                Image(systemName: isVisible.wrappedValue ? "eye.fill" : "eye.slash.fill")
                     .foregroundStyle(.secondary)
             }
             .buttonStyle(.plain)
@@ -172,7 +171,7 @@ struct ResetPasswordView: View {
         .formRowBackground()
     }
 
-    // MARK: - Info
+    // MARK: - Password Info
 
     private var passwordInfoCard: some View {
         HStack(spacing: 12) {
@@ -222,25 +221,25 @@ struct ResetPasswordView: View {
 
     private var passwordInfoTitle: String {
         if vm.newPassword.isEmpty && vm.confirmPassword.isEmpty {
-            return "Şifre bilgisi"
+            return ConstantStrings.passwordInfoTitle
         }
 
         return vm.newPassword == vm.confirmPassword
-            ? "Şifreler eşleşiyor"
-            : "Şifreler eşleşmiyor"
+            ? ConstantStrings.passwordsMatchTitle
+            : ConstantStrings.passwordsNotMatchTitle
     }
 
     private var passwordInfoText: String {
         if vm.newPassword.isEmpty && vm.confirmPassword.isEmpty {
-            return "Yeni şifreni iki alana da gir."
+            return ConstantStrings.passwordInfoEmptyText
         }
 
         return vm.newPassword == vm.confirmPassword
-            ? "Şifreni değiştirmek için onaylayabilirsin."
-            : "Devam etmek için iki şifre alanı aynı olmalı."
+            ? ConstantStrings.passwordInfoMatchText
+            : ConstantStrings.passwordInfoNotMatchText
     }
 
-    // MARK: - Bottom
+    // MARK: - Bottom Button
 
     private var bottomConfirmButton: some View {
         VStack(spacing: 0) {
@@ -252,9 +251,14 @@ struct ResetPasswordView: View {
                 }
             } label: {
                 HStack(spacing: 8) {
-                    Image(systemName: "checkmark.circle.fill")
+                    if vm.isLoading {
+                        ProgressView()
+                            .tint(.white)
+                    } else {
+                        Image(systemName: "checkmark.circle.fill")
+                    }
 
-                    Text(ConstantStrings.confirmButton)
+                    Text(vm.isLoading ? ConstantStrings.savingText : ConstantStrings.confirmButton)
                         .font(.headline)
                 }
                 .foregroundStyle(.white)

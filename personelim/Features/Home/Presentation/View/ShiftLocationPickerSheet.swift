@@ -90,7 +90,7 @@ struct ShiftLocationPickerSheet: View {
                 .font(.system(size: 22, weight: .bold))
                 .foregroundStyle(.primary)
 
-            Text("Mesaiye nereden başlayacağını seç.")
+            Text(ConstantStrings.shiftLocationDescription)
                 .font(.subheadline)
                 .foregroundStyle(.secondary)
                 .multilineTextAlignment(.center)
@@ -117,7 +117,7 @@ struct ShiftLocationPickerSheet: View {
                         .font(.system(size: 17, weight: .bold))
                         .foregroundStyle(.primary)
 
-                    Text("Seçili konum: \(selectedTitle)")
+                    Text(String(format: ConstantStrings.selectedLocationFormat, selectedTitle))
                         .font(.caption)
                         .foregroundStyle(.secondary)
                         .lineLimit(1)
@@ -148,7 +148,7 @@ struct ShiftLocationPickerSheet: View {
             )
 
             if officeOptions.isEmpty {
-                Text("Kayıtlı ofis yoksa evden çalışma seçeneğiyle başlayabilirsin.")
+                Text(ConstantStrings.noOfficeHomeHint)
                     .font(.caption)
                     .foregroundStyle(.secondary)
                     .padding(.horizontal, 2)
@@ -184,7 +184,7 @@ struct ShiftLocationPickerSheet: View {
                         .font(.system(size: 15, weight: .semibold))
                         .foregroundStyle(.primary)
 
-                    Text(option == .home ? "Evden çalışma" : "Şirket/ofis konumu")
+                    Text(option == .home ? ConstantStrings.workFromHomeSubtitle : ConstantStrings.officeLocationSubtitle)
                         .font(.caption)
                         .foregroundStyle(.secondary)
                 }

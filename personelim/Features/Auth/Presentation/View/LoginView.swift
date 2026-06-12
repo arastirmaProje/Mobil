@@ -82,7 +82,7 @@ struct LoginView: View {
                     .font(.system(size: 26, weight: .bold))
                     .foregroundStyle(.primary)
 
-                Text("Hesabına giriş yaparak personel yönetimine devam et.")
+                Text(ConstantStrings.loginDescription)
                     .font(.subheadline)
                     .foregroundStyle(.secondary)
                     .multilineTextAlignment(.center)
@@ -102,7 +102,7 @@ struct LoginView: View {
     // MARK: - Form
 
     private var formSection: some View {
-        sectionCard(title: "Giriş Bilgileri") {
+        sectionCard(title: ConstantStrings.loginCredentialsTitle) {
             inputRow(
                 title: ConstantStrings.emailLabel,
                 placeholder: ConstantStrings.emailPlaceholder,
@@ -130,9 +130,9 @@ struct LoginView: View {
 
                 Group {
                     if showPassword {
-                        TextField("123...", text: $vm.password)
+                        TextField(ConstantStrings.passwordPlaceholderShort, text: $vm.password)
                     } else {
-                        SecureField("123...", text: $vm.password)
+                        SecureField(ConstantStrings.passwordPlaceholderShort, text: $vm.password)
                     }
                 }
                 .font(.system(size: 15, weight: .medium))
@@ -143,7 +143,7 @@ struct LoginView: View {
             Button {
                 showPassword.toggle()
             } label: {
-                Image(systemName: showPassword ? "eye.slash.fill" : "eye.fill")
+                Image(systemName: showPassword ? "eye.fill" : "eye.slash.fill")
                     .foregroundStyle(.secondary)
             }
             .buttonStyle(.plain)
@@ -211,7 +211,7 @@ struct LoginView: View {
                         Image(systemName: "arrow.right.circle.fill")
                     }
 
-                    Text(vm.isLoading ? "Giriş yapılıyor..." : ConstantStrings.loginButton)
+                    Text(vm.isLoading ? ConstantStrings.loginLoading : ConstantStrings.loginButton)
                         .font(.headline)
                 }
                 .foregroundStyle(.white)

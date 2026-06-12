@@ -1,16 +1,10 @@
-//
-//  CreateLeaveViewModel.swift
-//  personelim
-//
-//  Created by Tuğberk Acabey on 30.12.2025.
-//
-
 import Foundation
 
 @MainActor
 final class CreateLeaveViewModel: ObservableObject {
 
     // MARK: - Published
+
     @Published var selectedDates: Set<DateComponents> = []
     @Published var title: String = ""
     @Published var description: String = ""
@@ -19,10 +13,12 @@ final class CreateLeaveViewModel: ObservableObject {
     @Published var errorMessage: String?
 
     // MARK: - Dependencies
+
     private let businessId: String
     private let repo: LeaveRepositoryProtocol
 
     // MARK: - Init
+
     init(
         businessId: String,
         repo: LeaveRepositoryProtocol
@@ -32,17 +28,27 @@ final class CreateLeaveViewModel: ObservableObject {
     }
 
     // MARK: - Validation
+
     var isFormValid: Bool {
         !selectedDates.isEmpty &&
-        !title.trimmingCharacters(in: .whitespaces).isEmpty
+        !title.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty
     }
 
     // MARK: - Action
+
     func createLeave() async -> Bool {
-        guard isFormValid else { return false }
+
+        guard isFormValid else {
+            errorMessage = ConstantStrings.leaveFormValidationError
+            return false
+        }
 
         isLoading = true
-        defer { isLoading = false }
+        errorMessage = nil
+
+        defer {
+            isLoading = false
+        }
 
         let dates = selectedDates
             .compactMap { Calendar.current.date(from: $0) }
@@ -50,22 +56,44 @@ final class CreateLeaveViewModel: ObservableObject {
 
         guard let start = dates.first,
               let end = dates.last else {
-            errorMessage = "Geçersiz tarih aralığı"
+            errorMessage = ConstantStrings.invalidDateRangeError
             return false
         }
 
         do {
             try await repo.createLeave(
                 businessId: businessId,
-                title: title,
-                description: description,
+                title: title.trimmingCharacters(
+                    in: .whitespacesAndNewlines
+                ),
+                description: description.trimmingCharacters(
+                    in: .whitespacesAndNewlines
+                ),
                 startDate: start,
                 endDate: end
             )
+
             return true
+
         } catch {
-            errorMessage = error.localizedDescription
+            errorMessage = userMessage(
+                from: error,
+                fallback: ConstantStrings.leaveCreateFailed
+            )
+
             return false
         }
+    }
+
+    private func userMessage(
+        from error: Error,
+        fallback: String
+    ) -> String {
+
+        if case let RepositoryError.api(message) = error {
+            return message
+        }
+
+        return fallback
     }
 }

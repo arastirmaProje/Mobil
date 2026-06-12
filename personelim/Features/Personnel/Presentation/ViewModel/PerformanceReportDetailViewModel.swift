@@ -1,10 +1,3 @@
-//
-//  PerformanceReportDetailViewModel.swift
-//  personelim
-//
-//  Created by Yusuf Kaan USTA on 25.12.2025.
-//
-
 import Foundation
 
 @MainActor
@@ -16,19 +9,42 @@ final class PerformanceReportDetailViewModel: ObservableObject {
 
     private let detailUseCase: GetPerformanceReportDetailUseCaseProtocol
 
-    init(detailUseCase: GetPerformanceReportDetailUseCaseProtocol) {
+    init(
+        detailUseCase: GetPerformanceReportDetailUseCaseProtocol
+    ) {
         self.detailUseCase = detailUseCase
     }
 
     func load(reportId: String) async {
         errorMessage = nil
         isLoading = true
-        defer { isLoading = false }
+
+        defer {
+            isLoading = false
+        }
 
         do {
-            report = try await detailUseCase.execute(reportId: reportId)
+            report = try await detailUseCase.execute(
+                reportId: reportId
+            )
+
         } catch {
-            errorMessage = error.localizedDescription
+            errorMessage = userMessage(
+                from: error,
+                fallback: ConstantStrings.performanceReportLoadFailed
+            )
         }
+    }
+
+    private func userMessage(
+        from error: Error,
+        fallback: String
+    ) -> String {
+
+        if case let RepositoryError.api(message) = error {
+            return message
+        }
+
+        return fallback
     }
 }

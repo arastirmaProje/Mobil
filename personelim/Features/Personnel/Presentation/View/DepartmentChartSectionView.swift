@@ -59,14 +59,14 @@ struct DepartmentChartSectionView: View {
     private var header: some View {
         HStack(alignment: .top) {
             VStack(alignment: .leading, spacing: 4) {
-                Text("Departman Analitiği")
+                Text(ConstantStrings.departmentAnalyticsTitle)
                     .font(.title3.weight(.semibold))
 
                 HStack(spacing: 6) {
                     Image(systemName: viewModel.selectedMetric.icon)
                         .foregroundStyle(viewModel.selectedMetric.color)
 
-                    Text(viewModel.selectedMetric.rawValue)
+                    Text(viewModel.selectedMetric.title)
                         .font(.subheadline)
                         .foregroundStyle(.secondary)
                 }
@@ -81,7 +81,8 @@ struct DepartmentChartSectionView: View {
     private var chartTypeBadge: some View {
         HStack(spacing: 5) {
             Image(systemName: viewModel.resolvedChartType.icon)
-            Text(viewModel.resolvedChartType.rawValue)
+
+            Text(viewModel.resolvedChartType.title)
         }
         .font(.caption2.weight(.semibold))
         .foregroundStyle(viewModel.selectedMetric.color)
@@ -98,26 +99,30 @@ struct DepartmentChartSectionView: View {
     private var summaryCards: some View {
         HStack(spacing: 10) {
             summaryCard(
-                title: "Ortalama",
+                title: ConstantStrings.averageTitle,
                 value: viewModel.formattedValue(viewModel.averageValue),
                 icon: "chart.line.uptrend.xyaxis"
             )
 
             summaryCard(
-                title: "En Yüksek",
-                value: viewModel.topItem.map { viewModel.formattedValue($0.value) } ?? "-",
+                title: ConstantStrings.highestTitle,
+                value: viewModel.topItem.map { viewModel.formattedValue($0.value) } ?? ConstantStrings.dashPlaceholder,
                 icon: "arrow.up.circle.fill"
             )
 
             summaryCard(
-                title: "En Düşük",
-                value: viewModel.bottomItem.map { viewModel.formattedValue($0.value) } ?? "-",
+                title: ConstantStrings.lowestTitle,
+                value: viewModel.bottomItem.map { viewModel.formattedValue($0.value) } ?? ConstantStrings.dashPlaceholder,
                 icon: "arrow.down.circle.fill"
             )
         }
     }
 
-    private func summaryCard(title: String, value: String, icon: String) -> some View {
+    private func summaryCard(
+        title: String,
+        value: String,
+        icon: String
+    ) -> some View {
         VStack(alignment: .leading, spacing: 7) {
             HStack(spacing: 5) {
                 Image(systemName: icon)
@@ -162,7 +167,7 @@ struct DepartmentChartSectionView: View {
                 Image(systemName: "calendar")
                     .foregroundStyle(viewModel.selectedMetric.color)
 
-                Text("Tarih Seç")
+                Text(ConstantStrings.selectDateTitle)
                     .font(.caption.weight(.semibold))
 
                 Spacer()
@@ -187,6 +192,7 @@ struct DepartmentChartSectionView: View {
     private var dateRangeText: String {
         let start = viewModel.chartStartDate.formatted(date: .abbreviated, time: .omitted)
         let end = viewModel.chartEndDate.formatted(date: .abbreviated, time: .omitted)
+
         return "\(start) - \(end)"
     }
 
@@ -198,6 +204,7 @@ struct DepartmentChartSectionView: View {
                 ForEach(MetricTab.allCases, id: \.self) { tab in
                     Button {
                         haptic()
+
                         withAnimation(.spring(response: 0.35, dampingFraction: 0.82)) {
                             viewModel.setMetric(tab)
                         }
@@ -206,7 +213,7 @@ struct DepartmentChartSectionView: View {
                             Image(systemName: tab.icon)
                                 .font(.caption)
 
-                            Text(tab.rawValue)
+                            Text(tab.title)
                                 .font(.caption.weight(.semibold))
                         }
                         .foregroundStyle(viewModel.selectedMetric == tab ? .white : .primary.opacity(0.8))
@@ -214,7 +221,11 @@ struct DepartmentChartSectionView: View {
                         .padding(.vertical, 8)
                         .background(
                             Capsule()
-                                .fill(viewModel.selectedMetric == tab ? tab.color : Color(.systemGray6))
+                                .fill(
+                                    viewModel.selectedMetric == tab
+                                    ? tab.color
+                                    : Color(.systemGray6)
+                                )
                         )
                     }
                     .buttonStyle(.plain)
@@ -227,7 +238,7 @@ struct DepartmentChartSectionView: View {
 
     private var limitPicker: some View {
         VStack(alignment: .leading, spacing: 8) {
-            Text("Gösterilecek Departman")
+            Text(ConstantStrings.departmentDisplayLimitTitle)
                 .font(.caption.weight(.semibold))
                 .foregroundStyle(.secondary)
 
@@ -235,11 +246,12 @@ struct DepartmentChartSectionView: View {
                 ForEach([3, 5, 10, 100], id: \.self) { value in
                     Button {
                         haptic()
+
                         withAnimation(.spring(response: 0.3, dampingFraction: 0.85)) {
                             viewModel.departmentLimit = value
                         }
                     } label: {
-                        Text(value == 100 ? "Hepsi" : "\(value)")
+                        Text(value == 100 ? ConstantStrings.allOption : "\(value)")
                             .font(.caption.weight(.semibold))
                             .frame(maxWidth: .infinity)
                             .padding(.vertical, 10)
@@ -282,7 +294,7 @@ struct DepartmentChartSectionView: View {
                 .font(.title2)
                 .foregroundStyle(.secondary)
 
-            Text("Bu tarih aralığında grafik verisi yok")
+            Text(ConstantStrings.emptyChartDataTitle)
                 .font(.caption)
                 .foregroundStyle(.secondary)
         }
@@ -317,14 +329,14 @@ struct DepartmentChartSectionView: View {
 
     private var barChart: some View {
         Chart {
-            RuleMark(y: .value("Ortalama", viewModel.averageValue))
+            RuleMark(y: .value(ConstantStrings.averageTitle, viewModel.averageValue))
                 .foregroundStyle(.gray.opacity(0.28))
                 .lineStyle(StrokeStyle(lineWidth: 1, dash: [5]))
 
             ForEach(viewModel.limitedChartData, id: \.name) { item in
                 BarMark(
-                    x: .value("Departman", item.name),
-                    y: .value(viewModel.selectedMetric.rawValue, item.value)
+                    x: .value(ConstantStrings.departmentTitle, item.name),
+                    y: .value(viewModel.selectedMetric.title, item.value)
                 )
                 .foregroundStyle(DepartmentColorService.color(for: item.name))
                 .annotation(position: .top) {
@@ -356,8 +368,8 @@ struct DepartmentChartSectionView: View {
         Chart {
             ForEach(viewModel.limitedChartData, id: \.name) { item in
                 BarMark(
-                    x: .value(viewModel.selectedMetric.rawValue, item.value),
-                    y: .value("Departman", item.name)
+                    x: .value(viewModel.selectedMetric.title, item.value),
+                    y: .value(ConstantStrings.departmentTitle, item.name)
                 )
                 .foregroundStyle(DepartmentColorService.color(for: item.name))
                 .annotation(position: .trailing) {
@@ -389,15 +401,15 @@ struct DepartmentChartSectionView: View {
         Chart {
             ForEach(viewModel.limitedChartData, id: \.name) { item in
                 LineMark(
-                    x: .value("Departman", item.name),
-                    y: .value(viewModel.selectedMetric.rawValue, item.value)
+                    x: .value(ConstantStrings.departmentTitle, item.name),
+                    y: .value(viewModel.selectedMetric.title, item.value)
                 )
                 .foregroundStyle(viewModel.selectedMetric.color)
                 .interpolationMethod(.catmullRom)
 
                 PointMark(
-                    x: .value("Departman", item.name),
-                    y: .value(viewModel.selectedMetric.rawValue, item.value)
+                    x: .value(ConstantStrings.departmentTitle, item.name),
+                    y: .value(viewModel.selectedMetric.title, item.value)
                 )
                 .foregroundStyle(DepartmentColorService.color(for: item.name))
                 .annotation(position: .top) {
@@ -418,20 +430,20 @@ struct DepartmentChartSectionView: View {
         Chart {
             ForEach(viewModel.limitedChartData, id: \.name) { item in
                 AreaMark(
-                    x: .value("Departman", item.name),
-                    y: .value(viewModel.selectedMetric.rawValue, item.value)
+                    x: .value(ConstantStrings.departmentTitle, item.name),
+                    y: .value(viewModel.selectedMetric.title, item.value)
                 )
                 .foregroundStyle(viewModel.selectedMetric.color.opacity(0.35))
 
                 LineMark(
-                    x: .value("Departman", item.name),
-                    y: .value(viewModel.selectedMetric.rawValue, item.value)
+                    x: .value(ConstantStrings.departmentTitle, item.name),
+                    y: .value(viewModel.selectedMetric.title, item.value)
                 )
                 .foregroundStyle(viewModel.selectedMetric.color)
 
                 PointMark(
-                    x: .value("Departman", item.name),
-                    y: .value(viewModel.selectedMetric.rawValue, item.value)
+                    x: .value(ConstantStrings.departmentTitle, item.name),
+                    y: .value(viewModel.selectedMetric.title, item.value)
                 )
                 .foregroundStyle(DepartmentColorService.color(for: item.name))
             }
@@ -447,7 +459,7 @@ struct DepartmentChartSectionView: View {
         Chart {
             ForEach(viewModel.limitedChartData, id: \.name) { item in
                 SectorMark(
-                    angle: .value(viewModel.selectedMetric.rawValue, item.value)
+                    angle: .value(viewModel.selectedMetric.title, item.value)
                 )
                 .foregroundStyle(DepartmentColorService.color(for: item.name))
                 .annotation(position: .overlay) {
@@ -467,7 +479,7 @@ struct DepartmentChartSectionView: View {
         Chart {
             ForEach(viewModel.limitedChartData, id: \.name) { item in
                 SectorMark(
-                    angle: .value(viewModel.selectedMetric.rawValue, item.value),
+                    angle: .value(viewModel.selectedMetric.title, item.value),
                     innerRadius: .ratio(0.58),
                     angularInset: 2
                 )
@@ -484,12 +496,18 @@ struct DepartmentChartSectionView: View {
         }
         .chartBackground { _ in
             VStack(spacing: 2) {
-                Text("Toplam")
+                Text(ConstantStrings.totalTitle)
                     .font(.caption2)
                     .foregroundStyle(.secondary)
 
-                Text(viewModel.formattedValue(viewModel.limitedChartData.map(\.value).reduce(0, +)))
-                    .font(.headline.weight(.bold))
+                Text(
+                    viewModel.formattedValue(
+                        viewModel.limitedChartData
+                            .map(\.value)
+                            .reduce(0, +)
+                    )
+                )
+                .font(.headline.weight(.bold))
             }
         }
     }
@@ -502,6 +520,7 @@ struct DepartmentChartSectionView: View {
                 ForEach(viewModel.limitedChartData, id: \.name) { item in
                     Button {
                         haptic()
+
                         withAnimation(.spring(response: 0.3, dampingFraction: 0.85)) {
                             viewModel.selectDepartment(item.name)
                         }

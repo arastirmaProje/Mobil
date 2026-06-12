@@ -17,7 +17,7 @@ struct PersonnelEditView: View {
     private var selectedPositionName: String {
         vm.jobTitles
             .first(where: { $0.id == vm.selectedPositionId })?
-            .name ?? originalMember.positionName ?? "Ünvan seç"
+            .name ?? originalMember.positionName ?? ConstantStrings.selectTitlePlaceholder
     }
 
     private var filteredJobTitles: [JobTitleDTO] {
@@ -64,13 +64,9 @@ struct PersonnelEditView: View {
             ScrollView(showsIndicators: false) {
                 VStack(spacing: 16) {
                     headerSection
-
                     formSection
-
                     positionSection
-
                     selectedPositionSummary
-
                     dangerSection
 
                     if vm.isLoading {
@@ -183,7 +179,7 @@ struct PersonnelEditView: View {
     // MARK: - Form
 
     private var formSection: some View {
-        sectionCard(title: "Personel Bilgileri") {
+        sectionCard(title: ConstantStrings.personnelInfoTitle) {
             inputRow(
                 title: ConstantStrings.salaryField,
                 text: $vm.salaryText,
@@ -243,7 +239,7 @@ struct PersonnelEditView: View {
                 .font(.system(size: 15, weight: .semibold))
                 .foregroundStyle(.secondary)
 
-            TextField("Ünvan ara", text: $positionSearchText)
+            TextField(ConstantStrings.titleSearchPlaceholder, text: $positionSearchText)
                 .font(.system(size: 15, weight: .medium))
                 .textInputAutocapitalization(.words)
                 .disabled(vm.isLoading || vm.isPositionsLoading)
@@ -292,7 +288,7 @@ struct PersonnelEditView: View {
                         .foregroundStyle(.primary)
                         .lineLimit(1)
 
-                    Text(isSelected(title) ? "Seçili ünvan" : "Ünvan")
+                    Text(isSelected(title) ? ConstantStrings.selectedTitleText : ConstantStrings.titleText)
                         .font(.caption)
                         .foregroundStyle(.secondary)
                 }
@@ -331,7 +327,7 @@ struct PersonnelEditView: View {
                     .foregroundStyle(.blue)
 
                 VStack(alignment: .leading, spacing: 3) {
-                    Text("Seçilen ünvan")
+                    Text(ConstantStrings.selectedTitleTitle)
                         .font(.caption.weight(.semibold))
                         .foregroundStyle(.secondary)
 
@@ -358,7 +354,7 @@ struct PersonnelEditView: View {
         HStack(spacing: 12) {
             ProgressView()
 
-            Text("Ünvanlar yükleniyor...")
+            Text(ConstantStrings.titlesLoading)
                 .font(.subheadline)
                 .foregroundStyle(.secondary)
 
@@ -379,10 +375,10 @@ struct PersonnelEditView: View {
                 .font(.system(size: 36, weight: .semibold))
                 .foregroundStyle(.blue)
 
-            Text("Ünvan bulunamadı")
+            Text(ConstantStrings.titleNotFoundTitle)
                 .font(.headline)
 
-            Text("Bu departman için tanımlı ünvan bulunamadı.")
+            Text(ConstantStrings.titleNotFoundDescription)
                 .font(.caption)
                 .foregroundStyle(.secondary)
                 .multilineTextAlignment(.center)
@@ -401,7 +397,7 @@ struct PersonnelEditView: View {
     // MARK: - Danger
 
     private var dangerSection: some View {
-        sectionCard(title: "Tehlikeli İşlem") {
+        sectionCard(title: ConstantStrings.dangerousActionTitle) {
             Button {
                 showDeleteConfirm = true
             } label: {
@@ -416,7 +412,7 @@ struct PersonnelEditView: View {
                             .font(.system(size: 15, weight: .semibold))
                             .foregroundStyle(.red)
 
-                        Text("Bu işlem geri alınamaz.")
+                        Text(ConstantStrings.deleteAlertMessage)
                             .font(.caption)
                             .foregroundStyle(.secondary)
                     }
@@ -442,7 +438,7 @@ struct PersonnelEditView: View {
         HStack(spacing: 12) {
             ProgressView()
 
-            Text("İşlem yapılıyor...")
+            Text(ConstantStrings.processingLoading)
                 .font(.subheadline)
                 .foregroundStyle(.secondary)
 
@@ -479,7 +475,7 @@ struct PersonnelEditView: View {
                         Image(systemName: "checkmark.circle.fill")
                     }
 
-                    Text(vm.isLoading ? "Kaydediliyor..." : "Değişiklikleri Kaydet")
+                    Text(vm.isLoading ? ConstantStrings.registerLoading : ConstantStrings.saveChangesButton)
                         .font(.headline)
                 }
                 .foregroundStyle(.white)

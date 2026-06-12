@@ -110,7 +110,7 @@ struct AddMemberView: View {
                     .font(.system(size: 24, weight: .bold))
                     .foregroundStyle(.primary)
 
-                Text("Departmana yeni personel ekle.")
+                Text(ConstantStrings.addMemberDescription)
                     .font(.subheadline)
                     .foregroundStyle(.secondary)
                     .lineLimit(2)
@@ -217,7 +217,7 @@ struct AddMemberView: View {
                 .font(.system(size: 15, weight: .semibold))
                 .foregroundStyle(.secondary)
 
-            TextField("Pozisyon ara", text: $positionSearchText)
+            TextField(ConstantStrings.positionSearchPlaceholder, text: $positionSearchText)
                 .font(.system(size: 15, weight: .medium))
                 .textInputAutocapitalization(.words)
 
@@ -264,7 +264,7 @@ struct AddMemberView: View {
                         .foregroundStyle(.primary)
                         .lineLimit(1)
 
-                    Text(isSelected(title) ? "Seçili pozisyon" : "Pozisyon")
+                    Text(isSelected(title) ? ConstantStrings.selectedPositionText : ConstantStrings.positionText)
                         .font(.caption)
                         .foregroundStyle(.secondary)
                 }
@@ -304,7 +304,7 @@ struct AddMemberView: View {
                     .foregroundStyle(.blue)
 
                 VStack(alignment: .leading, spacing: 3) {
-                    Text("Seçilen pozisyon")
+                    Text(ConstantStrings.selectedPositionTitle)
                         .font(.caption.weight(.semibold))
                         .foregroundStyle(.secondary)
 
@@ -332,10 +332,10 @@ struct AddMemberView: View {
                 .font(.system(size: 36, weight: .semibold))
                 .foregroundStyle(.blue)
 
-            Text("Pozisyon bulunamadı")
+            Text(ConstantStrings.positionNotFoundTitle)
                 .font(.headline)
 
-            Text("Bu departman için pozisyon yoksa önce pozisyon oluşturman gerekir.")
+            Text(ConstantStrings.positionNotFoundDescription)
                 .font(.caption)
                 .foregroundStyle(.secondary)
                 .multilineTextAlignment(.center)

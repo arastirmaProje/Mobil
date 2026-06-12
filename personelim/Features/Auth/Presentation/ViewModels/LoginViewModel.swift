@@ -1,10 +1,3 @@
-//
-//  LoginViewModel.swift
-//  personelim
-//
-//  Created by Tuğberk Acabey on 06.12.2025.
-//
-
 import SwiftUI
 
 @MainActor
@@ -25,8 +18,9 @@ final class LoginViewModel: ObservableObject {
     }
 
     func login(appState: AppState) async {
-        guard !email.isEmpty, !password.isEmpty else {
-            errorMessage = "Email ve şifre zorunludur."
+        guard !email.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty,
+              !password.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty else {
+            errorMessage = ConstantStrings.loginRequiredFieldsError
             return
         }
 
@@ -35,7 +29,10 @@ final class LoginViewModel: ObservableObject {
         defer { isLoading = false }
 
         do {
-            let user = try await loginUseCase.execute(email: email, password: password)
+            let user = try await loginUseCase.execute(
+                email: email.trimmingCharacters(in: .whitespacesAndNewlines),
+                password: password
+            )
 
             TokenStore.shared.save(user.token)
 
@@ -56,6 +53,7 @@ final class LoginViewModel: ObservableObject {
                 ownedBusinessCount: nil,
                 imageUrl: nil
             )
+
             appState.applyLogin(
                 userDTO: dto,
                 role: user.role
@@ -68,9 +66,17 @@ final class LoginViewModel: ObservableObject {
                     businessMemberRepository: BusinessMemberRepositoryImpl(network: NetworkManager())
                 )
             }
+
         } catch {
-            errorMessage = error.localizedDescription
+            errorMessage = userMessage(from: error)
         }
     }
 
+    private func userMessage(from error: Error) -> String {
+        if case let RepositoryError.api(message) = error {
+            return message
+        }
+
+        return ConstantStrings.failText
+    }
 }

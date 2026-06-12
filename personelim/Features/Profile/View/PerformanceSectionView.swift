@@ -11,7 +11,6 @@ struct PerformanceSectionView: View {
 
     var body: some View {
         VStack(alignment: .leading, spacing: 12) {
-
             header
 
             if let error {
@@ -28,17 +27,19 @@ struct PerformanceSectionView: View {
         }
     }
 
-    // MARK: - Header
-
     private var header: some View {
         HStack(spacing: 12) {
             VStack(alignment: .leading, spacing: 3) {
-                Text("Performans Sorguları")
+                Text(ConstantStrings.performanceQueriesTitle)
                     .font(.system(size: 17, weight: .bold))
 
-                Text(reports.isEmpty ? "Rapor geçmişi bulunmuyor" : "\(reports.count) rapor listeleniyor")
-                    .font(.caption)
-                    .foregroundStyle(.secondary)
+                Text(
+                    reports.isEmpty
+                    ? ConstantStrings.reportHistoryEmpty
+                    : String(format: ConstantStrings.reportListedCountFormat, reports.count)
+                )
+                .font(.caption)
+                .foregroundStyle(.secondary)
             }
 
             Spacer()
@@ -48,7 +49,7 @@ struct PerformanceSectionView: View {
                     Image(systemName: "magnifyingglass")
                         .font(.system(size: 13, weight: .semibold))
 
-                    Text("Sorgu")
+                    Text(ConstantStrings.querySectionTitle)
                         .font(.system(size: 13, weight: .semibold))
                 }
                 .foregroundStyle(.blue)
@@ -62,8 +63,6 @@ struct PerformanceSectionView: View {
             .buttonStyle(.plain)
         }
     }
-
-    // MARK: - Reports
 
     private var reportsList: some View {
         VStack(spacing: 0) {
@@ -81,13 +80,11 @@ struct PerformanceSectionView: View {
         )
     }
 
-    // MARK: - States
-
     private var loadingRow: some View {
         HStack(spacing: 12) {
             ProgressView()
 
-            Text("Raporlar yükleniyor...")
+            Text(ConstantStrings.reportsLoading)
                 .font(.system(size: 15, weight: .medium))
                 .foregroundStyle(.secondary)
 
@@ -111,10 +108,10 @@ struct PerformanceSectionView: View {
                 .frame(width: 36, height: 36)
 
             VStack(alignment: .leading, spacing: 3) {
-                Text("Henüz rapor yok")
+                Text(ConstantStrings.noReportsAvailable)
                     .font(.system(size: 15, weight: .semibold))
 
-                Text("Tarih aralığı seçip performans sorgusu oluştur.")
+                Text(ConstantStrings.createQueryInstruction)
                     .font(.caption)
                     .foregroundStyle(.secondary)
             }
@@ -154,8 +151,6 @@ struct PerformanceSectionView: View {
     }
 }
 
-// MARK: - Performance Report Row
-
 private struct PerformanceReportRow: View {
 
     let report: PerformanceReportDTO
@@ -168,16 +163,15 @@ private struct PerformanceReportRow: View {
     var body: some View {
         Button(action: onTap) {
             HStack(spacing: 13) {
-
                 ScoreMiniGauge(score: score)
 
                 VStack(alignment: .leading, spacing: 4) {
                     HStack(spacing: 6) {
-                        Text("Sorgu Aralığı")
+                        Text(ConstantStrings.queryRangeLabel)
                             .font(.caption.weight(.semibold))
                             .foregroundStyle(.secondary)
 
-                        statusPill
+                        
                     }
 
                     Text(ISODate.shortRange(start: report.startDate, end: report.endDate))
@@ -210,7 +204,7 @@ private struct PerformanceReportRow: View {
     }
 
     private var statusPill: some View {
-        Text("\(score) gün")
+        Text(String(format: ConstantStrings.scoreDayFormat, score))
             .font(.caption2.weight(.bold))
             .foregroundStyle(scoreColor(score))
             .padding(.horizontal, 7)
@@ -221,8 +215,6 @@ private struct PerformanceReportRow: View {
             )
     }
 }
-
-// MARK: - Mini Radial Gauge
 
 private struct ScoreMiniGauge: View {
 
@@ -249,18 +241,16 @@ private struct ScoreMiniGauge: View {
     }
 }
 
-// MARK: - Score Helpers
-
 private func scoreLevel(_ score: Int) -> String {
     switch score {
     case 0..<40:
-        return "Zayıf"
+        return ConstantStrings.performanceWeak
     case 40..<70:
-        return "Orta"
+        return ConstantStrings.performanceMedium
     case 70..<85:
-        return "İyi"
+        return ConstantStrings.performanceGood
     default:
-        return "Mükemmel"
+        return ConstantStrings.performanceExcellent
     }
 }
 

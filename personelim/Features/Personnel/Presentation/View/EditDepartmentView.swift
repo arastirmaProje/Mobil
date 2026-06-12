@@ -139,7 +139,7 @@ struct EditDepartmentView: View {
                 .font(.system(size: 15, weight: .semibold))
                 .foregroundStyle(.secondary)
 
-            TextField("Kategori ara", text: $searchText)
+            TextField(ConstantStrings.categorySearchPlaceholder, text: $searchText)
                 .font(.system(size: 15, weight: .medium))
                 .textInputAutocapitalization(.words)
 
@@ -234,7 +234,7 @@ struct EditDepartmentView: View {
                         .foregroundStyle(.primary)
                         .lineLimit(1)
 
-                    Text(isSelected(category) ? "Seçili kategori" : "Departman kategorisi")
+                    Text(isSelected(category) ? ConstantStrings.selectedCategoryText : ConstantStrings.departmentCategoryText)
                         .font(.caption)
                         .foregroundStyle(.secondary)
                 }
@@ -320,10 +320,10 @@ struct EditDepartmentView: View {
                 .font(.system(size: 36, weight: .semibold))
                 .foregroundStyle(.blue)
 
-            Text("Kategori bulunamadı")
+            Text(ConstantStrings.categoryNotFoundTitle)
                 .font(.headline)
 
-            Text("Arama kriterini değiştirerek tekrar deneyebilirsin.")
+            Text(ConstantStrings.departmentSearchNoResultDescription)
                 .font(.caption)
                 .foregroundStyle(.secondary)
                 .multilineTextAlignment(.center)

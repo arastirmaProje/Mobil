@@ -1,44 +1,74 @@
-//
-//  BusinessMemberViewModel.swift
-//  personelim
-//
-//  Created by Yusuf Kaan USTA on 27.04.2026.
-//
-
 import Foundation
 
 @MainActor
 class BusinessMemberViewModel: ObservableObject {
+
     @Published var members: [BusinessMemberDTO] = []
     @Published var isLoading = false
     @Published var errorMessage: String?
-    
+
     private let repository: BusinessMemberRepositoryProtocol
-    
-    init(repository: BusinessMemberRepositoryProtocol = BusinessMemberRepositoryImpl(network: NetworkManager.shared)) {
+
+    init(
+        repository: BusinessMemberRepositoryProtocol =
+            BusinessMemberRepositoryImpl(network: NetworkManager.shared)
+    ) {
         self.repository = repository
     }
-    
+
     func fetchMembers(businessId: String) async {
         isLoading = true
-        defer { isLoading = false }
-        
+        errorMessage = nil
+
+        defer {
+            isLoading = false
+        }
+
         do {
-            self.members = try await repository.getMembers(businessId: businessId)
+            members = try await repository.getMembers(
+                businessId: businessId
+            )
         } catch {
-            self.errorMessage = error.localizedDescription
+            errorMessage = userMessage(
+                from: error,
+                fallback: ConstantStrings.membersLoadFailed
+            )
         }
     }
-    
+
     func addMember(request: CreateMemberRequestDTO) async {
         isLoading = true
-        defer { isLoading = false }
-        
-        do {
-            try await repository.addMember(request: request)
-            await fetchMembers(businessId: request.businessId)
-        } catch {
-            self.errorMessage = error.localizedDescription
+        errorMessage = nil
+
+        defer {
+            isLoading = false
         }
+
+        do {
+            try await repository.addMember(
+                request: request
+            )
+
+            await fetchMembers(
+                businessId: request.businessId
+            )
+
+        } catch {
+            errorMessage = userMessage(
+                from: error,
+                fallback: ConstantStrings.memberAddFailed
+            )
+        }
+    }
+
+    private func userMessage(
+        from error: Error,
+        fallback: String
+    ) -> String {
+        if case let RepositoryError.api(message) = error {
+            return message
+        }
+
+        return fallback
     }
 }

@@ -30,10 +30,16 @@ final class HomeViewModelTests: XCTestCase {
     // MARK: - loadActiveTasks
 
     func test_loadActiveTasks_filtersOnlyBeklemede() async {
+        let futureDate = Calendar.current.date(
+            byAdding: .day,
+            value: 1,
+            to: Date()
+        )!
+
         let tasks: [TaskEntity] = [
-            .test(id: "1", status: "Beklemede"),
-            .test(id: "2", status: "Tamamlandı"),
-            .test(id: "3", status: "Beklemede")
+            TaskEntity.test(id: "1", status: "Beklemede", endDate: futureDate),
+            TaskEntity.test(id: "2", status: "Tamamlandı", endDate: futureDate),
+            TaskEntity.test(id: "3", status: "Beklemede", endDate: futureDate)
         ]
 
         let taskRepo = MockTaskRepo(result: .success(tasks))
@@ -78,5 +84,27 @@ final class HomeViewModelTests: XCTestCase {
 
         XCTAssertEqual(sut.selectedDayDetail?.id, key)
         XCTAssertEqual(sut.selectedDayDetail?.shifts.count, 1)
+    }
+}
+
+private extension TaskEntity {
+
+    static func test(
+        id: String,
+        status: String,
+        endDate: Date
+    ) -> TaskEntity {
+        TaskEntity(
+            id: id,
+            title: "Test",
+            description: nil,
+            assignedToName: nil,
+            assignedByName: nil,
+            startDate: Date(),
+            endDate: endDate,
+            status: status,
+            activityType: .task,
+            isOverdue: false
+        )
     }
 }

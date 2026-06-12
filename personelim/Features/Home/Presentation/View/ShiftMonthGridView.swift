@@ -20,7 +20,7 @@ struct ShiftMonthGridView: View {
                         .font(.system(size: 17, weight: .bold))
                         .foregroundStyle(.primary)
 
-                    Text("Aylık mesai özeti")
+                    Text(ConstantStrings.monthlyShiftSummary)
                         .font(.caption)
                         .foregroundStyle(.secondary)
                 }
@@ -56,10 +56,8 @@ struct ShiftMonthGridView: View {
     }
 
     private var weekHeader: some View {
-        let days = ["P", "S", "Ç", "P", "C", "C", "P"]
-
-        return HStack(spacing: 0) {
-            ForEach(days, id: \.self) { day in
+        HStack(spacing: 0) {
+            ForEach(ConstantStrings.weekDaysVeryShort, id: \.self) { day in
                 Text(day)
                     .font(.caption2.weight(.bold))
                     .foregroundStyle(.secondary)

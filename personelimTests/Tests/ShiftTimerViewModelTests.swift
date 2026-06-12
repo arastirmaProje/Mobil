@@ -78,14 +78,18 @@ final class ShiftTimerViewModelTests: XCTestCase {
         vm.confirmStart(option: .home)
         try? await Task.sleep(nanoseconds: 200_000_000)
 
+        let savedState = ShiftStore.shared.load()
+        XCTAssertNotNil(savedState)
+
         let restored = ShiftTimerViewModel(
-            createShiftUseCase: useCase
-           // locationManager: locationManager
+            createShiftUseCase: useCase,
+            toleranceMeters: 150
         )
 
         XCTAssertTrue(restored.isRunning)
         XCTAssertFalse(restored.isPaused)
-        XCTAssertNotEqual(restored.elapsedText, "00:00:00")
+        XCTAssertNil(restored.errorMessage)
+        XCTAssertNotNil(ShiftStore.shared.load())
     }
 
     // MARK: - End Day

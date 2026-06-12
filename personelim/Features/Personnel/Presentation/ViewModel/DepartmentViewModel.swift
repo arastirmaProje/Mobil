@@ -3,142 +3,234 @@ import SwiftUI
 
 @MainActor
 class DepartmentViewModel: ObservableObject {
+
     @Published var departments: [DepartmentResponseDTO] = []
     @Published var isLoading = false
     @Published var errorMessage: String?
+
     @Published var categories: [JobCategoryDTO] = []
+
     @Published var departmentPerformance: DepartmentPerformanceResponseDTO?
     @Published var isPerformanceLoading = false
+
     @Published var chartData: [DepartmentChartItemDTO] = []
     @Published var isChartsLoading = false
     @Published var businessCharts: BusinessDepartmentChartsResponseDTO?
-    
+
     private let repository: DepartmentRepositoryProtocol
-    
-    init(repository: DepartmentRepositoryProtocol = DepartmentRepositoryImpl()) {
+
+    init(
+        repository: DepartmentRepositoryProtocol = DepartmentRepositoryImpl()
+    ) {
         self.repository = repository
     }
-    
+
     func fetchDepartments(businessId: String) async {
         guard !businessId.isEmpty else {
-            self.errorMessage = ConstantStrings.businessInfoNotFoundError
+            errorMessage = ConstantStrings.businessInfoNotFoundError
             return
         }
-        
+
         isLoading = true
         errorMessage = nil
-        
-        do {
-            self.departments = try await repository.fetchDepartments(businessId: businessId)
-        } catch {
-            self.errorMessage = error.localizedDescription
+
+        defer {
+            isLoading = false
         }
-        isLoading = false
+
+        do {
+            departments = try await repository.fetchDepartments(
+                businessId: businessId
+            )
+        } catch {
+            errorMessage = userMessage(
+                from: error,
+                fallback: ConstantStrings.departmentFetchError
+            )
+        }
     }
-    
+
     func fetchCategories() async {
         guard categories.isEmpty else { return }
-        
+
         do {
-            let fetchedCategories = try await repository.fetchCategories()
-            self.categories = fetchedCategories
+            categories = try await repository.fetchCategories()
         } catch {
             print("\(ConstantStrings.categoryFetchError): \(error)")
         }
     }
-    
-    func createDepartment(name: String, businessId: String, categoryId: Int) async {
-        guard !name.isEmpty else {
-            self.errorMessage = ConstantStrings.departmentNameEmptyError
+
+    func createDepartment(
+        name: String,
+        businessId: String,
+        categoryId: Int
+    ) async {
+        let trimmedName = name.trimmingCharacters(
+            in: .whitespacesAndNewlines
+        )
+
+        guard !trimmedName.isEmpty else {
+            errorMessage = ConstantStrings.departmentNameEmptyError
             return
         }
-        
+
         isLoading = true
         errorMessage = nil
-        
+
+        defer {
+            isLoading = false
+        }
+
         let request = CreateDepartmentRequestDTO(
-            name: name,
+            name: trimmedName,
             businessId: businessId,
             categoryId: categoryId
         )
-        
+
         do {
             try await repository.createDepartment(request: request)
-            await fetchDepartments(businessId: businessId)
+            departments = try await repository.fetchDepartments(
+                businessId: businessId
+            )
         } catch {
-            self.errorMessage = error.localizedDescription
-            isLoading = false
+            errorMessage = userMessage(
+                from: error,
+                fallback: ConstantStrings.departmentCreateFailed
+            )
         }
     }
-    
-    func updateDepartment(id: String, name: String, categoryId: Int, businessId: String) async {
+
+    func updateDepartment(
+        id: String,
+        name: String,
+        categoryId: Int,
+        businessId: String
+    ) async {
+        let trimmedName = name.trimmingCharacters(
+            in: .whitespacesAndNewlines
+        )
+
         do {
-            try await repository.updateDepartment(id: id, name: name, categoryId: categoryId)
-            await fetchDepartments(businessId: businessId)
+            try await repository.updateDepartment(
+                id: id,
+                name: trimmedName,
+                categoryId: categoryId
+            )
+
+            departments = try await repository.fetchDepartments(
+                businessId: businessId
+            )
+
         } catch {
-            self.errorMessage = error.localizedDescription
+            errorMessage = userMessage(
+                from: error,
+                fallback: ConstantStrings.departmentUpdateFailed
+            )
         }
     }
-    
-    func deleteDepartment(id: String, businessId: String) async {
+
+    func deleteDepartment(
+        id: String,
+        businessId: String
+    ) async {
         do {
             try await repository.deleteDepartment(id: id)
-            await fetchDepartments(businessId: businessId)
+
+            departments = try await repository.fetchDepartments(
+                businessId: businessId
+            )
+
         } catch {
-            self.errorMessage = error.localizedDescription
+            errorMessage = userMessage(
+                from: error,
+                fallback: ConstantStrings.departmentDeleteFailed
+            )
         }
     }
-    
-    func fetchDepartmentPerformance(businessId: String, departmentId: String, startDate: Date, endDate: Date) async {
+
+    func fetchDepartmentPerformance(
+        businessId: String,
+        departmentId: String,
+        startDate: Date,
+        endDate: Date
+    ) async {
         isPerformanceLoading = true
         errorMessage = nil
-        
+
+        defer {
+            isPerformanceLoading = false
+        }
+
         let formatter = ISO8601DateFormatter()
-        formatter.formatOptions = [.withInternetDateTime, .withFractionalSeconds]
-        
+        formatter.formatOptions = [
+            .withInternetDateTime,
+            .withFractionalSeconds
+        ]
+
         let request = DepartmentPerformanceRequestDTO(
             businessId: businessId,
             departmentId: departmentId,
             startDate: formatter.string(from: startDate),
             endDate: formatter.string(from: endDate)
         )
-        
+
         do {
-            self.departmentPerformance = try await repository.queryDepartmentPerformance(request: request)
+            departmentPerformance = try await repository
+                .queryDepartmentPerformance(request: request)
         } catch {
-            self.errorMessage = error.localizedDescription
+            errorMessage = userMessage(
+                from: error,
+                fallback: ConstantStrings.departmentPerformanceLoadFailed
+            )
         }
-        isPerformanceLoading = false
     }
-    
-    func fetchDepartmentCharts(businessId: String, startDate: Date, endDate: Date) async {
-            guard !businessId.isEmpty else { return }
-            
-            isChartsLoading = true
-            errorMessage = nil
-            
-            // Backend'in beklediği formatta tarihleri String'e çeviriyoruz
-            let formatter = ISO8601DateFormatter()
-            formatter.formatOptions = [.withInternetDateTime, .withFractionalSeconds]
-            
-            let startStr = formatter.string(from: startDate)
-            let endStr = formatter.string(from: endDate)
-            
-            do {
-                // Protokole tam uyumlu şekilde çağrıyı gerçekleştiriyoruz
-                let response = try await repository.fetchDepartmentCharts(
-                    businessId: businessId,
-                    startDate: startStr,
-                    endDate: endStr
-                )
-                
-                // UI güncelleniyor
-                self.businessCharts = response
-                self.isChartsLoading = false
-            } catch {
-                self.isChartsLoading = false
-                self.errorMessage = "Grafik yüklenemedi: \(error.localizedDescription)"
-                print("Grafik Fetch Hatası:", error)
-            }
+
+    func fetchDepartmentCharts(
+        businessId: String,
+        startDate: Date,
+        endDate: Date
+    ) async {
+        guard !businessId.isEmpty else { return }
+
+        isChartsLoading = true
+        errorMessage = nil
+
+        defer {
+            isChartsLoading = false
         }
+
+        let formatter = ISO8601DateFormatter()
+        formatter.formatOptions = [
+            .withInternetDateTime,
+            .withFractionalSeconds
+        ]
+
+        let startStr = formatter.string(from: startDate)
+        let endStr = formatter.string(from: endDate)
+
+        do {
+            businessCharts = try await repository.fetchDepartmentCharts(
+                businessId: businessId,
+                startDate: startStr,
+                endDate: endStr
+            )
+        } catch {
+            errorMessage = userMessage(
+                from: error,
+                fallback: ConstantStrings.departmentChartsLoadFailed
+            )
+            print("Grafik Fetch Hatası:", error)
+        }
+    }
+
+    private func userMessage(
+        from error: Error,
+        fallback: String
+    ) -> String {
+        if case let RepositoryError.api(message) = error {
+            return message
+        }
+
+        return fallback
+    }
 }

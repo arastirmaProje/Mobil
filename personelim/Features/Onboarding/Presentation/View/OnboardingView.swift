@@ -51,13 +51,13 @@ struct OnboardingView: View {
             appIcon
 
             VStack(spacing: 10) {
-                Text("Personelim")
+                Text(ConstantStrings.appName)
                     .font(.system(size: 38, weight: .bold, design: .rounded))
                     .foregroundStyle(.primary)
                     .opacity(appear ? 1 : 0)
                     .offset(y: appear ? 0 : 16)
 
-                Text("Personel, vardiya, izin ve performans yönetimini tek yerden takip et.")
+                Text(ConstantStrings.onboardingDescription)
                     .font(.system(size: 15, weight: .medium))
                     .foregroundStyle(.secondary)
                     .multilineTextAlignment(.center)
@@ -110,9 +110,9 @@ struct OnboardingView: View {
 
     private var featurePills: some View {
         HStack(spacing: 8) {
-            pill("Vardiya", "clock.fill")
-            pill("İzin", "calendar.badge.checkmark")
-            pill("Performans", "chart.line.uptrend.xyaxis")
+            pill(ConstantStrings.onboardingShiftPill, "clock.fill")
+            pill(ConstantStrings.onboardingLeavePill, "calendar.badge.checkmark")
+            pill(ConstantStrings.onboardingPerformancePill, "chart.line.uptrend.xyaxis")
         }
         .padding(.horizontal, 18)
     }
@@ -145,7 +145,7 @@ struct OnboardingView: View {
             NavigationLink {
                 LoginView()
             } label: {
-                Label("Giriş Yap", systemImage: "arrow.right.circle.fill")
+                Label(ConstantStrings.loginButton, systemImage: "arrow.right.circle.fill")
             }
             .buttonStyle(OnboardingButtonStyle(kind: .primary))
             .opacity(appear ? 1 : 0)
@@ -154,7 +154,7 @@ struct OnboardingView: View {
             NavigationLink {
                 SignupView()
             } label: {
-                Label("Şirket oluştur", systemImage: "building.2.fill")
+                Label(ConstantStrings.createCompanyTitle, systemImage: "building.2.fill")
             }
             .buttonStyle(OnboardingButtonStyle(kind: .secondary))
             .opacity(appear ? 1 : 0)

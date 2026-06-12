@@ -14,11 +14,20 @@ struct AllTablesView: View {
     @State private var isLoading = false
     @State private var errorMessage: String?
 
-    enum MonthSort: String, CaseIterable, Identifiable {
-        case newestFirst = "Yeni → Eski"
-        case oldestFirst = "Eski → Yeni"
+    enum MonthSort: CaseIterable, Identifiable {
+        case newestFirst
+        case oldestFirst
 
-        var id: String { rawValue }
+        var id: String { title }
+
+        var title: String {
+            switch self {
+            case .newestFirst:
+                return ConstantStrings.monthSortNewestFirst
+            case .oldestFirst:
+                return ConstantStrings.monthSortOldestFirst
+            }
+        }
     }
 
     @State private var sort: MonthSort = .newestFirst
@@ -77,7 +86,7 @@ struct AllTablesView: View {
                     Menu {
                         Picker(ConstantStrings.sortTitle, selection: $sort) {
                             ForEach(MonthSort.allCases) { option in
-                                Text(option.rawValue).tag(option)
+                                Text(option.title).tag(option)
                             }
                         }
                     } label: {
@@ -89,8 +98,6 @@ struct AllTablesView: View {
         }
     }
 
-    // MARK: - Header
-
     private var headerSection: some View {
         HStack(alignment: .top) {
             VStack(alignment: .leading, spacing: 5) {
@@ -98,7 +105,7 @@ struct AllTablesView: View {
                     .font(.system(size: 28, weight: .bold))
                     .foregroundStyle(.primary)
 
-                Text("Son \(months.count) ayın mesai takvimleri")
+                Text(String(format: ConstantStrings.recentShiftCalendarsFormat, months.count))
                     .font(.subheadline)
                     .foregroundStyle(.secondary)
             }
@@ -110,7 +117,7 @@ struct AllTablesView: View {
     }
 
     private var sortBadge: some View {
-        Text(sort.rawValue)
+        Text(sort.title)
             .font(.caption.weight(.semibold))
             .foregroundStyle(.blue)
             .padding(.horizontal, 10)
@@ -120,8 +127,6 @@ struct AllTablesView: View {
                     .fill(Color.blue.opacity(0.10))
             )
     }
-
-    // MARK: - Months
 
     private var monthsSection: some View {
         VStack(spacing: 16) {
@@ -164,13 +169,11 @@ struct AllTablesView: View {
         )
     }
 
-    // MARK: - States
-
     private var loadingCard: some View {
         HStack(spacing: 12) {
             ProgressView()
 
-            Text("Mesai tabloları yükleniyor...")
+            Text(ConstantStrings.shiftTablesLoading)
                 .font(.subheadline)
                 .foregroundStyle(.secondary)
 
@@ -212,10 +215,10 @@ struct AllTablesView: View {
                 .font(.system(size: 38, weight: .semibold))
                 .foregroundStyle(.blue)
 
-            Text("Mesai tablosu bulunamadı")
+            Text(ConstantStrings.shiftTableNotFoundTitle)
                 .font(.headline)
 
-            Text("Bu işletme için gösterilecek mesai kaydı yok.")
+            Text(ConstantStrings.shiftTableNotFoundDescription)
                 .font(.caption)
                 .foregroundStyle(.secondary)
                 .multilineTextAlignment(.center)
@@ -231,8 +234,6 @@ struct AllTablesView: View {
         )
     }
 
-    // MARK: - Sort
-
     private var sortedMonths: [Date] {
         switch sort {
         case .newestFirst:
@@ -243,11 +244,9 @@ struct AllTablesView: View {
         }
     }
 
-    // MARK: - Load
-
     private func loadAll() async {
         guard let businessId else {
-            errorMessage = "İşletme bilgisi bulunamadı."
+            errorMessage = ConstantStrings.businessInfoNotFoundError
             return
         }
 
@@ -281,8 +280,8 @@ struct AllTablesView: View {
                     shifts: filtered
                 )
             }
-        } catch {
-            errorMessage = error.localizedDescription
+        }  catch {
+            errorMessage = ConstantStrings.shiftTablesLoadFailed
 
             for month in months {
                 monthSummaries[month.monthKey()] = ShiftCalendarMapper.makeMonthSummaries(

@@ -29,7 +29,7 @@ struct SlackIntegrationSection: View {
                     .font(.system(size: 21, weight: .bold))
                     .foregroundStyle(.primary)
 
-                Text("Slack bildirim bağlantılarını yönet")
+                Text(ConstantStrings.slackIntegrationSubtitle)
                     .font(.caption)
                     .foregroundStyle(.secondary)
             }
@@ -55,7 +55,7 @@ struct SlackIntegrationSection: View {
         HStack(spacing: 12) {
             ProgressView()
 
-            Text("Slack entegrasyonları yükleniyor...")
+            Text(ConstantStrings.slackLoading)
                 .font(.subheadline)
                 .foregroundStyle(.secondary)
 
@@ -79,7 +79,7 @@ struct SlackIntegrationSection: View {
                     .font(.system(size: 15, weight: .semibold))
                     .foregroundStyle(.primary)
 
-                Text("Yeni Slack webhook bağlantısı ekleyebilirsin.")
+                Text(ConstantStrings.slackEmptyDescription)
                     .font(.caption)
                     .foregroundStyle(.secondary)
             }
@@ -156,7 +156,7 @@ private struct SlackIntegrationCard: View {
                     .foregroundStyle(.primary)
                     .lineLimit(1)
 
-                Text("Slack webhook entegrasyonu")
+                Text(ConstantStrings.slackWebhookIntegrationSubtitle)
                     .font(.caption)
                     .foregroundStyle(.secondary)
             }
@@ -324,10 +324,14 @@ private extension SlackIntegrationEditorView {
                     .foregroundStyle(.primary)
                     .lineLimit(1)
 
-                Text(isEditing ? "Webhook bilgilerini düzenle." : "Entegrasyon detaylarını görüntüle.")
-                    .font(.subheadline)
-                    .foregroundStyle(.secondary)
-                    .lineLimit(2)
+                Text(
+                    isEditing
+                    ? ConstantStrings.slackEditSubtitle
+                    : ConstantStrings.slackDetailSubtitle
+                )
+                .font(.subheadline)
+                .foregroundStyle(.secondary)
+                .lineLimit(2)
             }
 
             Spacer()
@@ -342,7 +346,7 @@ private extension SlackIntegrationEditorView {
     }
 
     var formSection: some View {
-        sectionCard(title: "Webhook Bilgileri") {
+        sectionCard(title: ConstantStrings.slackWebhookInfoTitle) {
             formField(
                 title: ConstantStrings.slackChannelNameLabel,
                 placeholder: ConstantStrings.slackChannelNamePlaceholder,
@@ -380,7 +384,7 @@ private extension SlackIntegrationEditorView {
         HStack(spacing: 12) {
             ProgressView()
 
-            Text("İşlem yapılıyor...")
+            Text(ConstantStrings.processingText)
                 .font(.subheadline)
                 .foregroundStyle(.secondary)
 
@@ -438,11 +442,11 @@ private extension SlackIntegrationEditorView {
 
     var bottomButtonTitle: String {
         if viewModel.isLoading {
-            return "Kaydediliyor..."
+            return ConstantStrings.savingText
         }
 
         return isEditing
-            ? "Kaydet"
+            ? ConstantStrings.saveButtonShort
             : ConstantStrings.editButton
     }
 
@@ -634,6 +638,7 @@ private extension SlackIntegrationEditorView {
 // MARK: - Row Background
 
 private extension View {
+
     func formRowBackground() -> some View {
         self
             .padding(.horizontal, 14)

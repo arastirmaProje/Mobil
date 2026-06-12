@@ -137,7 +137,7 @@ private extension PerformanceBulkQueryView {
 
     var calendarSection: some View {
         VStack(alignment: .leading, spacing: 10) {
-            Text("Tarih Aralığı")
+            Text(ConstantStrings.dateRangeSectionTitle)
                 .font(.system(size: 17, weight: .bold))
                 .foregroundStyle(.primary)
                 .padding(.horizontal, 2)
@@ -180,7 +180,7 @@ private extension PerformanceBulkQueryView {
                         Image(systemName: "sparkle.magnifyingglass")
                     }
 
-                    Text(vm.isBulkLoading ? "Sorgulanıyor..." : ConstantStrings.bulkQueryTitle)
+                    Text(vm.isBulkLoading ? ConstantStrings.bulkQueryLoading : ConstantStrings.bulkQueryTitle)
                         .font(.headline)
                 }
                 .foregroundStyle(.white)
@@ -305,7 +305,7 @@ private struct RangeCalendarView: View {
                     .font(.system(size: 17, weight: .bold))
                     .foregroundStyle(.primary)
 
-                Text(isSelectingEnd ? "Bitiş tarihini seç" : "Başlangıç tarihini seç")
+                Text(isSelectingEnd ? ConstantStrings.selectEndDateInstruction : ConstantStrings.selectStartDateInstruction)
                     .font(.caption)
                     .foregroundStyle(.secondary)
             }

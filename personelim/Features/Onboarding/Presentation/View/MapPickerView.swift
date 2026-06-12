@@ -183,7 +183,7 @@ struct MapPickerView: View {
                             .font(.system(size: 14, weight: .semibold))
                             .foregroundStyle(.primary)
 
-                        Text("Bir adres, işletme veya konum adı yaz.")
+                        Text(ConstantStrings.mapSearchInstruction)
                             .font(.caption)
                             .foregroundStyle(.secondary)
                     }
@@ -308,12 +308,16 @@ struct MapPickerView: View {
             .frame(width: 46, height: 46)
 
             VStack(alignment: .leading, spacing: 4) {
-                Text(selectedCoordinate == nil ? "Konum seçilmedi" : selectedTitle)
+                Text(
+                    selectedCoordinate == nil
+                    ? ConstantStrings.locationNotSelected
+                    : selectedTitle
+                )
                     .font(.system(size: 15, weight: .bold))
                     .foregroundStyle(.primary)
                     .lineLimit(1)
 
-                Text(selectedAddress ?? "Haritaya dokunarak veya arama yaparak konum seç.")
+                Text(selectedAddress ?? ConstantStrings.mapSelectionInstruction)
                     .font(.caption)
                     .foregroundStyle(.secondary)
                     .lineLimit(2)

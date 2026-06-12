@@ -1,10 +1,3 @@
-//
-//  TasksListViewModel.swift
-//  personelim
-//
-//  Created by Tuğberk Acabey on 19.12.2025.
-//
-
 import Foundation
 
 @MainActor
@@ -49,13 +42,20 @@ final class TasksListViewModel: ObservableObject {
         isLoading = true
         errorMessage = nil
 
+        defer {
+            isLoading = false
+        }
+
         do {
-            let tasks = try await getActivitiesUseCase.execute(businessId: businessId)
+            let tasks = try await getActivitiesUseCase.execute(
+                businessId: businessId
+            )
             mapTasks(tasks)
-            isLoading = false
         } catch {
-            errorMessage = ConstantStrings.tasksNoDownload
-            isLoading = false
+            errorMessage = userMessage(
+                from: error,
+                fallback: ConstantStrings.tasksNoDownload
+            )
         }
     }
 
@@ -78,19 +78,40 @@ final class TasksListViewModel: ObservableObject {
         guard !deletingTaskIds.contains(task.id) else { return false }
 
         deletingTaskIds.insert(task.id)
-        defer { deletingTaskIds.remove(task.id) }
+        errorMessage = nil
+
+        defer {
+            deletingTaskIds.remove(task.id)
+        }
 
         do {
             try await deleteActivityUseCase.execute(
                 activityId: task.id,
                 activityType: task.activityType
             )
+
             activeTasks.removeAll { $0.id == task.id }
             pastTasks.removeAll { $0.id == task.id }
+
             return true
+
         } catch {
-            errorMessage = error.localizedDescription
+            errorMessage = userMessage(
+                from: error,
+                fallback: ConstantStrings.activityDeleteFailed
+            )
             return false
         }
+    }
+
+    private func userMessage(
+        from error: Error,
+        fallback: String
+    ) -> String {
+        if case let RepositoryError.api(message) = error {
+            return message
+        }
+
+        return fallback
     }
 }

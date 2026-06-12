@@ -12,16 +12,14 @@ struct LeaveSectionView: View {
         }
     }
 
-    // MARK: - Header
-
     private var header: some View {
         HStack(alignment: .center, spacing: 12) {
             VStack(alignment: .leading, spacing: 4) {
-                Text("İzinler")
+                Text(ConstantStrings.leavesTitle)
                     .font(.system(size: 21, weight: .bold))
                     .foregroundStyle(.primary)
 
-                Text("İzin durumunu ve kullanımını yönet")
+                Text(ConstantStrings.leavesSubtitle)
                     .font(.caption)
                     .foregroundStyle(.secondary)
             }
@@ -29,7 +27,7 @@ struct LeaveSectionView: View {
             Spacer()
 
             Button(action: onCreateLeave) {
-                Label("İzin kullan", systemImage: "calendar.badge.plus")
+                Label(ConstantStrings.useLeaveButton, systemImage: "calendar.badge.plus")
                     .font(.caption.weight(.semibold))
                     .foregroundStyle(.blue)
                     .padding(.horizontal, 12)
@@ -43,14 +41,12 @@ struct LeaveSectionView: View {
         }
     }
 
-    // MARK: - Content
-
     private var contentCard: some View {
         HStack(spacing: 14) {
             iconBox
 
             VStack(alignment: .leading, spacing: 5) {
-                Text("Kalan / kullanılan izin")
+                Text(ConstantStrings.remainingUsedLeaveTitle)
                     .font(.caption.weight(.semibold))
                     .foregroundStyle(.secondary)
 
@@ -60,16 +56,14 @@ struct LeaveSectionView: View {
                     .lineLimit(1)
                     .minimumScaleFactor(0.85)
 
-                Text("Güncel izin özeti")
+                Text(ConstantStrings.currentLeaveSummary)
                     .font(.caption2.weight(.medium))
                     .foregroundStyle(.secondary)
             }
 
             Spacer()
 
-            Image(systemName: "chevron.right")
-                .font(.system(size: 12, weight: .semibold))
-                .foregroundStyle(.secondary.opacity(0.8))
+           
         }
         .padding(16)
         .background(Color(.systemBackground))

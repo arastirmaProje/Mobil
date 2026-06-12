@@ -85,7 +85,7 @@ struct ForgotPasswordView: View {
                     .foregroundStyle(.primary)
                     .multilineTextAlignment(.center)
 
-                Text("Şifreni sıfırlamak için e-posta adresine doğrulama kodu göndereceğiz.")
+                Text(ConstantStrings.forgotPasswordDescription)
                     .font(.subheadline)
                     .foregroundStyle(.secondary)
                     .multilineTextAlignment(.center)
@@ -154,7 +154,7 @@ struct ForgotPasswordView: View {
                         .font(.system(size: 13, weight: .semibold))
                         .foregroundStyle(.blue)
 
-                    Text("Kod tamamlandığında doğrulama otomatik başlar.")
+                    Text(ConstantStrings.codeAutoVerifyHint)
                         .font(.caption)
                         .foregroundStyle(.secondary)
 

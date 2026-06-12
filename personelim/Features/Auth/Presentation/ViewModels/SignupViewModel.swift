@@ -1,31 +1,20 @@
-//
-//  SignupViewModel.swift
-//  personelim
-//
-//  Created by Tuğberk Acabey on 07.12.2025.
-//
-
 import Foundation
 
 @MainActor
 final class SignupViewModel: ObservableObject {
 
-    // MARK: - Inputs
     @Published var firstName = ""
     @Published var lastName = ""
     @Published var email = ""
     @Published var password = ""
 
-    // MARK: - UI State
     @Published var isLoading = false
     @Published var showError = false
     @Published var errorMessage = ""
 
-    // MARK: - Navigation
     @Published var goToCreateCompany = false
     @Published var createdUser: AuthUserEntity?
 
-    // MARK: - Dependencies
     private let registerUseCase: RegisterUserUseCaseProtocol
 
     init(registerUseCase: RegisterUserUseCaseProtocol = RegisterUserUseCase()) {
@@ -38,14 +27,15 @@ final class SignupViewModel: ObservableObject {
         isLoading = true
         showError = false
         errorMessage = ""
+
         defer { isLoading = false }
 
         do {
             let authUser = try await registerUseCase.execute(
                 RegisterUserEntity(
-                    firstName: firstName,
-                    lastName: lastName,
-                    email: email,
+                    firstName: firstName.trimmingCharacters(in: .whitespacesAndNewlines),
+                    lastName: lastName.trimmingCharacters(in: .whitespacesAndNewlines),
+                    email: email.trimmingCharacters(in: .whitespacesAndNewlines),
                     password: password
                 )
             )
@@ -56,30 +46,43 @@ final class SignupViewModel: ObservableObject {
             goToCreateCompany = true
 
         } catch {
-            errorMessage = error.localizedDescription
+            errorMessage = userMessage(from: error)
             showError = true
         }
     }
 
     private func validateForm() -> Bool {
-        if firstName.isEmpty || lastName.isEmpty || email.isEmpty || password.isEmpty {
-            errorMessage = "Tüm alanlar gereklidir."
+
+        if firstName.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty ||
+            lastName.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty ||
+            email.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty ||
+            password.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty {
+
+            errorMessage = ConstantStrings.signupRequiredFieldsError
             showError = true
             return false
         }
 
         if !email.contains("@") {
-            errorMessage = "Geçerli bir email giriniz."
+            errorMessage = ConstantStrings.signupInvalidEmailError
             showError = true
             return false
         }
 
         if password.count < 6 {
-            errorMessage = "Şifre en az 6 karakter olmalıdır."
+            errorMessage = ConstantStrings.signupPasswordMinLengthError
             showError = true
             return false
         }
 
         return true
+    }
+
+    private func userMessage(from error: Error) -> String {
+        if case let RepositoryError.api(message) = error {
+            return message
+        }
+
+        return ConstantStrings.failText
     }
 }

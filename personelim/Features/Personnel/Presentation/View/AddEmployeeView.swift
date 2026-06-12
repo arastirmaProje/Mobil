@@ -108,7 +108,7 @@ struct AddEmployeeView: View {
                     .font(.system(size: 24, weight: .bold))
                     .foregroundStyle(.primary)
 
-                Text("Çalışana davet bağlantısı göndermek için e-posta adresini gir.")
+                Text(ConstantStrings.addEmployeeDescription)
                     .font(.subheadline)
                     .foregroundStyle(.secondary)
                     .lineLimit(2)
@@ -167,7 +167,7 @@ struct AddEmployeeView: View {
         HStack(spacing: 12) {
             ProgressView()
 
-            Text("Davet gönderiliyor...")
+            Text(ConstantStrings.invitationSendingLoading)
                 .font(.subheadline)
                 .foregroundStyle(.secondary)
 
@@ -233,7 +233,7 @@ struct AddEmployeeView: View {
                         Image(systemName: "paperplane.fill")
                     }
 
-                    Text(vm.isLoading ? "Gönderiliyor..." : "Davet Gönder")
+                    Text(vm.isLoading ? ConstantStrings.sendButtonLoading : ConstantStrings.sendInvitation)
                         .font(.headline)
                 }
                 .foregroundStyle(.white)

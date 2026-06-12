@@ -1,10 +1,3 @@
-//
-//  AddEmployeeView.swift
-//  personelim
-//
-//  Created by Yusuf Kaan USTA on 25.12.2025.
-//
-
 import SwiftUI
 
 @MainActor
@@ -25,8 +18,10 @@ final class AddEmployeeViewModel: ObservableObject {
         errorMessage = nil
         successMessage = nil
 
-        let e = email.trimmingCharacters(in: .whitespacesAndNewlines)
-        
+        let e = email.trimmingCharacters(
+            in: .whitespacesAndNewlines
+        )
+
         guard !e.isEmpty, e.contains("@") else {
             errorMessage = ConstantStrings.invalidEmailError
             return
@@ -36,10 +31,32 @@ final class AddEmployeeViewModel: ObservableObject {
         defer { isLoading = false }
 
         do {
-            let res = try await sendUseCase.execute(businessId: businessId, email: e, message: nil)
-            successMessage = res.message ?? ConstantStrings.invitationSuccess
+            let res = try await sendUseCase.execute(
+                businessId: businessId,
+                email: e,
+                message: nil
+            )
+
+            successMessage = res.message ??
+                ConstantStrings.invitationSuccess
+
         } catch {
-            errorMessage = error.localizedDescription
+            errorMessage = userMessage(
+                from: error,
+                fallback: ConstantStrings.invitationSendFailed
+            )
         }
+    }
+
+    private func userMessage(
+        from error: Error,
+        fallback: String
+    ) -> String {
+
+        if case let RepositoryError.api(message) = error {
+            return message
+        }
+
+        return fallback
     }
 }

@@ -29,7 +29,6 @@ struct AssigneePickerView: View {
             ScrollView(showsIndicators: false) {
                 VStack(spacing: 16) {
                     headerSection
-
                     searchSection
 
                     if filteredMembers.isEmpty {
@@ -51,8 +50,6 @@ struct AssigneePickerView: View {
         .navigationBarTitleDisplayMode(.inline)
     }
 
-    // MARK: - Header
-
     private var headerSection: some View {
         HStack(spacing: 14) {
             ZStack {
@@ -70,9 +67,13 @@ struct AssigneePickerView: View {
                     .font(.system(size: 23, weight: .bold))
                     .foregroundStyle(.primary)
 
-                Text(selectedAssignees.isEmpty ? "Henüz kişi seçilmedi" : "\(selectedAssignees.count) kişi seçildi")
-                    .font(.subheadline)
-                    .foregroundStyle(.secondary)
+                Text(
+                    selectedAssignees.isEmpty
+                    ? ConstantStrings.noAssigneeSelected
+                    : String(format: ConstantStrings.assigneeSelectedCountFormat, selectedAssignees.count)
+                )
+                .font(.subheadline)
+                .foregroundStyle(.secondary)
             }
 
             Spacer()
@@ -86,15 +87,13 @@ struct AssigneePickerView: View {
         )
     }
 
-    // MARK: - Search
-
     private var searchSection: some View {
         HStack(spacing: 10) {
             Image(systemName: "magnifyingglass")
                 .font(.system(size: 15, weight: .semibold))
                 .foregroundStyle(.secondary)
 
-            TextField("Çalışan ara", text: $searchText)
+            TextField(ConstantStrings.employeeSearchPlaceholder, text: $searchText)
                 .font(.system(size: 15, weight: .medium))
                 .textInputAutocapitalization(.words)
 
@@ -118,12 +117,10 @@ struct AssigneePickerView: View {
         )
     }
 
-    // MARK: - Members
-
     private var membersSection: some View {
         VStack(alignment: .leading, spacing: 10) {
             HStack {
-                Text("Çalışanlar")
+                Text(ConstantStrings.employeesHeader)
                     .font(.system(size: 17, weight: .bold))
                     .foregroundStyle(.primary)
 
@@ -175,7 +172,7 @@ struct AssigneePickerView: View {
                         .foregroundStyle(.primary)
                         .lineLimit(1)
 
-                    Text(member.position ?? "-")
+                    Text(member.position ?? ConstantStrings.dashPlaceholder)
                         .font(.caption)
                         .foregroundStyle(.secondary)
                         .lineLimit(1)
@@ -219,18 +216,16 @@ struct AssigneePickerView: View {
         .frame(width: 38, height: 38)
     }
 
-    // MARK: - Empty
-
     private var emptyState: some View {
         VStack(spacing: 12) {
             Image(systemName: "person.crop.circle.badge.questionmark")
                 .font(.system(size: 38, weight: .semibold))
                 .foregroundStyle(.blue)
 
-            Text("Çalışan bulunamadı")
+            Text(ConstantStrings.employeeNotFound)
                 .font(.headline)
 
-            Text("Arama kriterini değiştirerek tekrar deneyebilirsin.")
+            Text(ConstantStrings.searchRetryHint)
                 .font(.caption)
                 .foregroundStyle(.secondary)
                 .multilineTextAlignment(.center)
@@ -245,8 +240,6 @@ struct AssigneePickerView: View {
                 .stroke(Color.black.opacity(0.06), lineWidth: 1)
         )
     }
-
-    // MARK: - Bottom Button
 
     private var bottomDoneButton: some View {
         VStack(spacing: 0) {
@@ -274,8 +267,6 @@ struct AssigneePickerView: View {
             .background(.regularMaterial)
         }
     }
-
-    // MARK: - Helpers
 
     private func isSelected(_ id: String) -> Bool {
         selectedAssignees.contains(id)

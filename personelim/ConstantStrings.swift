@@ -407,4 +407,418 @@ public enum ConstantStrings {
     static let allActivities = "Tüm aktiviteleri gör"
     static let dailyActivitiesTitle = "Günün Aktiviteleri"
     static let noActivityFound = "Bu güne ait bir aktivite bulunmuyor."
+    
+    // MARK: - Forgot Password
+    static let forgotPasswordDescription = "Şifreni sıfırlamak için e-posta adresine doğrulama kodu göndereceğiz."
+    static let codeAutoVerifyHint = "Kod tamamlandığında doğrulama otomatik başlar."
+    
+    // MARK: - Login
+    static let loginDescription = "Hesabına giriş yaparak personel yönetimine devam et."
+    static let loginCredentialsTitle = "Giriş Bilgileri"
+    static let passwordPlaceholderShort = "123..."
+    static let loginLoading = "Giriş yapılıyor..."
+    
+    // MARK: - Reset Password
+    static let resetPasswordDescription = "Yeni şifreni belirleyerek hesabına tekrar giriş yapabilirsin."
+    static let passwordInfoTitle = "Şifre bilgisi"
+    static let passwordsMatchTitle = "Şifreler eşleşiyor"
+    static let passwordsNotMatchTitle = "Şifreler eşleşmiyor"
+    static let passwordInfoEmptyText = "Yeni şifreni iki alana da gir."
+    static let passwordInfoMatchText = "Şifreni değiştirmek için onaylayabilirsin."
+    static let passwordInfoNotMatchText = "Devam etmek için iki şifre alanı aynı olmalı."
+    
+    // MARK: - Signup
+    static let signupDescription = "Önce hesabını oluştur, ardından şirket bilgilerini tamamla."
+    static let accountInfoTitle = "Hesap Bilgileri"
+    static let nextStepTitle = "Sonraki adım"
+    static let signupNextStepDescription = "Kayıttan sonra şirket oluşturma ekranına yönlendirileceksin."
+    static let registerLoading = "Kaydediliyor..."
+    
+    // MARK: - All Tables
+    static let monthSortNewestFirst = "Yeni → Eski"
+    static let monthSortOldestFirst = "Eski → Yeni"
+    static let recentShiftCalendarsFormat = "Son %d ayın mesai takvimleri"
+    static let shiftTablesLoading = "Mesai tabloları yükleniyor..."
+    static let shiftTableNotFoundTitle = "Mesai tablosu bulunamadı"
+    static let shiftTableNotFoundDescription = "Bu işletme için gösterilecek mesai kaydı yok."
+    
+    // MARK: - Home
+    static let shiftActiveSubtitle = "Çalışma süren aktif"
+    static let shiftNotStartedSubtitle = "Mesai başlatılmadı"
+    static let monthlyShiftTrackingSubtitle = "Aylık mesai takibini görüntüle"
+    static let weeklyActivityViewSubtitle = "Haftalık aktivite görünümü"
+    static let activityCountFormat = "%d aktivite"
+    static let noActivityForSelectedDay = "Bu gün için kayıtlı aktivite bulunmuyor."
+    
+    // MARK: - Shift Location
+    static let shiftLocationDescription = "Mesaiye nereden başlayacağını seç."
+    static let selectedLocationFormat = "Seçili konum: %@"
+    static let noOfficeHomeHint = "Kayıtlı ofis yoksa evden çalışma seçeneğiyle başlayabilirsin."
+    static let workFromHomeSubtitle = "Evden çalışma"
+    static let officeLocationSubtitle = "Şirket/ofis konumu"
+    
+    // MARK: - Shift Month Grid
+    static let monthlyShiftSummary = "Aylık mesai özeti"
+    static let weekDaysVeryShort = ["P", "S", "Ç", "P", "C", "C", "P"]
+    
+    // MARK: - Create Company
+    static let createCompanyDescription = "Şirket bilgilerini tamamlayarak işletmeni oluştur."
+    static let companyInfoSectionTitle = "Şirket Bilgileri"
+    static let officeInfoCountFormat = "%d ofis bilgisi"
+    static let pickOfficeLocationFromMap = "Haritadan ofis konumu seç"
+    static let locationInfoSectionTitle = "Konum Bilgileri"
+    static let addressDetailSectionTitle = "Adres Detayı"
+    static let companyCreatingLoading = "Şirket oluşturuluyor..."
+    static let createButtonLoading = "Oluşturuluyor..."
+    
+    // MARK: - Email Verification
+    static let verificationCodeTitle = "Doğrulama kodu"
+    static let verificationCodeDescription = "E-postana gelen kodu gir."
+    
+    // MARK: - Map Picker
+    static let mapSearchInstruction = "Bir adres, işletme veya konum adı yaz."
+    static let mapSelectionInstruction = "Haritaya dokunarak veya arama yaparak konum seç."
+    
+    // MARK: - Onboarding
+    static let appName = "Personelim"
+    static let onboardingDescription = "Personel, vardiya, izin ve performans yönetimini tek yerden takip et."
+    static let onboardingShiftPill = "Vardiya"
+    static let onboardingLeavePill = "İzin"
+    static let onboardingPerformancePill = "Performans"
+    
+    // MARK: - Add Employee
+    static let addEmployeeDescription = "Çalışana davet bağlantısı göndermek için e-posta adresini gir."
+    static let invitationSendingLoading = "Davet gönderiliyor..."
+    static let sendButtonLoading = "Gönderiliyor..."
+    
+    // MARK: - Add Member
+    static let addMemberDescription = "Departmana yeni personel ekle."
+    static let positionSearchPlaceholder = "Pozisyon ara"
+    static let selectedPositionText = "Seçili pozisyon"
+    static let positionText = "Pozisyon"
+    static let selectedPositionTitle = "Seçilen pozisyon"
+    static let positionNotFoundTitle = "Pozisyon bulunamadı"
+    static let positionNotFoundDescription = "Bu departman için pozisyon yoksa önce pozisyon oluşturman gerekir."
+    
+    // MARK: - Department Analytics
+    static let departmentAnalyticsTitle = "Departman Analitiği"
+    static let averageTitle = "Ortalama"
+    static let highestTitle = "En Yüksek"
+    static let lowestTitle = "En Düşük"
+    static let selectDateTitle = "Tarih Seç"
+    static let departmentDisplayLimitTitle = "Gösterilecek Departman"
+    static let allOption = "Hepsi"
+    static let emptyChartDataTitle = "Bu tarih aralığında grafik verisi yok"
+    static let totalTitle = "Toplam"
+    
+    // MARK: - Department Charts
+
+    static let metricScore = "Skor"
+    static let metricOvertime = "Mesai (%)"
+    static let metricTask = "Görev"
+    static let metricProductivity = "Verimlilik"
+    static let metricCompletion = "Tamamlanma"
+    static let metricDifficultySuccess = "Zorluk Başarısı"
+    static let metricEmployeeCount = "Çalışan Sayısı"
+    static let metricOvertimeUsage = "Mesai Kullanımı"
+
+    static let chartTypeBar = "Çubuk"
+    static let chartTypeLine = "Çizgi"
+    static let chartTypeHorizontalBar = "Yatay"
+    static let chartTypePie = "Pasta"
+    static let chartTypeDonut = "Donut"
+    static let chartTypeArea = "Alan"
+    
+    // MARK: - Department Detail Performance
+    static let departmentEmployeeCountFormat = "%d çalışan"
+    static let departmentPerformanceQueryTitle = "Departman Performans Sorgulama"
+    static let startDatePickerTitle = "Başlangıç Tarihi"
+    static let endDatePickerTitle = "Bitiş Tarihi"
+    static let queryPerformanceButton = "Performansı Sorgula"
+    static let aiPerformanceAnalysisTitle = "AI Performans Analizi"
+    static let generalPerformanceScoreTitle = "Genel Performans Skoru"
+    static let activeEmployeeAnalyzedFormat = "%d Aktif Çalışan Analiz Edildi"
+    static let reportSummaryTitle = "Rapor Özeti"
+    static let detailedAnalysisReportTitle = "Detaylı Analiz Raporu"
+    static let employeePeriodScoresTitle = "Çalışan Dönem Skorları"
+    static let noEmployeeScoreForPeriod = "Bu dönemde kaydedilmiş çalışan skoru bulunamadı."
+    static let scorePointFormat = "%.1f Puan"
+    
+    // MARK: - Department List
+    static let departmentSearchPrompt = "Departman ara"
+    static let departmentListedCountFormat = "%d departman listeleniyor"
+    static let noDepartmentYetTitle = "Henüz departman yok"
+    static let departmentSearchNoResultTitle = "Sonuç bulunamadı"
+    static let noDepartmentYetDescription = "Yeni departman ekleyerek listeyi oluşturmaya başlayabilirsin."
+    static let departmentSearchNoResultDescription = "Arama kriterini değiştirerek tekrar deneyebilirsin."
+    static let dateRangeSectionTitle = "Tarih Aralığı"
+    static let customDateTitle = "Özel Tarih"
+    static let cancelAction = "Vazgeç"
+    static let applyAction = "Uygula"
+    static let sortAZ = "A-Z"
+    static let sortZA = "Z-A"
+    
+    // MARK: - Edit Department
+    static let categorySearchPlaceholder = "Kategori ara"
+    static let selectedCategoryText = "Seçili kategori"
+    static let departmentCategoryText = "Departman kategorisi"
+    static let categoryNotFoundTitle = "Kategori bulunamadı"
+    
+    // MARK: - Performance Bulk Query
+    
+    static let bulkQueryLoading = "Sorgulanıyor..."
+    static let selectEndDateInstruction = "Bitiş tarihini seç"
+    static let selectStartDateInstruction = "Başlangıç tarihini seç"
+    
+    // MARK: - Performance Query
+    static let createQueryButton = "Sorgu Oluştur"
+    
+    // MARK: - Performance Report Detail
+    static let performanceReportTitle = "Performans Raporu"
+    static let reportLoading = "Rapor yükleniyor..."
+    static let reportLoadFailed = "Rapor yüklenemedi"
+    static let performanceScoreFormat = "%d/100"
+    
+    // MARK: - Personnel Detail
+    static let personnelDetailTitle = "Personel Detayı"
+    static let personnelInfoTitle = "Personel Bilgileri"
+    static let reportHistoryEmpty = "Rapor geçmişi bulunmuyor"
+    static let reportListedCountFormat = "%d rapor listeleniyor"
+    static let reportsLoading = "Raporlar yükleniyor..."
+    static let personnelInfoLoading = "Personel bilgileri yükleniyor..."
+    static let resumeValue = "Resume"
+    
+    // MARK: - Personnel Edit
+    static let selectTitlePlaceholder = "Ünvan seç"
+    static let titleSearchPlaceholder = "Ünvan ara"
+    static let selectedTitleText = "Seçili ünvan"
+    static let titleText = "Ünvan"
+    static let selectedTitleTitle = "Seçilen ünvan"
+    static let titlesLoading = "Ünvanlar yükleniyor..."
+    static let titleNotFoundTitle = "Ünvan bulunamadı"
+    static let titleNotFoundDescription = "Bu departman için tanımlı ünvan bulunamadı."
+    static let dangerousActionTitle = "Tehlikeli İşlem"
+    static let processingLoading = "İşlem yapılıyor..."
+    static let saveChangesButton = "Değişiklikleri Kaydet"
+    
+    // MARK: - Personnel List
+    static let personnelListedCountFormat = "%d personel listeleniyor"
+    static let personnelLoading = "Personeller yükleniyor..."
+    static let personnelNotFoundTitle = "Personel bulunamadı"
+    static let personnelEmptyDescription = "Yeni personel ekleyerek listeyi oluşturmaya başlayabilirsin."
+    
+    // MARK: - Leave
+    static let selectedDayTitle = "Seçilen gün"
+    static let selectedDayCountFormat = "%d gün seçildi"
+    static let characterCountFormat = "%d karakter"
+    static let leaveCreateButton = "İzin Oluştur"
+    
+    // MARK: - Document Preview
+    static let pdfPreviewSubtitle = "PDF belge önizlemesi"
+    static let documentLoadingTitle = "Belge yükleniyor"
+    static let pdfPreviewPreparing = "PDF önizlemesi hazırlanıyor."
+    static let documentOpenFailed = "Belge açılamadı"
+    static let unknownErrorShort = "Bilinmeyen hata"
+    static let downloadedContentNotPDFFormat = "İndirilen içerik PDF değil.\nÖrnek yanıt:\n%@"
+    static let notBinaryUTF8 = "binary/utf8 değil"
+    static let pdfDocumentCreateFailed = "PDFDocument oluşturulamadı."
+    
+    // MARK: - Edit Company
+    static let changeLogoButton = "Logo Değiştir"
+    static let selectPDFDocument = "PDF belge seç"
+    static let addOfficeButton = "Ofis Ekle"
+    static let addressInfoSectionTitle = "Adres Bilgileri"
+    
+    // MARK: - Edit Personal Profile
+    static let editProfileTitle = "Profili Düzenle"
+    static let nameLabel = "İsim"
+    static let surnameLabel = "Soyisim"
+    static let selectPDFCV = "PDF CV seç"
+    static let deleteAccountConfirmationTitle = "Hesabınızı silmek istiyor musunuz?"
+    static let deleteAccountButton = "Hesabı Sil"
+    static let changePhotoButton = "Fotoğraf Değiştir"
+    static let scanButton = "Tara"
+    static let uploadedFileTitle = "Yüklü Dosya"
+    static let dangerousActionsTitle = "Tehlikeli İşlemler"
+    
+    // MARK: - ID Scanner
+    static let cameraPermissionDenied = "Kamera izni verilmedi."
+    static let cameraPermissionDisabled = "Kamera izni kapalı. Ayarlar > Gizlilik > Kamera bölümünden açabilirsin."
+    static let idScannerTitle = "Kimlik Tara"
+    static let idScannerSubtitle = "11 haneli TC otomatik algılanır"
+    static let idScannerHint = "Kimliğini çerçeve içine hizala.\nTC numarası göründüğünde otomatik yakalanır."
+    static let visionKitFallbackMessage = "VisionKit tarama başlatılamadı, OCR moduna geçiliyor."
+    static let visionKitErrorFallbackMessage = "VisionKit hata verdi, OCR moduna geçiliyor."
+    static let cameraStartFailed = "Kamera başlatılamadı."
+    static let cameraOutputFailed = "Kamera çıktısı eklenemedi."
+    static let ocrErrorFormat = "OCR hata: %@"
+    static let ocrStartFailedFormat = "OCR başlatılamadı: %@"
+    
+    // MARK: - Leave Section
+    static let leavesTitle = "İzinler"
+    static let leavesSubtitle = "İzin durumunu ve kullanımını yönet"
+    static let useLeaveButton = "İzin kullan"
+    static let remainingUsedLeaveTitle = "Kullanılan izin"
+    static let currentLeaveSummary = "Güncel izin özeti"
+    
+    static let performanceQueriesTitle = "Performans Sorguları"
+    static let scoreDayFormat = "%d gün"
+    
+    // MARK: - Profile
+    static let noPositionInfo = "Ünvan bilgisi yok"
+    static let incomeFormat = "Gelir: %@"
+    static let companyNoDescription = "Şirket açıklaması yok"
+    static let mainOfficeTitle = "Ana Ofis"
+    static let cityDistrictTitle = "İl / İlçe"
+    static let noRegisteredOffice = "Kayıtlı ofis bulunmuyor"
+    static let officeDefaultNameFormat = "Ofis %d"
+    static let openInMap = "Haritada aç"
+    static let noLocationInfo = "Konum bilgisi yok"
+    static let noDocumentFound = "Belge bulunmuyor"
+    static let previewText = "Önizle"
+    static let profileLoading = "Profil bilgileri yükleniyor..."
+    
+    // MARK: - Slack Integration
+    static let slackIntegrationSubtitle = "Slack bildirim bağlantılarını yönet"
+    static let slackLoading = "Slack entegrasyonları yükleniyor..."
+    static let slackEmptyDescription = "Yeni Slack webhook bağlantısı ekleyebilirsin."
+    static let slackWebhookIntegrationSubtitle = "Slack webhook entegrasyonu"
+    static let slackEditSubtitle = "Webhook bilgilerini düzenle."
+    static let slackDetailSubtitle = "Entegrasyon detaylarını görüntüle."
+    static let slackWebhookInfoTitle = "Webhook Bilgileri"
+    static let processingText = "İşlem yapılıyor..."
+    static let savingText = "Kaydediliyor..."
+    static let saveButtonShort = "Kaydet"
+    
+    static let noAssigneeSelected = "Henüz kişi seçilmedi"
+    static let assigneeSelectedCountFormat = "%d kişi seçildi"
+    static let employeeSearchPlaceholder = "Çalışan ara"
+    static let employeeNotFound = "Çalışan bulunamadı"
+    static let searchRetryHint = "Arama kriterini değiştirerek tekrar deneyebilirsin."
+    
+    static let createActivityTitle = "Aktivite Oluştur"
+    static let dateTitle = "Tarih"
+    static let selectedDateTitle = "Seçilen Tarih"
+  
+    static let assignedPeopleTitle = "Atanan kişiler"
+    static let activityCreatingText = "Oluşturuluyor..."
+    static let activityTypeTaskDateRangeSubtitle = "Başlangıç ve bitiş tarihi seçilir"
+    static let activityTypeSingleDateSubtitle = "Tek tarih seçilir"
+    static let activityDetailTitle = "Aktivite Detayı"
+    static let selectedStatusTitle = "Seçili Durum"
+    
+    static let feedbackNavTitle = "Geri Bildirim"
+    static let levelFormat = "Seviye %d / 5"
+   
+    static let activeRecordCountFormat = "%d aktif kayıt"
+    static let pastRecordCountFormat = "%d geçmiş kayıt"
+    static let activitiesLoading = "Aktiviteler yükleniyor..."
+    
+    static let departmentTitle = "Departman"
+    
+    static let logoutButtonTitle = "Çıkış Yap"
+    static let logoutButtonDescription = "Oturumu kapat ve giriş ekranına dön"
+    static let logoutFailed = "Oturum kapatılamadı"
+    
+    static let loginRequiredFieldsError = "Email ve şifre zorunludur."
+    
+    static let signupRequiredFieldsError = "Tüm alanlar gereklidir."
+    static let signupInvalidEmailError = "Geçerli bir email giriniz."
+    static let signupPasswordMinLengthError = "Şifre en az 6 karakter olmalıdır."
+    
+    static let forgotPasswordEmailRequired = "Email gereklidir."
+    static let resetCodeLengthError = "Kod 6 haneli olmalıdır."
+    static let resetCodeInvalid = "Kod doğrulanamadı."
+    static let resetCodeVerifyFailed = "Kod doğrulanırken bir hata oluştu."
+    
+    static let resetPasswordFieldsRequired = "Şifre alanları boş olamaz."
+    static let resetPasswordMismatch = "Şifreler eşleşmiyor."
+    static let resetPasswordFailed = "Şifre değiştirilemedi. Lütfen tekrar deneyin."
+    
+    static let provinceLoadFailed = "İller yüklenemedi."
+    static let districtLoadFailed = "İlçeler yüklenemedi."
+    static let companyNameRequired = "Şirket adı zorunludur."
+    static let businessVerifyFailed = "Şirket doğrulanamadı."
+    
+    static let slackIntegrationLoadFailed = "Slack entegrasyonları yüklenemedi."
+    static let slackIntegrationCreateFailed = "Slack entegrasyonu oluşturulamadı."
+    static let slackIntegrationUpdateFailed = "Slack entegrasyonu güncellenemedi."
+    
+    static let premiumPlansLoadFailed = "Premium paketler yüklenemedi."
+   
+    static let profileImageLoadFailed = "Profil fotoğrafı yüklenemedi."
+    
+    static let titleRequiredError = "Lütfen bir ünvan seç."
+    
+    static let memberDeleteFail = "Personel silinemedi."
+    
+    static let reportsLoadFailed = "Raporlar yüklenemedi."
+    
+    static let departmentCreateFailed = "Departman oluşturulamadı."
+    static let departmentUpdateFailed = "Departman güncellenemedi."
+    static let departmentDeleteFailed = "Departman silinemedi."
+    static let departmentPerformanceLoadFailed = "Departman performansı yüklenemedi."
+    static let departmentChartsLoadFailed = "Departman grafikleri yüklenemedi."
+    
+    static let createActivityFailed = "Aktivite oluşturulamadı."
+    
+    static let feedbackRequiredError = "Lütfen geri bildirim giriniz."
+    static let feedbackSaveFailed = "Geri bildirim kaydedilemedi."
+    
+    static let activityDeleteFailed = "Aktivite silinemedi."
+    
+    static let leaveFormValidationError = "Lütfen gerekli alanları doldurun."
+    static let invalidDateRangeError = "Geçersiz tarih aralığı."
+    static let leaveCreateFailed = "İzin talebi oluşturulamadı."
+    
+    static let officeCoordinateNotFound = "Ofis konumu bulunamadı."
+    static let notCloseEnoughToOffice = "Seçilen ofise yeterince yakın değilsin."
+    static let mustEndShiftAtSameOffice = "Mesaiyi aynı ofiste bitirmelisin."
+    static let shiftStartFailed = "Mesai başlatılamadı."
+    static let shiftEndFailed = "Mesai sonlandırılamadı."
+    static let shiftEndWithoutStart = "Mesai başlatılmadan gün sonlandırılamaz."
+    
+    static let invitationSendFailed =
+        "Davet gönderilemedi. Lütfen tekrar deneyin."
+    
+    static let memberAddFailed = "Personel eklenemedi."
+    
+    static let performanceReportCreateFailed =
+        "Performans raporu oluşturulamadı."
+    
+    static let performanceReportLoadFailed =
+        "Performans raporu yüklenemedi."
+    
+    static let performanceScoresLoadFailed = "Performans skorları yüklenemedi."
+    
+    static let sessionLoadFailed = "Oturum bilgileri yüklenemedi."
+    
+    static let shiftTablesLoadFailed = "Mesai tabloları yüklenemedi."
+    
+    static let documentPreviewLoadFailed = "Belge önizlemesi yüklenemedi."
+    static let downloadedContentNotPDF = "İndirilen belge PDF formatında değil."
+    
+    static let documentSelectFailed = "Belge seçilemedi."
+    static let companyUpdateFail = "Şirket bilgileri güncellenemedi."
+    
+    static let ocrReadFailed = "Kimlik numarası okunamadı."
+    static let ocrStartFailed = "Kimlik tarama işlemi başlatılamadı."
+    
+   
+    static let departmentPerformanceTitle = "Departman Performansı"
+    static let departmentScoreTitle = "Departman Skoru"
+    static let employeeCountTitle = "Çalışan Sayısı"
+    static let taskCompletionRateTitle = "Tamamlanma Oranı"
+    static let productivityTitle = "Verimlilik"
+    static let workUsageTitle = "Mesai Kullanımı"
+    static let taskDistributionTitle = "Görev Dağılımı"
+    static let completedTaskTitle = "Tamamlanan"
+    static let failedTaskTitle = "Tamamlanamayan"
+    static let totalTaskTitle = "Toplam Görev"
+    
+    static let detailedReportTitle = "Detaylı Rapor"
+    static let employeeScoresTitle = "Çalışan Skorları"
+    static let createDepartmentReportButton = "Departman Raporu Oluştur"
+    
+    static let noDataText = "Veri bulunamadı."
 }

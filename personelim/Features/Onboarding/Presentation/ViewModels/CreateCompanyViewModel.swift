@@ -1,10 +1,3 @@
-//
-//  CreateCompanyViewModel.swift
-//  personelim
-//
-//  Created by Tuğberk Acabey on 24.11.2025.
-//
-
 import Foundation
 import CoreLocation
 
@@ -12,10 +5,15 @@ import CoreLocation
 final class CreateCompanyViewModel: ObservableObject {
 
     // MARK: - VERIFY EMAIL
+
     @Published private(set) var verifyEmail: String = ""
-    func setVerifyEmail(_ email: String) { self.verifyEmail = email }
+
+    func setVerifyEmail(_ email: String) {
+        self.verifyEmail = email
+    }
 
     // MARK: - Inputs
+
     @Published var companyName = ""
     @Published var selectedProvinceId: Int? = nil
     @Published var selectedDistrictId: Int? = nil
@@ -33,6 +31,7 @@ final class CreateCompanyViewModel: ObservableObject {
     @Published var errorMessage: String?
 
     // MARK: - Dependencies
+
     private let createBusinessUseCase: CreateBusinessUseCaseProtocol
     private let verifyBusinessUseCase: VerifyBusinessUseCaseProtocol
     private let createBusinessAndGetIdUseCase: CreateBusinessAndGetIdUseCaseProtocol
@@ -54,15 +53,17 @@ final class CreateCompanyViewModel: ObservableObject {
     }
 
     // MARK: - Loaders
+
     func loadProvinces() async {
-        print("DEBUG: loadProvinces çağırdım") // 1. Kontrol
+        errorMessage = nil
+
         do {
-            let result = try await getProvincesUseCase.execute()
-            print("DEBUG: Başarılı ve  il sayısı: \(result.count)") // 2. Kontrol
-            self.provinces = result
+            provinces = try await getProvincesUseCase.execute()
         } catch {
-            print("DEBUG: İL YÜKLEME HATASI: \(error)") // 3. Kontrol
-            self.errorMessage = "İller yüklenemedi: \(error.localizedDescription)"
+            errorMessage = userMessage(
+                from: error,
+                fallback: ConstantStrings.provinceLoadFailed
+            )
         }
     }
 
@@ -70,17 +71,32 @@ final class CreateCompanyViewModel: ObservableObject {
         selectedProvinceId = provinceId
         selectedDistrictId = nil
         districts = []
-        do { districts = try await getDistrictsUseCase.execute(provinceId: provinceId) }
-        catch { errorMessage = error.localizedDescription }
+        errorMessage = nil
+
+        do {
+            districts = try await getDistrictsUseCase.execute(
+                provinceId: provinceId
+            )
+        } catch {
+            errorMessage = userMessage(
+                from: error,
+                fallback: ConstantStrings.districtLoadFailed
+            )
+        }
     }
 
     // MARK: - Office
+
     func addOffice() {
         let nextIndex = offices.count + 1
+
         offices.append(
             Office(
                 index: nextIndex,
-                name: "Ofis \(nextIndex)",
+                name: String(
+                    format: ConstantStrings.officeDefaultNameFormat,
+                    nextIndex
+                ),
                 address: "",
                 latitude: nil,
                 longitude: nil
@@ -94,19 +110,26 @@ final class CreateCompanyViewModel: ObservableObject {
     }
 
     // MARK: - Map Picker Bridge
+
     func beginPickLocation(for officeId: UUID) {
         selectingOfficeId = officeId
         showMapPicker = true
     }
 
-    func setLocation(_ coord: CLLocationCoordinate2D, address: String?) {
+    func setLocation(
+        _ coord: CLLocationCoordinate2D,
+        address: String?
+    ) {
         guard let id = selectingOfficeId,
-              let idx = offices.firstIndex(where: { $0.id == id }) else { return }
+              let idx = offices.firstIndex(where: { $0.id == id }) else {
+            return
+        }
 
         offices[idx].latitude = coord.latitude
         offices[idx].longitude = coord.longitude
 
-        if let address, !address.isEmpty {
+        if let address,
+           !address.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty {
             offices[idx].address = address
         }
 
@@ -114,31 +137,26 @@ final class CreateCompanyViewModel: ObservableObject {
     }
 
     // MARK: - Create Business
+
     func createCompany(appState: AppState) async {
+        let name = companyName.trimmingCharacters(in: .whitespacesAndNewlines)
 
-       // let isFormValid =
-       //     !companyName.isEmpty &&
-       //     selectedProvinceId != nil &&     burası boş geldiği için böyle yaptım şimdilik zorunlu olmasın bakalım.
-       //     selectedDistrictId != nil
-        let isFormValid = !companyName.isEmpty 
-
-        guard isFormValid else {
-            errorMessage = "Şirket adı, il ve ilçe zorunludur."
+        guard !name.isEmpty else {
+            errorMessage = ConstantStrings.companyNameRequired
             return
         }
 
         isLoading = true
         errorMessage = nil
+        defer { isLoading = false }
 
         let request = CreateBusinessRequestDTO(
-            businessName: companyName,
-            phoneNumber: phone,
-            provinceId: selectedProvinceId ?? 1, // Seçilmediyse zorla 1 gönder
-                districtId: selectedDistrictId ?? 1, // Seçilmediyse zorla 1 gönder
-           // provinceId: selectedProvinceId ?? 0,
-           // districtId: selectedDistrictId ?? 0,
-            address: detailedAddress,
-            description: description,
+            businessName: name,
+            phoneNumber: phone.trimmingCharacters(in: .whitespacesAndNewlines),
+            provinceId: selectedProvinceId ?? 1,
+            districtId: selectedDistrictId ?? 1,
+            address: detailedAddress.trimmingCharacters(in: .whitespacesAndNewlines),
+            description: description.trimmingCharacters(in: .whitespacesAndNewlines),
             offices: offices.map {
                 OfficeLocationDTO(
                     officeName: $0.name,
@@ -149,18 +167,42 @@ final class CreateCompanyViewModel: ObservableObject {
         )
 
         do {
-            let businessId = try await createBusinessAndGetIdUseCase.execute(request: request)
-            showOTP = true
-        } catch {
-            errorMessage = error.localizedDescription
-        }
+            _ = try await createBusinessAndGetIdUseCase.execute(
+                request: request
+            )
 
-        isLoading = false
+            showOTP = true
+
+        } catch {
+            errorMessage = userMessage(
+                from: error,
+                fallback: ConstantStrings.businessCreateFail
+            )
+        }
     }
 
     // MARK: - Verify Business
+
     func verifyBusiness(code: String) async throws {
         let success = try await verifyBusinessUseCase.execute(code: code)
-        if !success { throw NSError(domain: "VERIFY_FAILED", code: -1) }
+
+        if !success {
+            throw RepositoryError.api(
+                message: ConstantStrings.businessVerifyFailed
+            )
+        }
+    }
+
+    // MARK: - Helpers
+
+    private func userMessage(
+        from error: Error,
+        fallback: String
+    ) -> String {
+        if case let RepositoryError.api(message) = error {
+            return message
+        }
+
+        return fallback
     }
 }

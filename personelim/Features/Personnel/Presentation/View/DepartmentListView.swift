@@ -40,12 +40,12 @@ struct DepartmentListView: View {
                 .scrollContentBackground(.hidden)
                 .background(Color(.systemBackground))
             }
-            .navigationTitle("Departmanlar")
+            .navigationTitle(ConstantStrings.departmentsNavTitle)
             .navigationBarTitleDisplayMode(.large)
             .searchable(
                 text: $searchQuery,
                 placement: .navigationBarDrawer(displayMode: .automatic),
-                prompt: "Departman ara"
+                prompt: ConstantStrings.departmentSearchPrompt
             )
             .toolbar { toolbarContent }
             .navigationDestination(
@@ -119,10 +119,10 @@ struct DepartmentListView: View {
     private var departmentHeaderSection: some View {
         HStack(alignment: .center) {
             VStack(alignment: .leading, spacing: 4) {
-                Text("Departmanlar")
+                Text(ConstantStrings.departmentsNavTitle)
                     .font(.title3.weight(.bold))
 
-                Text("\(filteredDepartments.count) departman listeleniyor")
+                Text(String(format: ConstantStrings.departmentListedCountFormat, filteredDepartments.count))
                     .font(.caption)
                     .foregroundStyle(.secondary)
             }
@@ -174,12 +174,10 @@ struct DepartmentListView: View {
                 .font(.system(size: 38))
                 .foregroundStyle(.secondary)
 
-            Text(searchQuery.isEmpty ? "Henüz departman yok" : "Sonuç bulunamadı")
+            Text(searchQuery.isEmpty ? ConstantStrings.noDepartmentYetTitle : ConstantStrings.departmentSearchNoResultTitle)
                 .font(.headline)
 
-            Text(searchQuery.isEmpty
-                 ? "Yeni departman ekleyerek listeyi oluşturmaya başlayabilirsin."
-                 : "Arama kriterini değiştirerek tekrar deneyebilirsin.")
+            Text(searchQuery.isEmpty ? ConstantStrings.noDepartmentYetDescription : ConstantStrings.departmentSearchNoResultDescription)
                 .font(.caption)
                 .foregroundStyle(.secondary)
                 .multilineTextAlignment(.center)
@@ -188,7 +186,7 @@ struct DepartmentListView: View {
                 Button {
                     showingAddSheet = true
                 } label: {
-                    Label("Departman Ekle", systemImage: "plus")
+                    Label(ConstantStrings.addDepartmentTitle, systemImage: "plus")
                         .font(.caption.weight(.semibold))
                         .padding(.horizontal, 14)
                         .padding(.vertical, 10)
@@ -239,7 +237,7 @@ struct DepartmentListView: View {
         Group {
             ToolbarItem(placement: .topBarTrailing) {
                 Menu {
-                    Picker("Sıralama", selection: $sortOption) {
+                    Picker(ConstantStrings.sortTitle, selection: $sortOption) {
                         ForEach(SortOption.allCases, id: \.self) { option in
                             Text(option.title).tag(option)
                         }
@@ -266,31 +264,23 @@ struct DepartmentListView: View {
     private var customDatePickerSheet: some View {
         NavigationStack {
             Form {
-                Section("Tarih Aralığı") {
-                    DatePicker(
-                        "Başlangıç",
-                        selection: $chartVM.chartStartDate,
-                        displayedComponents: .date
-                    )
+                Section(ConstantStrings.dateRangeSectionTitle) {
+                    DatePicker(ConstantStrings.startTitle, selection: $chartVM.chartStartDate, displayedComponents: .date)
 
-                    DatePicker(
-                        "Bitiş",
-                        selection: $chartVM.chartEndDate,
-                        displayedComponents: .date
-                    )
+                    DatePicker(ConstantStrings.endTitle, selection: $chartVM.chartEndDate, displayedComponents: .date)
                 }
             }
-            .navigationTitle("Özel Tarih")
+            .navigationTitle(ConstantStrings.customDateTitle)
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {
                 ToolbarItem(placement: .cancellationAction) {
-                    Button("Vazgeç") {
+                    Button(ConstantStrings.cancelAction) {
                         chartVM.showingCustomDatePicker = false
                     }
                 }
 
                 ToolbarItem(placement: .confirmationAction) {
-                    Button("Uygula") {
+                    Button(ConstantStrings.applyAction) {
                         chartVM.showingCustomDatePicker = false
 
                         Task {
@@ -313,9 +303,9 @@ struct DepartmentListView: View {
         var title: String {
             switch self {
             case .nameAZ:
-                return "A-Z"
+                return ConstantStrings.sortAZ
             case .nameZA:
-                return "Z-A"
+                return ConstantStrings.sortZA
             }
         }
     }

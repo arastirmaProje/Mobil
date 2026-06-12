@@ -10,22 +10,22 @@ struct EditCompanyView: View {
     @State private var showDocPicker = false
 
     init(authRepo: AuthRepositoryProtocol) {
-        _vm = StateObject(wrappedValue: EditCompanyViewModel(authRepo: authRepo))
+        _vm = StateObject(
+            wrappedValue: EditCompanyViewModel(authRepo: authRepo)
+        )
     }
 
     var body: some View {
         NavigationStack {
             ZStack(alignment: .bottom) {
-
                 Color(.systemBackground)
                     .ignoresSafeArea()
 
                 ScrollView(showsIndicators: false) {
                     VStack(spacing: 18) {
-
                         logoSection
 
-                        sectionCard(title: "Şirket Bilgileri") {
+                        sectionCard(title: ConstantStrings.companyInfoSectionTitle) {
                             appTextField(
                                 title: ConstantStrings.companyNameLabel,
                                 text: $vm.companyName,
@@ -47,13 +47,13 @@ struct EditCompanyView: View {
                             )
                         }
 
-                        sectionCard(title: "Belgeler") {
+                        sectionCard(title: ConstantStrings.documentsLabel) {
                             documentPickerRow
                         }
 
                         officeSection
 
-                        sectionCard(title: "Adres Bilgileri") {
+                        sectionCard(title: ConstantStrings.addressInfoSectionTitle) {
                             provincePicker
 
                             if vm.selectedProvinceId != nil {
@@ -61,13 +61,13 @@ struct EditCompanyView: View {
                             }
 
                             appTextField(
-                                title: "Adres",
+                                title: ConstantStrings.detailedAddressLabel,
                                 text: $vm.detailedAddress,
                                 icon: "map"
                             )
 
                             appTextField(
-                                title: "Telefon",
+                                title: ConstantStrings.phoneLabel,
                                 text: $vm.phone,
                                 icon: "phone",
                                 keyboard: .phonePad
@@ -99,7 +99,9 @@ struct EditCompanyView: View {
                 }
             }
         }
-        .task { await vm.load() }
+        .task {
+            await vm.load()
+        }
         .fileImporter(
             isPresented: $showDocPicker,
             allowedContentTypes: [UTType.pdf],
@@ -111,8 +113,8 @@ struct EditCompanyView: View {
                     vm.setDocument(url: url)
                 }
 
-            case .failure(let error):
-                vm.errorMessage = error.localizedDescription
+            case .failure:
+                vm.errorMessage = ConstantStrings.documentSelectFailed
             }
         }
         .sheet(isPresented: $vm.showMapPicker) {
@@ -148,7 +150,7 @@ struct EditCompanyView: View {
                 )
 
             PhotosPicker(selection: $vm.photoItem, matching: .images) {
-                Label("Logo Değiştir", systemImage: "photo")
+                Label(ConstantStrings.changeLogoButton, systemImage: "photo")
                     .font(.subheadline.weight(.semibold))
                     .foregroundStyle(.blue)
                     .padding(.horizontal, 14)
@@ -176,7 +178,8 @@ struct EditCompanyView: View {
 
     private func profileImage(size: CGFloat) -> some View {
         Group {
-            if let data = vm.photoData, let ui = UIImage(data: data) {
+            if let data = vm.photoData,
+               let ui = UIImage(data: data) {
                 Image(uiImage: ui)
                     .resizable()
                     .scaledToFill()
@@ -212,7 +215,7 @@ struct EditCompanyView: View {
                         .font(.caption.weight(.semibold))
                         .foregroundStyle(.secondary)
 
-                    Text(vm.documentURL?.lastPathComponent ?? "PDF belge seç")
+                    Text(vm.documentURL?.lastPathComponent ?? ConstantStrings.selectPDFDocument)
                         .font(.system(size: 15, weight: .medium))
                         .foregroundStyle(.primary)
                         .lineLimit(1)
@@ -245,7 +248,7 @@ struct EditCompanyView: View {
                         Image(systemName: "plus.circle.fill")
                             .foregroundStyle(.blue)
 
-                        Text("Ofis Ekle")
+                        Text(ConstantStrings.addOfficeButton)
                             .font(.system(size: 15, weight: .semibold))
                             .foregroundStyle(.blue)
 
@@ -312,9 +315,11 @@ struct EditCompanyView: View {
 
             if let lat = office.wrappedValue.latitude,
                let lng = office.wrappedValue.longitude {
-                Text("\(ConstantStrings.selectedLocation): \(String(format: "%.5f", lat)), \(String(format: "%.5f", lng))")
-                    .font(.caption)
-                    .foregroundStyle(.secondary)
+                Text(
+                    "\(ConstantStrings.selectedLocation): \(String(format: "%.5f", lat)), \(String(format: "%.5f", lng))"
+                )
+                .font(.caption)
+                .foregroundStyle(.secondary)
             } else {
                 Text(ConstantStrings.locationNotSelected)
                     .font(.caption)
@@ -337,9 +342,11 @@ struct EditCompanyView: View {
         pickerRow(
             title: ConstantStrings.provinceLabel,
             icon: "map.fill",
-            placeholder: "İl seç",
+            placeholder: ConstantStrings.provincePickerPlaceholder,
             selection: Binding<Int?>(
-                get: { vm.selectedProvinceId },
+                get: {
+                    vm.selectedProvinceId
+                },
                 set: { newId in
                     guard let newId else {
                         vm.selectedProvinceId = nil
@@ -359,12 +366,16 @@ struct EditCompanyView: View {
 
     private var districtPicker: some View {
         pickerRow(
-            title: "İlçe",
+            title: ConstantStrings.districtLabel,
             icon: "mappin",
-            placeholder: "İlçe seç",
+            placeholder: ConstantStrings.districtPickerPlaceholder,
             selection: Binding<Int?>(
-                get: { vm.selectedDistrictId },
-                set: { vm.selectedDistrictId = $0 }
+                get: {
+                    vm.selectedDistrictId
+                },
+                set: {
+                    vm.selectedDistrictId = $0
+                }
             ),
             items: vm.districts
         )
@@ -389,7 +400,7 @@ struct EditCompanyView: View {
                     .foregroundStyle(.secondary)
 
                 Picker(placeholder, selection: selection) {
-                    Text("Seçiniz").tag(Int?.none)
+                    Text(ConstantStrings.pickerSelect).tag(Int?.none)
 
                     ForEach(items) { item in
                         Text(item.name).tag(Int?.some(item.id))
@@ -417,7 +428,11 @@ struct EditCompanyView: View {
                         try await vm.save()
                         dismiss()
                     } catch {
-                        vm.errorMessage = error.localizedDescription
+                        if case let RepositoryError.api(message) = error {
+                            vm.errorMessage = message
+                        } else {
+                            vm.errorMessage = ConstantStrings.companyUpdateFail
+                        }
                     }
                 }
             } label: {
@@ -427,7 +442,7 @@ struct EditCompanyView: View {
                             .tint(.white)
                     }
 
-                    Text(vm.isLoading ? "Kaydediliyor..." : "Değişiklikleri Kaydet")
+                    Text(vm.isLoading ? ConstantStrings.registerLoading : ConstantStrings.saveChangesButton)
                         .font(.headline)
                 }
                 .frame(maxWidth: .infinity)
@@ -515,6 +530,7 @@ struct EditCompanyView: View {
 // MARK: - Shared Row Background
 
 private extension View {
+
     func formRowBackground() -> some View {
         self
             .padding(.horizontal, 14)

@@ -17,10 +17,14 @@ struct PersonnelListView: View {
 
         var title: String {
             switch self {
-            case .nameAZ: return ConstantStrings.sortNameAZ
-            case .nameZA: return ConstantStrings.sortNameZA
-            case .salaryHighLow: return ConstantStrings.sortSalaryHighLow
-            case .salaryLowHigh: return ConstantStrings.sortSalaryLowHigh
+            case .nameAZ:
+                return ConstantStrings.sortNameAZ
+            case .nameZA:
+                return ConstantStrings.sortNameZA
+            case .salaryHighLow:
+                return ConstantStrings.sortSalaryHighLow
+            case .salaryLowHigh:
+                return ConstantStrings.sortSalaryLowHigh
             }
         }
 
@@ -55,11 +59,8 @@ struct PersonnelListView: View {
 
                 VStack(spacing: 14) {
                     headerSection
-
                     searchActionSection
-
                     statusMessages
-
                     personnelList
                 }
                 .padding(.top, 12)
@@ -107,7 +108,7 @@ struct PersonnelListView: View {
                     .font(.system(size: 28, weight: .bold))
                     .foregroundStyle(.primary)
 
-                Text("\(sortedMembers.count) personel listeleniyor")
+                Text(String(format: ConstantStrings.personnelListedCountFormat, sortedMembers.count))
                     .font(.subheadline)
                     .foregroundStyle(.secondary)
             }
@@ -149,7 +150,6 @@ struct PersonnelListView: View {
     private var searchActionSection: some View {
         HStack(spacing: 10) {
             searchBox
-
             sortMenu
 
             Button {
@@ -244,7 +244,7 @@ struct PersonnelListView: View {
         HStack(spacing: 12) {
             ProgressView()
 
-            Text("Personeller yükleniyor...")
+            Text(ConstantStrings.personnelLoading)
                 .font(.subheadline)
                 .foregroundStyle(.secondary)
 
@@ -334,15 +334,17 @@ struct PersonnelListView: View {
                 .font(.system(size: 38, weight: .semibold))
                 .foregroundStyle(.blue)
 
-            Text("Personel bulunamadı")
+            Text(ConstantStrings.personnelNotFoundTitle)
                 .font(.headline)
 
-            Text(vm.query.isEmpty
-                 ? "Yeni personel ekleyerek listeyi oluşturmaya başlayabilirsin."
-                 : "Arama kriterini değiştirerek tekrar deneyebilirsin.")
-                .font(.caption)
-                .foregroundStyle(.secondary)
-                .multilineTextAlignment(.center)
+            Text(
+                vm.query.isEmpty
+                ? ConstantStrings.personnelEmptyDescription
+                : ConstantStrings.departmentSearchNoResultDescription
+            )
+            .font(.caption)
+            .foregroundStyle(.secondary)
+            .multilineTextAlignment(.center)
 
             if vm.query.isEmpty {
                 Button {
@@ -577,10 +579,13 @@ private struct ScoreMiniGauge: View {
         switch score {
         case 0..<40:
             return .red
+
         case 40..<70:
             return .orange
+
         case 70..<85:
             return .blue
+
         default:
             return .green
         }

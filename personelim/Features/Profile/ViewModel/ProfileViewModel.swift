@@ -5,10 +5,14 @@ import SwiftUI
 final class ProfileViewModel: ObservableObject {
 
     // MARK: - State
+
     @Published var isLoading = false
     @Published var errorMessage: String?
     @Published var employeeUI: EmployeeProfileUI?
     @Published var managerUI: ManagerProfileUI?
+
+    @Published var isLoggingOut = false
+    @Published var logoutErrorMessage: String?
 
     private let authRepo: AuthRepositoryProtocol
     private let memberRepo: BusinessMemberRepositoryProtocol
@@ -18,6 +22,7 @@ final class ProfileViewModel: ObservableObject {
     private var loadTask: Task<Void, Never>?
 
     // MARK: - Init
+
     init(
         authRepo: AuthRepositoryProtocol = AuthRepositoryImpl(network: NetworkManager()),
         memberRepo: BusinessMemberRepositoryProtocol,
@@ -30,7 +35,29 @@ final class ProfileViewModel: ObservableObject {
         self.leaveRepo = leaveRepo
     }
 
+    // MARK: - Logout
+
+    func logout(appState: AppState) async {
+        isLoggingOut = true
+        logoutErrorMessage = nil
+
+        defer {
+            isLoggingOut = false
+        }
+
+        do {
+            try await authRepo.logout()
+            appState.logout()
+        } catch {
+            logoutErrorMessage = userMessage(
+                from: error,
+                fallback: ConstantStrings.logoutFailed
+            )
+        }
+    }
+
     // MARK: - Load Profile
+
     func loadProfile(appState: AppState) async {
         if loadTask != nil { return }
 
@@ -52,9 +79,12 @@ final class ProfileViewModel: ObservableObject {
                 appState.userDTO = userDTO
 
                 let businesses = try await businessRepo.getBusinesses()
+
                 guard let businessDTO = businesses.first else {
                     let employee = EmployeeProfileUI(
-                        fullName: userDTO.fullName ?? "\(userDTO.firstName ?? "") \(userDTO.lastName ?? "")".trimmingCharacters(in: .whitespacesAndNewlines),
+                        fullName: userDTO.fullName
+                            ?? "\(userDTO.firstName ?? "") \(userDTO.lastName ?? "")"
+                                .trimmingCharacters(in: .whitespacesAndNewlines),
                         position: nil,
                         salaryText: nil,
                         tcIdentityNumber: nil,
@@ -64,27 +94,41 @@ final class ProfileViewModel: ObservableObject {
                         documentFiles: [],
                         remainingLeaveDaysText: "0"
                     )
+
                     self.employeeUI = employee
                     return
                 }
+
                 appState.companyDTO = businessDTO
 
                 let businessId = businessDTO.id
-                let members = try await memberRepo.getMembers(businessId: businessId)
+
+                let members = try await memberRepo.getMembers(
+                    businessId: businessId
+                )
+
                 let activeMembers = members.filter { $0.isActive ?? false }
                 appState.businessMembers = activeMembers
-                let me = activeMembers.first { $0.userId.lowercased() == userDTO.id.lowercased() }
+
+                let me = activeMembers.first {
+                    $0.userId.lowercased() == userDTO.id.lowercased()
+                }
+
                 let role = me?.role ?? .default
                 appState.role = role
 
                 var remainingLeaveText = "0"
-                if let me {
+
+                if me != nil {
                     do {
-                        let leaves = try await leaveRepo.getMyLeaves(businessId: businessId)
+                        let leaves = try await leaveRepo.getMyLeaves(
+                            businessId: businessId
+                        )
+
                         let total = leaves.reduce(0) { $0 + $1.dayCount }
                         remainingLeaveText = "\(total)"
                     } catch {
-                        print("⚠️ Leave fetch failed:", error.localizedDescription)
+                        print("⚠️ Leave fetch failed:", error)
                     }
                 }
 
@@ -92,14 +136,26 @@ final class ProfileViewModel: ObservableObject {
                 var documentFiles: [BusinessMemberDocumentDTO] = []
 
                 if let me {
-                    let detail = try await memberRepo.getMember(memberId: me.id)
+                    let detail = try await memberRepo.getMember(
+                        memberId: me.id
+                    )
+
                     let docs = detail.documents ?? []
-                    cvFiles = docs.filter { $0.documentType.uppercased() == "CV" }
-                    documentFiles = docs.filter { $0.documentType.uppercased() != "CV" }
+
+                    cvFiles = docs.filter {
+                        $0.documentType.uppercased() == "CV"
+                    }
+
+                    documentFiles = docs.filter {
+                        $0.documentType.uppercased() != "CV"
+                    }
                 }
 
                 let employee = EmployeeProfileUI(
-                    fullName: me?.fullName ?? userDTO.fullName ?? "\(userDTO.firstName ?? "") \(userDTO.lastName ?? "")".trimmingCharacters(in: .whitespacesAndNewlines),
+                    fullName: me?.fullName
+                        ?? userDTO.fullName
+                        ?? "\(userDTO.firstName ?? "") \(userDTO.lastName ?? "")"
+                            .trimmingCharacters(in: .whitespacesAndNewlines),
                     position: me?.position,
                     salaryText: me?.salary.map { "\($0) TL" },
                     tcIdentityNumber: me?.tcIdentityNumber,
@@ -110,17 +166,26 @@ final class ProfileViewModel: ObservableObject {
                     remainingLeaveDaysText: remainingLeaveText
                 )
 
-                let offices: [OfficeUI] = (businessDTO.offices?.enumerated().map { idx, o in
-                    OfficeUI(
-                        id: o.id ?? "office-\(idx)",
-                        name: o.officeName?.trimmingCharacters(in: .whitespacesAndNewlines) ?? "Ofis \(idx + 1)",
-                        latitude: o.latitude,
-                        longitude: o.longitude
-                    )
-                }) ?? [
+                let offices: [OfficeUI] = (
+                    businessDTO.offices?.enumerated().map { idx, o in
+                        OfficeUI(
+                            id: o.id ?? "office-\(idx)",
+                            name: o.officeName?
+                                .trimmingCharacters(in: .whitespacesAndNewlines)
+                                ?? String(
+                                    format: ConstantStrings.officeDefaultNameFormat,
+                                    idx + 1
+                                ),
+                            latitude: o.latitude,
+                            longitude: o.longitude
+                        )
+                    }
+                ) ?? [
                     OfficeUI(
                         id: "office-1",
-                        name: businessDTO.locationName?.trimmingCharacters(in: .whitespacesAndNewlines) ?? "Merkez Ofis",
+                        name: businessDTO.locationName?
+                            .trimmingCharacters(in: .whitespacesAndNewlines)
+                            ?? ConstantStrings.mainOfficeTitle,
                         latitude: businessDTO.latitude,
                         longitude: businessDTO.longitude
                     )
@@ -145,17 +210,35 @@ final class ProfileViewModel: ObservableObject {
                 }
 
             } catch {
-                self.errorMessage = error.localizedDescription
+                self.errorMessage = self.userMessage(
+                    from: error,
+                    fallback: ConstantStrings.profileNotRetrivied
+                )
             }
         }
 
         await loadTask?.value
     }
+
+    // MARK: - Helpers
+
+    private func userMessage(
+        from error: Error,
+        fallback: String
+    ) -> String {
+        if case let RepositoryError.api(message) = error {
+            return message
+        }
+
+        return fallback
+    }
 }
 
 // MARK: - Convenience
+
 @MainActor
 extension ProfileViewModel {
+
     func loadIfNeeded(appState: AppState) async {
         guard employeeUI == nil && managerUI == nil else { return }
         await loadProfile(appState: appState)

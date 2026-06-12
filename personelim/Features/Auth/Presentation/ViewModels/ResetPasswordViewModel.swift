@@ -1,20 +1,11 @@
-//
-//  ResetPasswordViewModel.swift
-//  personelim
-//
-//  Created by Tuğberk Acabey on 6.12.2025.
-//
-
 import Foundation
 
 @MainActor
 final class ResetPasswordViewModel: ObservableObject {
 
-    // MARK: - Inputs
     @Published var newPassword: String = ""
     @Published var confirmPassword: String = ""
 
-    // MARK: - States
     @Published var isLoading = false
     @Published var success = false
 
@@ -30,7 +21,11 @@ final class ResetPasswordViewModel: ObservableObject {
         email: String,
         code: String,
         resetPasswordUseCase: ResetPasswordUseCaseProtocol =
-            ResetPasswordUseCase(repository: AuthRepositoryImpl(network: NetworkManager()))
+            ResetPasswordUseCase(
+                repository: AuthRepositoryImpl(
+                    network: NetworkManager()
+                )
+            )
     ) {
         self.email = email
         self.code = code
@@ -38,39 +33,65 @@ final class ResetPasswordViewModel: ObservableObject {
     }
 
     // MARK: - RESET PASSWORD
+
     func resetPassword() async {
 
-        guard !newPassword.isEmpty, !confirmPassword.isEmpty else {
-            errorMessage = "Şifre alanları boş olamaz."
+        let password = newPassword.trimmingCharacters(
+            in: .whitespacesAndNewlines
+        )
+
+        let confirm = confirmPassword.trimmingCharacters(
+            in: .whitespacesAndNewlines
+        )
+
+        guard !password.isEmpty,
+              !confirm.isEmpty else {
+
+            errorMessage = ConstantStrings.resetPasswordFieldsRequired
             showError = true
             return
         }
 
-        guard newPassword == confirmPassword else {
-            errorMessage = "Şifreler eşleşmiyor."
+        guard password == confirm else {
+
+            errorMessage = ConstantStrings.resetPasswordMismatch
             showError = true
             return
         }
 
         isLoading = true
+        errorMessage = ""
+        showError = false
+
+        defer { isLoading = false }
 
         do {
             let result = try await resetPasswordUseCase.execute(
                 email: email,
                 code: code,
-                newPassword: newPassword,
-                confirmPassword: confirmPassword
+                newPassword: password,
+                confirmPassword: confirm
             )
 
             if result {
                 success = true
+            } else {
+                errorMessage = ConstantStrings.resetPasswordFailed
+                showError = true
             }
 
         } catch {
-            errorMessage = error.localizedDescription
+            errorMessage = userMessage(from: error)
             showError = true
         }
+    }
 
-        isLoading = false
+    private func userMessage(from error: Error) -> String {
+
+        if case let RepositoryError.api(message) = error {
+            return message
+        }
+
+        return ConstantStrings.resetPasswordFailed
     }
 }

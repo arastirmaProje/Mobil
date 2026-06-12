@@ -120,7 +120,7 @@ private extension PerformanceQueryView {
     }
 
     var calendarSection: some View {
-        sectionCard(title: "Tarih Aralığı") {
+        sectionCard(title: ConstantStrings.dateRangeSectionTitle) {
             VStack(spacing: 14) {
                 RangeCalendarCard(
                     startDate: $startDate,
@@ -131,7 +131,7 @@ private extension PerformanceQueryView {
                 HStack(spacing: 0) {
                     dateSummaryBox(
                         title: ConstantStrings.startTitle,
-                        value: startDate?.trShortDate() ?? "-",
+                        value: startDate?.trShortDate() ?? ConstantStrings.dashPlaceholder,
                         icon: "calendar.badge.play"
                     )
 
@@ -140,7 +140,7 @@ private extension PerformanceQueryView {
 
                     dateSummaryBox(
                         title: ConstantStrings.endTitle,
-                        value: endDate?.trShortDate() ?? "-",
+                        value: endDate?.trShortDate() ?? ConstantStrings.dashPlaceholder,
                         icon: "calendar.badge.clock"
                     )
                 }
@@ -185,7 +185,7 @@ private extension PerformanceQueryView {
                         Image(systemName: "sparkle.magnifyingglass")
                     }
 
-                    Text(vm.isLoading ? "Sorgulanıyor..." : "Sorgu Oluştur")
+                    Text(vm.isLoading ? ConstantStrings.bulkQueryLoading : ConstantStrings.createQueryButton)
                         .font(.headline)
                 }
                 .foregroundStyle(.white)
@@ -248,7 +248,7 @@ private extension PerformanceQueryView {
 
                 Text(value)
                     .font(.system(size: 14, weight: .semibold))
-                    .foregroundStyle(value == "-" ? .secondary : .primary)
+                    .foregroundStyle(value == ConstantStrings.dashPlaceholder ? .secondary : .primary)
                     .lineLimit(2)
             }
         }

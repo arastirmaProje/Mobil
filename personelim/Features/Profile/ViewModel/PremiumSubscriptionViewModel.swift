@@ -1,14 +1,8 @@
-//
-//  PremiumSubscriptionViewModel.swift
-//  personelim
-//
-//  Created by Tuğberk Acabey on 14.05.2026.
-//
-
 import Foundation
 
 @MainActor
 final class PremiumSubscriptionViewModel: ObservableObject {
+
     @Published var isLoading = false
     @Published var errorMessage: String?
     @Published var plans: [PremiumSubscriptionPlan] = []
@@ -33,18 +27,26 @@ final class PremiumSubscriptionViewModel: ObservableObject {
     func loadPlans() async {
         isLoading = true
         errorMessage = nil
-        defer { isLoading = false }
+
+        defer {
+            isLoading = false
+        }
 
         do {
             let fetchedPlans = try await getPlansUseCase.execute()
+
             plans = fetchedPlans.isEmpty && useMockPlansWhenEmpty
                 ? Self.mockPlans
                 : fetchedPlans
+
         } catch {
             if useMockPlansWhenEmpty {
                 plans = Self.mockPlans
             } else {
-                errorMessage = userMessage(from: error)
+                errorMessage = userMessage(
+                    from: error,
+                    fallback: ConstantStrings.premiumPlansLoadFailed
+                )
             }
         }
     }
@@ -60,23 +62,37 @@ final class PremiumSubscriptionViewModel: ObservableObject {
         isPurchasing = true
         errorMessage = nil
         successMessage = nil
-        defer { isPurchasing = false }
+
+        defer {
+            isPurchasing = false
+        }
 
         do {
-            try await subscribeUseCase.execute(businessId: businessId)
+            try await subscribeUseCase.execute(
+                businessId: businessId
+            )
+
             successMessage = ConstantStrings.premiumSubscribeSuccess
             return true
+
         } catch {
-            errorMessage = userMessage(from: error)
+            errorMessage = userMessage(
+                from: error,
+                fallback: ConstantStrings.premiumSubscribeFailed
+            )
             return false
         }
     }
 
-    private func userMessage(from error: Error) -> String {
+    private func userMessage(
+        from error: Error,
+        fallback: String
+    ) -> String {
         if case let RepositoryError.api(message) = error {
             return message
         }
-        return error.localizedDescription
+
+        return fallback
     }
 
     private static let mockPlans: [PremiumSubscriptionPlan] = [
