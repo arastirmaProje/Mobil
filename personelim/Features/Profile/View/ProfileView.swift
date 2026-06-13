@@ -68,9 +68,10 @@ struct ProfileView: View {
                     errorCard(err)
                 }
 
-                if appState.businessId != nil {
+                if appState.businessId != nil,
+                   appState.companyDTO?.isSubscribed != true {
                     PremiumPromotionCard(
-                        isSubscribed: appState.companyDTO?.isSubscribed ?? false,
+                        isSubscribed: false,
                         onTap: { showPremiumSubscription = true }
                     )
                     .padding(.horizontal, 16)
@@ -103,7 +104,6 @@ struct ProfileView: View {
         }
         .refreshable {
             await vm.reload(appState: appState)
-            await loadReportsIfPossible()
             await loadSlackIfPossible()
         }
         .sheet(isPresented: $showEditPersonalProfile, onDismiss: {
@@ -120,7 +120,11 @@ struct ProfileView: View {
             EditCompanyView(authRepo: authRepo)
                 .presentationDetents([.large])
         }
-        .sheet(isPresented: $showCreateLeave) {
+        .sheet(isPresented: $showCreateLeave, onDismiss: {
+            Task {
+                await vm.reload(appState: appState)
+            }
+        }) {
             if let bid = appState.businessId {
                 CreateLeaveView(businessId: bid)
                     .presentationDetents([.large])
@@ -215,17 +219,22 @@ struct ProfileView: View {
 
     // MARK: - Employee Profile
 
-    private func employeeProfile(_ p: EmployeeProfileUI) -> some View {
+    private func employeeProfile(
+        _ p: EmployeeProfileUI,
+        showsSalary: Bool = true
+    ) -> some View {
         VStack(spacing: 14) {
 
             profileHeaderCard(
                 imageUrl: p.imageUrl,
                 title: p.fullName,
-                subtitle: p.position ?? ConstantStrings.noPositionInfo,
-                detail: String(
-                    format: ConstantStrings.incomeFormat,
-                    p.salaryText ?? ConstantStrings.dashPlaceholder
-                ),
+                subtitle: "",
+                detail: showsSalary
+                    ? String(
+                        format: ConstantStrings.incomeFormat,
+                        p.salaryText ?? ConstantStrings.dashPlaceholder
+                    )
+                    : nil,
                 editAction: { showEditPersonalProfile = true }
             )
 
@@ -274,7 +283,7 @@ struct ProfileView: View {
                 imageUrl: m.companyImageUrl,
                 title: m.companyName,
                 subtitle: trimmedOrNil(m.companyDescription) ?? ConstantStrings.companyNoDescription,
-                detail: m.companyCityLine,
+                detail: nil,
                 editAction: { showEditCompany = true }
             )
             .padding(.horizontal, 16)
@@ -294,7 +303,7 @@ struct ProfileView: View {
             .unifiedCard()
             .padding(.horizontal, 16)
 
-            employeeProfile(m.employee)
+            employeeProfile(m.employee, showsSalary: false)
                 .padding(.horizontal, 16)
         }
     }
@@ -324,10 +333,12 @@ struct ProfileView: View {
                     .foregroundStyle(.primary)
                     .lineLimit(1)
 
-                Text(subtitle)
-                    .font(.system(size: 14, weight: .medium))
-                    .foregroundStyle(.secondary)
-                    .lineLimit(2)
+                if !subtitle.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty {
+                    Text(subtitle)
+                        .font(.system(size: 14, weight: .medium))
+                        .foregroundStyle(.secondary)
+                        .lineLimit(2)
+                }
 
                 if let detail = trimmedOrNil(detail) {
                     Text(detail)
@@ -597,7 +608,7 @@ struct ProfileView: View {
         .padding(.vertical, 12)
         .background(Color(.systemBackground))
     }
-    
+
     // MARK: - Logout
 
     private var logoutSection: some View {

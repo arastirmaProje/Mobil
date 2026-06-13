@@ -180,7 +180,7 @@ private extension TaskDetailView {
                 dateBox(
                     title: ConstantStrings.startDateLabel,
                     date: task.startDate,
-                    icon: "calendar.badge.play"
+                    icon: "calendar"
                 )
                 Divider()
                     .padding(.vertical, 10)

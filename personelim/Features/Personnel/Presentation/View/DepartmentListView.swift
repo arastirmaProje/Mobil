@@ -245,6 +245,7 @@ struct DepartmentListView: View {
                 } label: {
                     Image(systemName: "arrow.up.arrow.down.circle.fill")
                         .symbolRenderingMode(.hierarchical)
+                        .font(.system(size: 24, weight: .semibold))
                 }
             }
 
@@ -254,6 +255,7 @@ struct DepartmentListView: View {
                 } label: {
                     Image(systemName: "plus.circle.fill")
                         .symbolRenderingMode(.hierarchical)
+                        .font(.system(size: 24, weight: .semibold))
                 }
             }
         }

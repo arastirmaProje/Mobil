@@ -11,6 +11,7 @@ final class ShiftTimerViewModel: ObservableObject {
     @Published var showLocationPicker: Bool = false
 
     private(set) var startOption: ShiftStartOption?
+
     private var startedAt: Date?
     private var pausedAt: Date?
     private var pausedTotalSeconds: Int = 0
@@ -22,6 +23,7 @@ final class ShiftTimerViewModel: ObservableObject {
     private let store = ShiftStore.shared
 
     private let toleranceMeters: Double
+    private let maxWorkedSeconds: Int = 24 * 60 * 60
 
     init(
         createShiftUseCase: CreateShiftUseCaseProtocol = CreateShiftUseCase(
@@ -70,6 +72,7 @@ final class ShiftTimerViewModel: ObservableObject {
 
         self.pausedAt = nil
 
+        checkDailyLimit()
         startTimer()
         persist()
     }
@@ -187,7 +190,11 @@ final class ShiftTimerViewModel: ObservableObject {
 
             let now = Date()
             let rawSeconds = Int(now.timeIntervalSince(startedAt))
-            let workedSeconds = max(0, rawSeconds - pausedTotalSeconds)
+            let workedSeconds = min(
+                max(0, rawSeconds - pausedTotalSeconds),
+                maxWorkedSeconds
+            )
+
             let endAt = startedAt.addingTimeInterval(
                 TimeInterval(workedSeconds)
             )
@@ -210,6 +217,31 @@ final class ShiftTimerViewModel: ObservableObject {
         }
     }
 
+    // MARK: - 24 Hour Limit
+
+    private func checkDailyLimit() {
+        guard isRunning, let startedAt else { return }
+
+        let now = Date()
+        let rawSeconds = Int(now.timeIntervalSince(startedAt))
+
+        var totalPaused = pausedTotalSeconds
+
+        if isPaused, let pausedAt {
+            totalPaused += max(
+                0,
+                Int(now.timeIntervalSince(pausedAt))
+            )
+        }
+
+        let workedSeconds = max(0, rawSeconds - totalPaused)
+
+        if workedSeconds >= maxWorkedSeconds {
+            errorMessage = "24 saatlik çalışma limiti dolduğu için mesai otomatik durduruldu."
+            resetLocal()
+        }
+    }
+
     // MARK: - Timer
 
     private func startTimer() {
@@ -222,10 +254,12 @@ final class ShiftTimerViewModel: ObservableObject {
             guard let self else { return }
 
             Task { @MainActor in
+                self.checkDailyLimit()
                 self.updateElapsed()
             }
         }
 
+        checkDailyLimit()
         updateElapsed()
     }
 
@@ -250,7 +284,7 @@ final class ShiftTimerViewModel: ObservableObject {
         }
 
         let worked = max(0, raw - pausedTotal)
-        elapsedText = Self.format(seconds: worked)
+        elapsedText = Self.format(seconds: min(worked, maxWorkedSeconds))
     }
 
     private static func format(seconds: Int) -> String {
@@ -294,7 +328,13 @@ final class ShiftTimerViewModel: ObservableObject {
         startOption = s.option.toDomain()
         isRunning = startOption != nil
 
-        if isRunning && !isPaused {
+        checkDailyLimit()
+
+        guard isRunning else {
+            return
+        }
+
+        if !isPaused {
             startTimer()
         } else {
             updateElapsed()

@@ -62,14 +62,7 @@ struct DepartmentChartSectionView: View {
                 Text(ConstantStrings.departmentAnalyticsTitle)
                     .font(.title3.weight(.semibold))
 
-                HStack(spacing: 6) {
-                    Image(systemName: viewModel.selectedMetric.icon)
-                        .foregroundStyle(viewModel.selectedMetric.color)
-
-                    Text(viewModel.selectedMetric.title)
-                        .font(.subheadline)
-                        .foregroundStyle(.secondary)
-                }
+                
             }
 
             Spacer()

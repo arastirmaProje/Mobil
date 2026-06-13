@@ -82,13 +82,9 @@ struct PersonnelDetailView: View {
             }
         }
         .task {
-            await vm.load(memberId: memberId)
-            await loadReportsIfPossible()
+            await refreshDetail()
         }
-        .refreshable {
-            await vm.load(memberId: memberId)
-            await loadReportsIfPossible()
-        }
+        
         .navigationDestination(
             isPresented: Binding(
                 get: { selectedReportId != nil },
@@ -147,6 +143,20 @@ struct PersonnelDetailView: View {
             employeeUserId: userId
         )
     }
+    
+    private func refreshDetail() async {
+        await vm.load(memberId: memberId)
+
+        guard let businessId = appState.businessId,
+              let userId = vm.member?.userId else {
+            return
+        }
+
+        await vm.loadReports(
+            businessId: businessId,
+            employeeUserId: userId
+        )
+    }
 
     // MARK: - Header
 
@@ -161,16 +171,7 @@ struct PersonnelDetailView: View {
                         .foregroundStyle(.primary)
                         .lineLimit(1)
 
-                    Text("\(ConstantStrings.positionPrefix)\(member.positionName ?? ConstantStrings.dashPlaceholder)")                        .font(.system(size: 14, weight: .medium))
-                        .foregroundStyle(.secondary)
-                        .lineLimit(1)
-
-                    let salaryText = member.salary.map { "\(Int($0)) TL" } ?? ConstantStrings.dashPlaceholder
-
-                    Text("\(ConstantStrings.incomePrefix)\(salaryText)")
-                        .font(.caption)
-                        .foregroundStyle(.secondary)
-                        .lineLimit(1)
+               
                 }
 
                 Spacer()
@@ -514,7 +515,7 @@ private struct PerformanceReportCard: View {
                             .font(.caption.weight(.semibold))
                             .foregroundStyle(.secondary)
 
-                        scorePill
+                       
                     }
 
                     Text(ISODate.shortRange(start: report.startDate, end: report.endDate))

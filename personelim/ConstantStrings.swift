@@ -251,7 +251,7 @@ public enum ConstantStrings {
     static let identityLabel = "Kimlik"
     static let resumeLabel = "CV"
     static let documentsSectionLabel = "Belgeler"
-    static let remainingLeaveDays = "Kalan izin günü"
+    static let remainingLeaveDays = "Kullanılan izin günü"
     static let querySectionTitle = "Sorgu"
     static let noReportTitle = "Henüz rapor yok"
     static let noReportDescription = "Tarih aralığı seçip sorgu oluştur."
@@ -288,7 +288,7 @@ public enum ConstantStrings {
     
     // MARK: - Personnel Detail
     static let positionPrefix = "Ünvan: "
-    static let remainingLeaveLabel = "Kalan izin günü"
+    static let remainingLeaveLabel = "Kullanılan izin günü"
     static let noReportsAvailable = "Henüz rapor yok"
     static let createQueryInstruction = "Tarih aralığı seçip sorgu oluştur."
     static let queryRangeLabel = "Sorgu Aralığı"

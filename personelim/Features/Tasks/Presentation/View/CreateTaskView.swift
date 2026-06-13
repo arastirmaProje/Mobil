@@ -155,7 +155,7 @@ private extension CreateTaskView {
                         dateSummaryBox(
                             title: ConstantStrings.startTitle,
                             value: vm.startDate?.trShortDate() ?? ConstantStrings.dashPlaceholder,
-                            icon: "calendar.badge.play"
+                            icon: "calendar"
                         )
 
                         Divider()

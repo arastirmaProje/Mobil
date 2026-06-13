@@ -56,9 +56,7 @@ struct LeaveSectionView: View {
                     .lineLimit(1)
                     .minimumScaleFactor(0.85)
 
-                Text(ConstantStrings.currentLeaveSummary)
-                    .font(.caption2.weight(.medium))
-                    .foregroundStyle(.secondary)
+          
             }
 
             Spacer()

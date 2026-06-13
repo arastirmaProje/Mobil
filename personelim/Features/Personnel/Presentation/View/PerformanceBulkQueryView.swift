@@ -115,7 +115,7 @@ private extension PerformanceBulkQueryView {
             dateSummaryBox(
                 title: ConstantStrings.startTitle,
                 value: startDate.trShortDate(),
-                icon: "calendar.badge.play"
+                icon: "calendar"
             )
 
             Divider()

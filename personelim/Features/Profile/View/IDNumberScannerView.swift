@@ -3,8 +3,6 @@ import VisionKit
 import AVFoundation
 import Vision
 
-// MARK: - SwiftUI Wrapper
-
 struct IDNumberScannerView: UIViewControllerRepresentable {
 
     let onFound: (String) -> Void
@@ -24,8 +22,6 @@ struct IDNumberScannerView: UIViewControllerRepresentable {
         context: Context
     ) { }
 
-    // MARK: - Host VC
-
     final class ScannerHostViewController: UIViewController, DataScannerViewControllerDelegate {
 
         var onFound: ((String) -> Void)?
@@ -33,7 +29,6 @@ struct IDNumberScannerView: UIViewControllerRepresentable {
         var onError: ((String) -> Void)?
 
         private var scanner: DataScannerViewController?
-
         private let captureSession = AVCaptureSession()
         private var previewLayer: AVCaptureVideoPreviewLayer?
         private let videoOutput = AVCaptureVideoDataOutput()
@@ -42,18 +37,15 @@ struct IDNumberScannerView: UIViewControllerRepresentable {
         private var isUsingOCR = false
         private var isProcessingFrame = false
         private var lastHitAt: CFTimeInterval = 0
+        private var didFinish = false
 
-        private let topBlurView = UIVisualEffectView(
-            effect: UIBlurEffect(style: .systemUltraThinMaterialDark)
-        )
+        private let topBlurView = UIVisualEffectView(effect: UIBlurEffect(style: .systemUltraThinMaterialDark))
         private let closeButton = UIButton(type: .system)
         private let titleLabel = UILabel()
         private let subtitleLabel = UILabel()
         private let scanFrameView = UIView()
         private let scanLineView = UIView()
-        private let hintContainer = UIVisualEffectView(
-            effect: UIBlurEffect(style: .systemUltraThinMaterialDark)
-        )
+        private let hintContainer = UIVisualEffectView(effect: UIBlurEffect(style: .systemUltraThinMaterialDark))
         private let hintLabel = UILabel()
 
         private var scanLineTopConstraint: NSLayoutConstraint?
@@ -80,8 +72,6 @@ struct IDNumberScannerView: UIViewControllerRepresentable {
             super.viewDidLayoutSubviews()
             previewLayer?.frame = view.bounds
         }
-
-        // MARK: - Permission
 
         private func requestCameraPermissionAndStart() {
             let status = AVCaptureDevice.authorizationStatus(for: .video)
@@ -110,8 +100,6 @@ struct IDNumberScannerView: UIViewControllerRepresentable {
             }
         }
 
-        // MARK: - Overlay UI
-
         private func setupOverlayUI() {
             setupTopBar()
             setupScanFrame()
@@ -126,18 +114,11 @@ struct IDNumberScannerView: UIViewControllerRepresentable {
 
             view.addSubview(topBlurView)
 
-            closeButton.setImage(
-                UIImage(systemName: "xmark"),
-                for: .normal
-            )
+            closeButton.setImage(UIImage(systemName: "xmark"), for: .normal)
             closeButton.tintColor = .white
             closeButton.backgroundColor = UIColor.white.withAlphaComponent(0.14)
             closeButton.layer.cornerRadius = 18
-            closeButton.addTarget(
-                self,
-                action: #selector(closeTapped),
-                for: .touchUpInside
-            )
+            closeButton.addTarget(self, action: #selector(closeTapped), for: .touchUpInside)
 
             titleLabel.text = ConstantStrings.idScannerTitle
             titleLabel.textColor = .white
@@ -259,32 +240,18 @@ struct IDNumberScannerView: UIViewControllerRepresentable {
                 ])
 
                 if x == 0 {
-                    corner.leadingAnchor.constraint(
-                        equalTo: scanFrameView.leadingAnchor,
-                        constant: -1
-                    ).isActive = true
+                    corner.leadingAnchor.constraint(equalTo: scanFrameView.leadingAnchor, constant: -1).isActive = true
                 } else {
-                    corner.trailingAnchor.constraint(
-                        equalTo: scanFrameView.trailingAnchor,
-                        constant: 1
-                    ).isActive = true
+                    corner.trailingAnchor.constraint(equalTo: scanFrameView.trailingAnchor, constant: 1).isActive = true
                 }
 
                 if y == 0 {
-                    corner.topAnchor.constraint(
-                        equalTo: scanFrameView.topAnchor,
-                        constant: -1
-                    ).isActive = true
+                    corner.topAnchor.constraint(equalTo: scanFrameView.topAnchor, constant: -1).isActive = true
                 } else {
-                    corner.bottomAnchor.constraint(
-                        equalTo: scanFrameView.bottomAnchor,
-                        constant: 1
-                    ).isActive = true
+                    corner.bottomAnchor.constraint(equalTo: scanFrameView.bottomAnchor, constant: 1).isActive = true
                 }
 
-                corner.transform = CGAffineTransform(
-                    rotationAngle: rotation * .pi / 180
-                )
+                corner.transform = CGAffineTransform(rotationAngle: rotation * .pi / 180)
             }
         }
 
@@ -336,10 +303,8 @@ struct IDNumberScannerView: UIViewControllerRepresentable {
         }
 
         @objc private func closeTapped() {
-            onCancel?()
+            finishWithCancel()
         }
-
-        // MARK: - Scanner Selection
 
         private func setupPreferredScanner() {
             if DataScannerViewController.isSupported &&
@@ -353,9 +318,9 @@ struct IDNumberScannerView: UIViewControllerRepresentable {
         private func setupDataScanner() {
             let viewController = DataScannerViewController(
                 recognizedDataTypes: [.text()],
-                qualityLevel: .balanced,
-                recognizesMultipleItems: false,
-                isHighFrameRateTrackingEnabled: false,
+                qualityLevel: .accurate,
+                recognizesMultipleItems: true,
+                isHighFrameRateTrackingEnabled: true,
                 isGuidanceEnabled: true,
                 isHighlightingEnabled: true
             )
@@ -402,23 +367,47 @@ struct IDNumberScannerView: UIViewControllerRepresentable {
             stopOCRIfNeeded()
         }
 
-        // MARK: - DataScanner Delegate
-
         func dataScanner(
             _ dataScanner: DataScannerViewController,
             didTapOn item: RecognizedItem
         ) {
-            guard case .text(let text) = item else { return }
+            scanRecognizedItems([item])
+        }
 
-            let raw = text.transcript
+        func dataScanner(
+            _ dataScanner: DataScannerViewController,
+            didAdd addedItems: [RecognizedItem],
+            allItems: [RecognizedItem]
+        ) {
+            scanRecognizedItems(addedItems)
+        }
 
-            if let tc = Self.extract11Digits(from: raw) {
-                onFound?(tc)
+        func dataScanner(
+            _ dataScanner: DataScannerViewController,
+            didUpdate updatedItems: [RecognizedItem],
+            allItems: [RecognizedItem]
+        ) {
+            scanRecognizedItems(updatedItems)
+        }
+
+        private func scanRecognizedItems(_ items: [RecognizedItem]) {
+            guard !didFinish else { return }
+
+            let combinedText = items.compactMap { item -> String? in
+                guard case .text(let text) = item else { return nil }
+                return text.transcript
             }
+            .joined(separator: " ")
+
+            guard let tc = Self.extract11Digits(from: combinedText) else {
+                return
+            }
+
+            finishWithTC(tc)
         }
 
         func dataScannerDidCancel(_ dataScanner: DataScannerViewController) {
-            onCancel?()
+            finishWithCancel()
         }
 
         func dataScanner(
@@ -443,8 +432,6 @@ struct IDNumberScannerView: UIViewControllerRepresentable {
                 self.scanner = nil
             }
         }
-
-        // MARK: - OCR Fallback
 
         private func setupOCRFallback() {
             guard !isUsingOCR else { return }
@@ -476,10 +463,7 @@ struct IDNumberScannerView: UIViewControllerRepresentable {
                 kCVPixelBufferPixelFormatTypeKey as String:
                     kCVPixelFormatType_32BGRA
             ]
-            videoOutput.setSampleBufferDelegate(
-                self,
-                queue: captureQueue
-            )
+            videoOutput.setSampleBufferDelegate(self, queue: captureQueue)
 
             guard captureSession.canAddOutput(videoOutput) else {
                 onError?(ConstantStrings.cameraOutputFailed)
@@ -524,22 +508,87 @@ struct IDNumberScannerView: UIViewControllerRepresentable {
             }
         }
 
-        // MARK: - TC Extraction
+        private func finishWithTC(_ tc: String) {
+            guard !didFinish else { return }
+
+            didFinish = true
+            stopIfNeeded()
+
+            DispatchQueue.main.async { [weak self] in
+                self?.onFound?(tc)
+            }
+        }
+
+        private func finishWithCancel() {
+            guard !didFinish else { return }
+
+            didFinish = true
+            stopIfNeeded()
+            onCancel?()
+        }
 
         static func extract11Digits(from string: String) -> String? {
-            let digits = string.filter(\.isNumber)
+            let normalized = string
+                .replacingOccurrences(of: " ", with: "")
+                .replacingOccurrences(of: "-", with: "")
+                .replacingOccurrences(of: ".", with: "")
+                .replacingOccurrences(of: "\n", with: "")
+                .replacingOccurrences(of: "\t", with: "")
 
-            guard digits.count >= 11 else {
+            let pattern = #"(?<!\d)\d{11}(?!\d)"#
+
+            guard let regex = try? NSRegularExpression(pattern: pattern) else {
                 return nil
             }
 
-            let tc = String(digits.prefix(11))
-            return tc.count == 11 ? tc : nil
+            let range = NSRange(
+                normalized.startIndex..<normalized.endIndex,
+                in: normalized
+            )
+
+            let matches = regex.matches(
+                in: normalized,
+                range: range
+            )
+
+            for match in matches {
+                guard let swiftRange = Range(match.range, in: normalized) else {
+                    continue
+                }
+
+                let candidate = String(normalized[swiftRange])
+
+                if isValidTurkishID(candidate) {
+                    return candidate
+                }
+            }
+
+            return nil
+        }
+
+        static func isValidTurkishID(_ value: String) -> Bool {
+            guard value.count == 11,
+                  value.allSatisfy(\.isNumber),
+                  value.first != "0" else {
+                return false
+            }
+
+            let digits = value.compactMap { Int(String($0)) }
+
+            guard digits.count == 11 else {
+                return false
+            }
+
+            let oddSum = digits[0] + digits[2] + digits[4] + digits[6] + digits[8]
+            let evenSum = digits[1] + digits[3] + digits[5] + digits[7]
+
+            let tenthDigit = ((oddSum * 7) - evenSum) % 10
+            let eleventhDigit = digits[0...9].reduce(0, +) % 10
+
+            return digits[9] == tenthDigit && digits[10] == eleventhDigit
         }
     }
 }
-
-// MARK: - OCR Delegate
 
 extension IDNumberScannerView.ScannerHostViewController: AVCaptureVideoDataOutputSampleBufferDelegate {
 
@@ -550,7 +599,7 @@ extension IDNumberScannerView.ScannerHostViewController: AVCaptureVideoDataOutpu
     ) {
         let now = CACurrentMediaTime()
 
-        if now - lastHitAt < 0.20 { return }
+        if now - lastHitAt < 0.25 { return }
         if isProcessingFrame { return }
 
         guard let pixelBuffer = CMSampleBufferGetImageBuffer(sampleBuffer) else {
@@ -578,25 +627,22 @@ extension IDNumberScannerView.ScannerHostViewController: AVCaptureVideoDataOutpu
             }
 
             let text = observations
-                .compactMap {
-                    $0.topCandidates(1).first?.string
-                }
+                .compactMap { $0.topCandidates(3).first?.string }
                 .joined(separator: " ")
 
             if let tc = Self.extract11Digits(from: text) {
                 self.lastHitAt = CACurrentMediaTime()
 
                 DispatchQueue.main.async {
-                    self.stopOCRIfNeeded()
-                    self.onFound?(tc)
+                    self.finishWithTC(tc)
                 }
             }
         }
 
         request.recognitionLevel = .accurate
         request.usesLanguageCorrection = false
-        request.minimumTextHeight = 0.02
-        request.recognitionLanguages = ["en-US"]
+        request.minimumTextHeight = 0.01
+        request.recognitionLanguages = ["tr-TR", "en-US"]
 
         let handler = VNImageRequestHandler(
             cvPixelBuffer: pixelBuffer,
