@@ -94,6 +94,14 @@ enum Endpoint {
     case performanceQueryDepartmentCharts
     case queryDepartmentCharts
     
+    case departmentPerformanceHistory(
+        businessId: String,
+        departmentId: String
+    )
+    
+    case departmentReportsByBusiness(businessId: String)
+    case departmentReportDetail(reportId: String)
+    
     case logout
 
     var path: String {
@@ -179,7 +187,22 @@ enum Endpoint {
 
         case .logout:
             return "/api/Auth/logout"
+            
+        case let .departmentPerformanceHistory(
+            businessId,
+            departmentId
+        ):
+            return "/api/Performance/business/\(businessId)/department/\(departmentId)"
+            
+            
+        case let .departmentReportsByBusiness(businessId):
+            return "/api/Performance/department-reports/business/\(businessId)"
+
+        case let .departmentReportDetail(reportId):
+            return "/api/Performance/department-reports/\(reportId)"
                 }
+        
+        
         
         
     }
@@ -190,7 +213,7 @@ enum Endpoint {
                 .performanceQueryDepartment, .performanceQueryDepartmentCharts, .queryDepartmentCharts, .logout: 
                     return .post
 
-        case .businessMembers, .profile, .getBusiness, .provinces, .districts, .business, .businessList, .getBusinessMember, .downloadDocument, .myTasks, .schedules, .getBusinessDocuments, .performanceReports, .performanceReportDetail, .myShifts, .myLeaves, .businessLeaves, .departments, .jobTitleCategories, .jobCategories, .jobTitlesByDepartment, .slackWebhooks, .slackWebhookEventTypes:
+        case .businessMembers, .profile, .getBusiness, .provinces, .districts, .business, .businessList, .getBusinessMember, .downloadDocument, .myTasks, .schedules, .getBusinessDocuments, .performanceReports, .performanceReportDetail, .myShifts, .myLeaves, .businessLeaves, .departments, .jobTitleCategories, .jobCategories, .jobTitlesByDepartment, .slackWebhooks, .slackWebhookEventTypes,.departmentPerformanceHistory, .departmentReportsByBusiness, .departmentReportDetail:
             return .get
 
         case .profileUpdate, .updateBusinessMember, .updateBusiness, .updateTaskStatus, .updateLeaveStatus, .updateDepartment, .updateSlackWebhook:

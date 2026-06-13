@@ -46,9 +46,9 @@ final class DepartmentRepositoryImpl: DepartmentRepositoryProtocol {
         let name: String
         let categoryId: Int
     }
-
-   
-
+    
+    
+    
     func updateDepartment(id: String, name: String, categoryId: Int) async throws {
         let body = UpdateDepartmentRequest(name: name, categoryId: categoryId)
         
@@ -62,28 +62,28 @@ final class DepartmentRepositoryImpl: DepartmentRepositoryProtocol {
             throw RepositoryError.api(message: res.message ?? "Güncelleme başarısız")
         }
     }
-
-        func deleteDepartment(id: String) async throws {
-            let res: ServiceResponse<Bool> = try await network.request(
-                endpoint: .deleteDepartment(id: id), 
-                method: .delete,
-                body: nil
-            )
-            
-            guard res.success else {
-                throw RepositoryError.api(message: res.message ?? "Silme işlemi başarısız")
-            }
+    
+    func deleteDepartment(id: String) async throws {
+        let res: ServiceResponse<Bool> = try await network.request(
+            endpoint: .deleteDepartment(id: id),
+            method: .delete,
+            body: nil
+        )
+        
+        guard res.success else {
+            throw RepositoryError.api(message: res.message ?? "Silme işlemi başarısız")
         }
+    }
     
     func queryDepartmentPerformance(request: DepartmentPerformanceRequestDTO) async throws -> DepartmentPerformanceResponseDTO {
-   
+        
         let response: ServiceResponse<DepartmentPerformanceResponseDTO> = try await network.request(
             endpoint: .performanceQueryDepartment,
             method: .post,
             body: request
         )
         
-     
+        
         if response.success, let performanceData = response.data {
             return performanceData
         } else {
@@ -91,21 +91,87 @@ final class DepartmentRepositoryImpl: DepartmentRepositoryProtocol {
         }
     }
     func fetchDepartmentCharts(businessId: String, startDate: String, endDate: String) async throws -> BusinessDepartmentChartsResponseDTO {
-            let requestDTO = DepartmentChartsRequestDTO(businessId: businessId, startDate: startDate, endDate: endDate)
-            
-          
-            let response: ServiceResponse<BusinessDepartmentChartsResponseDTO> = try await network.request(
-                endpoint: .queryDepartmentCharts,
-                method: .post,
-                body: requestDTO
-            )
-            
-      
-            if response.success, let chartsData = response.data {
-                return chartsData
-            } else {
-                throw RepositoryError.api(message: response.message ?? "Grafik verileri alınamadı")
-            }
+        let requestDTO = DepartmentChartsRequestDTO(businessId: businessId, startDate: startDate, endDate: endDate)
+        
+        
+        let response: ServiceResponse<BusinessDepartmentChartsResponseDTO> = try await network.request(
+            endpoint: .queryDepartmentCharts,
+            method: .post,
+            body: requestDTO
+        )
+        
+        
+        if response.success, let chartsData = response.data {
+            return chartsData
+        } else {
+            throw RepositoryError.api(message: response.message ?? "Grafik verileri alınamadı")
         }
     }
+    func getDepartmentPerformanceHistory(
+        businessId: String,
+        departmentId: String
+    ) async throws -> [DepartmentPerformanceHistoryDTO] {
+        
+        let response: ServiceResponse<[DepartmentPerformanceHistoryDTO]> =
+        try await network.request(
+            endpoint: .departmentPerformanceHistory(
+                businessId: businessId,
+                departmentId: departmentId
+            ),
+            method: .get,
+            body: nil
+        )
+        
+        if response.success {
+            return response.data ?? []
+        } else {
+            throw RepositoryError.api(
+                message: response.message ?? "Geçmiş raporlar alınamadı"
+            )
+        }
+    }
+    
+    func getDepartmentReports(
+        businessId: String
+    ) async throws -> [DepartmentReportHistoryDTO] {
+
+        let response: ServiceResponse<[DepartmentReportHistoryDTO]> =
+        try await network.request(
+            endpoint: .departmentReportsByBusiness(businessId: businessId),
+            method: .get,
+            body: nil
+        )
+
+        if response.success {
+            return response.data ?? []
+        } else {
+            throw RepositoryError.api(
+                message: response.message ?? ConstantStrings.departmentPerformanceReportsLoadFailed
+            )
+        }
+    }
+
+    func getDepartmentReportDetail(
+        reportId: String
+    ) async throws -> DepartmentPerformanceResponseDTO {
+
+        let response: ServiceResponse<DepartmentPerformanceResponseDTO> =
+        try await network.request(
+            endpoint: .departmentReportDetail(reportId: reportId),
+            method: .get,
+            body: nil
+        )
+
+        if response.success, let data = response.data {
+            return data
+        } else {
+            throw RepositoryError.api(
+                message: response.message ?? ConstantStrings.departmentPerformanceDetailLoadFailed
+            )
+        }
+    }
+}
+    
+    
+
 

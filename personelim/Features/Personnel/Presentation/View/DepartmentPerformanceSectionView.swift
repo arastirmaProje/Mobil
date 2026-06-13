@@ -14,24 +14,143 @@ struct DepartmentPerformanceSectionView: View {
     let businessId: String
     let departmentId: String
 
+    @State private var selectedReportId: String?
+    @State private var showQuery = false
+
     var body: some View {
-        VStack(alignment: .leading, spacing: 14) {
+        VStack(alignment: .leading, spacing: 12) {
+            querySection
+        }
+        .task {
+            await vm.loadReports(
+                businessId: businessId,
+                departmentId: departmentId
+            )
+        }
+        .navigationDestination(
+            isPresented: Binding(
+                get: { selectedReportId != nil },
+                set: { if !$0 { selectedReportId = nil } }
+            )
+        ) {
+            if let reportId = selectedReportId {
+                DepartmentReportDetailView(reportId: reportId)
+            }
+        }
+        .sheet(isPresented: $showQuery) {
+            DepartmentPerformanceQueryView(
+                businessId: businessId,
+                departmentId: departmentId,
+                onCreated: {
+                    Task {
+                        await vm.loadReports(
+                            businessId: businessId,
+                            departmentId: departmentId
+                        )
+                    }
+                }
+            )
+            .presentationDetents([.large])
+        }
+    }
 
-            header
+    // MARK: - Query Section
 
-            dateSection
+    private var querySection: some View {
+        VStack(alignment: .leading, spacing: 12) {
+            HStack(alignment: .center) {
+                VStack(alignment: .leading, spacing: 4) {
+                    Text(ConstantStrings.departmentPerformanceQueriesTitle)
+                        .font(.system(size: 17, weight: .bold))
+                        .foregroundStyle(.primary)
 
-            if vm.isLoading {
-                loadingRow
+                    Text(
+                        vm.reports.isEmpty
+                        ? ConstantStrings.departmentPerformanceNoReportsText
+                        : String(
+                            format: ConstantStrings.departmentPerformanceListedReportsFormat,
+                            vm.reports.count
+                        )
+                    )
+                    .font(.caption)
+                    .foregroundStyle(.secondary)
+                }
+
+                Spacer()
+
+                Button {
+                    showQuery = true
+                } label: {
+                    Label(
+                        ConstantStrings.departmentPerformanceQueryButton,
+                        systemImage: "sparkle.magnifyingglass"
+                    )
+                    .font(.caption.weight(.semibold))
+                    .foregroundStyle(.blue)
+                    .padding(.horizontal, 12)
+                    .padding(.vertical, 8)
+                    .background(
+                        Capsule()
+                            .fill(Color.blue.opacity(0.10))
+                    )
+                }
+                .buttonStyle(.plain)
+                .disabled(vm.isLoading)
             }
 
-            if let error = vm.errorMessage {
-                errorRow(error)
+            if vm.isReportsLoading {
+                reportsLoadingCard
             }
 
-            if let report = vm.report {
-                reportContent(report)
+            if vm.reports.isEmpty && !vm.isReportsLoading {
+                emptyReportCard
+            } else {
+                reportsList
             }
+        }
+    }
+
+    // MARK: - Reports List
+
+    private var reportsList: some View {
+        VStack(spacing: 0) {
+            ForEach(vm.reports) { report in
+                DepartmentReportCard(
+                    report: report,
+                    dateRange: vm.formattedDateRange(
+                        start: report.periodStart,
+                        end: report.periodEnd
+                    ),
+                    statusText: vm.statusText(for: report.departmanSkoru)
+                ) {
+                    selectedReportId = report.id
+                }
+
+                if report.id != vm.reports.last?.id {
+                    Divider()
+                        .padding(.leading, 70)
+                }
+            }
+        }
+        .background(Color(.systemBackground))
+        .clipShape(RoundedRectangle(cornerRadius: 18, style: .continuous))
+        .overlay(
+            RoundedRectangle(cornerRadius: 18, style: .continuous)
+                .stroke(Color.black.opacity(0.06), lineWidth: 1)
+        )
+    }
+
+    // MARK: - State Cards
+
+    private var reportsLoadingCard: some View {
+        HStack(spacing: 12) {
+            ProgressView()
+
+            Text(ConstantStrings.departmentPerformanceLoadingReportsText)
+                .font(.subheadline)
+                .foregroundStyle(.secondary)
+
+            Spacer()
         }
         .padding(14)
         .background(Color(.systemBackground))
@@ -42,246 +161,124 @@ struct DepartmentPerformanceSectionView: View {
         )
     }
 
-    private var header: some View {
-        HStack {
-            VStack(alignment: .leading, spacing: 4) {
-                Text(ConstantStrings.departmentPerformanceTitle)
-                    .font(.system(size: 18, weight: .bold))
-
-                Text(ConstantStrings.createDepartmentReportButton)
-                    .font(.caption)
-                    .foregroundStyle(.secondary)
-            }
-
-            Spacer()
-
-            Button {
-                Task {
-                    await vm.load(
-                        businessId: businessId,
-                        departmentId: departmentId
-                    )
-                }
-            } label: {
-                Image(systemName: "chart.bar.doc.horizontal")
-                    .font(.system(size: 15, weight: .semibold))
-                    .foregroundStyle(.blue)
-                    .frame(width: 36, height: 36)
-                    .background(Color.blue.opacity(0.10))
-                    .clipShape(Circle())
-            }
-            .buttonStyle(.plain)
-            .disabled(vm.isLoading)
-        }
-    }
-
-    private var dateSection: some View {
-        VStack(spacing: 10) {
-            DatePicker(
-                ConstantStrings.startDateLabel,
-                selection: $vm.startDate,
-                displayedComponents: .date
-            )
-
-            DatePicker(
-                ConstantStrings.endDateLabel,
-                selection: $vm.endDate,
-                displayedComponents: .date
-            )
-        }
-        .font(.subheadline)
-    }
-
-    private var loadingRow: some View {
-        HStack(spacing: 10) {
-            ProgressView()
-
-            Text(ConstantStrings.loadingText)
-                .font(.subheadline)
-                .foregroundStyle(.secondary)
-
-            Spacer()
-        }
-        .padding(.vertical, 8)
-    }
-
-    private func errorRow(_ message: String) -> some View {
-        HStack(spacing: 10) {
-            Image(systemName: "exclamationmark.triangle.fill")
-                .foregroundStyle(.red)
-
-            Text(message)
-                .font(.footnote)
-                .foregroundStyle(.red)
-
-            Spacer()
-        }
-        .padding(12)
-        .background(Color.red.opacity(0.08))
-        .clipShape(RoundedRectangle(cornerRadius: 14, style: .continuous))
-    }
-
-    private func reportContent(_ report: DepartmentPerformanceResponseDTO) -> some View {
-        VStack(alignment: .leading, spacing: 14) {
-            scoreCards(report)
-
-            taskDistribution(report.grafikVerisi.gorevDagilimi)
-
-            employeeScores(report.calisanSkorlari)
-
-            textBlock(
-                title: ConstantStrings.reportSummaryTitle,
-                text: report.raporOzeti
-            )
-
-            textBlock(
-                title: ConstantStrings.detailedReportTitle,
-                text: report.detayliRapor
-            )
-        }
-    }
-
-    private func scoreCards(_ report: DepartmentPerformanceResponseDTO) -> some View {
-        LazyVGrid(
-            columns: [
-                GridItem(.flexible()),
-                GridItem(.flexible())
-            ],
-            spacing: 10
-        ) {
-            metricCard(
-                title: ConstantStrings.departmentScoreTitle,
-                value: String(format: "%.1f", report.departmanSkoru),
-                icon: "star.circle.fill"
-            )
-
-            metricCard(
-                title: ConstantStrings.employeeCountTitle,
-                value: "\(report.toplamCalisan)",
-                icon: "person.2.fill"
-            )
-
-            metricCard(
-                title: ConstantStrings.taskCompletionRateTitle,
-                value: "\(Int(report.grafikVerisi.departmanMetrikleri.ortalamaTamamlanmaOrani))%",
-                icon: "checkmark.circle.fill"
-            )
-
-            metricCard(
-                title: ConstantStrings.productivityTitle,
-                value: "\(Int(report.grafikVerisi.departmanMetrikleri.ortalamaVerimlilik))%",
-                icon: "bolt.fill"
-            )
-
-            metricCard(
-                title: ConstantStrings.workUsageTitle,
-                value: "\(Int(report.grafikVerisi.departmanMesaiOzeti.mesaiKullanimOrani))%",
-                icon: "clock.fill"
-            )
-        }
-    }
-
-    private func metricCard(
-        title: String,
-        value: String,
-        icon: String
-    ) -> some View {
-        VStack(alignment: .leading, spacing: 8) {
-            Image(systemName: icon)
+    private var emptyReportCard: some View {
+        HStack(spacing: 12) {
+            Image(systemName: "doc.text.magnifyingglass")
+                .font(.system(size: 18, weight: .semibold))
                 .foregroundStyle(.blue)
+                .frame(width: 38, height: 38)
 
-            Text(value)
-                .font(.system(size: 20, weight: .bold))
+            VStack(alignment: .leading, spacing: 4) {
+                Text(ConstantStrings.noReportsAvailable)
+                    .font(.system(size: 15, weight: .semibold))
 
-            Text(title)
-                .font(.caption)
-                .foregroundStyle(.secondary)
-        }
-        .frame(maxWidth: .infinity, alignment: .leading)
-        .padding(12)
-        .background(Color(.systemGray6))
-        .clipShape(RoundedRectangle(cornerRadius: 14, style: .continuous))
-    }
-
-    private func taskDistribution(_ data: GorevDagilimiDTO) -> some View {
-        VStack(alignment: .leading, spacing: 10) {
-            Text(ConstantStrings.taskDistributionTitle)
-                .font(.headline)
-
-            HStack(spacing: 10) {
-                smallStat(
-                    title: ConstantStrings.completedTaskTitle,
-                    value: "\(data.toplamTamamlanan)"
-                )
-
-                smallStat(
-                    title: ConstantStrings.failedTaskTitle,
-                    value: "\(data.toplamTamamlanamayan)"
-                )
-
-                smallStat(
-                    title: ConstantStrings.totalTaskTitle,
-                    value: "\(data.toplamGorev)"
-                )
-            }
-        }
-    }
-
-    private func smallStat(title: String, value: String) -> some View {
-        VStack(spacing: 4) {
-            Text(value)
-                .font(.headline)
-
-            Text(title)
-                .font(.caption2)
-                .foregroundStyle(.secondary)
-                .lineLimit(1)
-        }
-        .frame(maxWidth: .infinity)
-        .padding(10)
-        .background(Color(.systemGray6))
-        .clipShape(RoundedRectangle(cornerRadius: 12, style: .continuous))
-    }
-
-    private func employeeScores(_ scores: [CalisanSkorDTO]) -> some View {
-        VStack(alignment: .leading, spacing: 10) {
-            Text(ConstantStrings.employeeScoresTitle)
-                .font(.headline)
-
-            if scores.isEmpty {
-                Text(ConstantStrings.noDataText)
+                Text(ConstantStrings.createQueryInstruction)
                     .font(.caption)
                     .foregroundStyle(.secondary)
-            } else {
-                ForEach(scores) { item in
-                    HStack {
-                        Text(item.adSoyad)
-                            .font(.subheadline.weight(.medium))
-
-                        Spacer()
-
-                        Text(String(format: "%.1f", item.performansSkoru))
-                            .font(.subheadline.weight(.bold))
-                            .foregroundStyle(.blue)
-                    }
-                    .padding(.vertical, 6)
-                }
             }
+
+            Spacer()
         }
+        .padding(14)
+        .background(Color(.systemBackground))
+        .clipShape(RoundedRectangle(cornerRadius: 18, style: .continuous))
+        .overlay(
+            RoundedRectangle(cornerRadius: 18, style: .continuous)
+                .stroke(Color.black.opacity(0.06), lineWidth: 1)
+        )
+    }
+}
+
+// MARK: - Department Report Card
+
+private struct DepartmentReportCard: View {
+
+    let report: DepartmentReportHistoryDTO
+    let dateRange: String
+    let statusText: String
+    let onTap: () -> Void
+
+    private var score: Int {
+        Int(report.departmanSkoru.rounded())
     }
 
-    private func textBlock(
-        title: String,
-        text: String
-    ) -> some View {
-        VStack(alignment: .leading, spacing: 8) {
-            Text(title)
-                .font(.headline)
+    var body: some View {
+        Button {
+            onTap()
+        } label: {
+            HStack(spacing: 13) {
+                ScoreMiniGauge(score: score)
 
-            Text(text)
-                .font(.subheadline)
-                .foregroundStyle(.secondary)
-                .fixedSize(horizontal: false, vertical: true)
+                VStack(alignment: .leading, spacing: 4) {
+                    Text(ConstantStrings.departmentPerformanceQueryRangeTitle)
+                        .font(.caption.weight(.semibold))
+                        .foregroundStyle(.secondary)
+
+                    Text(dateRange)
+                        .font(.system(size: 14, weight: .semibold))
+                        .foregroundStyle(.primary)
+                        .lineLimit(1)
+
+                    Text(statusText)
+                        .font(.caption.weight(.semibold))
+                        .foregroundStyle(scoreColor(score))
+                }
+
+                Spacer()
+
+                Image(systemName: "chevron.right")
+                    .font(.system(size: 12, weight: .semibold))
+                    .foregroundStyle(.secondary)
+            }
+            .padding(.horizontal, 14)
+            .padding(.vertical, 13)
+            .background(Color(.systemBackground))
         }
+        .buttonStyle(.plain)
+    }
+}
+
+// MARK: - Mini Radial Gauge
+
+private struct ScoreMiniGauge: View {
+
+    let score: Int
+
+    var body: some View {
+        ZStack {
+            Circle()
+                .stroke(Color.black.opacity(0.08), lineWidth: 6)
+
+            Circle()
+                .trim(from: 0, to: min(CGFloat(score) / 100, 1))
+                .stroke(
+                    scoreColor(score),
+                    style: StrokeStyle(lineWidth: 6, lineCap: .round)
+                )
+                .rotationEffect(.degrees(-90))
+
+            Text("\(score)")
+                .font(.system(size: 12, weight: .bold))
+                .foregroundStyle(.primary)
+        }
+        .frame(width: 46, height: 46)
+    }
+}
+
+// MARK: - Score Helpers
+
+private func scoreColor(_ score: Int) -> Color {
+    switch score {
+    case 0..<40:
+        return .red
+
+    case 40..<70:
+        return .orange
+
+    case 70..<85:
+        return .blue
+
+    default:
+        return .green
     }
 }

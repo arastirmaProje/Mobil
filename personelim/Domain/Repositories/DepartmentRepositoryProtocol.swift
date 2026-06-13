@@ -17,4 +17,17 @@ protocol DepartmentRepositoryProtocol {
     
    
     func fetchDepartmentCharts(businessId: String, startDate: String, endDate: String) async throws -> BusinessDepartmentChartsResponseDTO
+    
+    func getDepartmentPerformanceHistory(
+        businessId: String,
+        departmentId: String
+    ) async throws -> [DepartmentPerformanceHistoryDTO]
+    
+    func getDepartmentReports(
+        businessId: String
+    ) async throws -> [DepartmentReportHistoryDTO]
+
+    func getDepartmentReportDetail(
+        reportId: String
+    ) async throws -> DepartmentPerformanceResponseDTO
 }

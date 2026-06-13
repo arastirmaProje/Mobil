@@ -821,4 +821,28 @@ public enum ConstantStrings {
     static let createDepartmentReportButton = "Departman Raporu Oluştur"
     
     static let noDataText = "Veri bulunamadı."
+    
+    static let departmentPerformanceQueriesTitle = "Departman Performans Sorguları"
+    static let departmentPerformanceQueryButton = "Sorgu"
+    static let departmentPerformanceListedReportsFormat = "%d rapor listeleniyor"
+    static let departmentPerformanceQueryRangeTitle = "Sorgu Aralığı"
+    static let departmentPerformanceNoReportsText = "Henüz departman raporu bulunmuyor."
+    static let departmentPerformanceLoadingReportsText = "Departman raporları yükleniyor..."
+    static let departmentPerformanceReportsLoadFailed = "Departman raporları yüklenemedi."
+    static let departmentPerformanceDetailLoadFailed = "Rapor detayı yüklenemedi."
+    static let departmentPerformanceWeakStatus = "Zayıf"
+    static let departmentPerformanceMediumStatus = "Orta"
+    static let departmentPerformanceGoodStatus = "İyi"
+    static let departmentPerformanceExcellentStatus = "Çok İyi"
+    
+  
+    static let departmentReportDetailTitle = "Departman Raporu"
+    static let departmentReportLoadFailed = "Departman raporu yüklenemedi."
+    static let departmentReportLoading = "Departman raporu yükleniyor..."
+    
+    static let departmentPerformanceQueryInstruction = "Rapor oluşturmak istediğiniz tarih aralığını seçin."
+    static let departmentPerformanceCreateReportButton = "Rapor Oluştur"
+    static let cancelButtonTitle = "Vazgeç"
+   
+    static let departmentDetailTitle = "Departman Detayı"
 }
