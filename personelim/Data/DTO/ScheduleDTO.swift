@@ -17,6 +17,8 @@ struct ScheduleDTO: Decodable {
     func toEntity() -> TaskEntity {
         let dateValue = ISODate.date(from: date) ?? .now
         let activityType: ActivityType = (type == 1) ? .event : .meeting
+        let endOfSelectedDay = Self.endOfDay(dateValue)
+        let isPast = endOfSelectedDay < Date()
 
         return TaskEntity(
             id: id,
@@ -25,10 +27,19 @@ struct ScheduleDTO: Decodable {
             assignedToName: nil,
             assignedByName: nil,
             startDate: dateValue,
-            endDate: dateValue,
-            status: "Beklemede",
+            endDate: endOfSelectedDay,
+            status: isPast ? "Süresi Geçti" : "Beklemede",
             activityType: activityType,
-            isOverdue: dateValue < Date()
+            isOverdue: isPast
         )
+    }
+
+    private static func endOfDay(_ date: Date) -> Date {
+        Calendar.current.date(
+            bySettingHour: 23,
+            minute: 59,
+            second: 59,
+            of: date
+        ) ?? date
     }
 }

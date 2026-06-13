@@ -34,8 +34,13 @@ final class CreateTaskViewModel: ObservableObject {
             return false
         }
 
-        let normalizedStartDate = min(startDate, endDate)
-        let normalizedEndDate = max(startDate, endDate)
+        let normalizedStartDate = Calendar.current.startOfDay(
+            for: min(startDate, endDate)
+        )
+
+        let normalizedEndDate = Self.endOfDay(
+            max(startDate, endDate)
+        )
 
         isLoading = true
         errorMessage = nil
@@ -90,4 +95,14 @@ final class CreateTaskViewModel: ObservableObject {
 
         return fallback
     }
+    
+    private static func endOfDay(_ date: Date) -> Date {
+        Calendar.current.date(
+            bySettingHour: 23,
+            minute: 59,
+            second: 59,
+            of: date
+        ) ?? date
+    }
 }
+
