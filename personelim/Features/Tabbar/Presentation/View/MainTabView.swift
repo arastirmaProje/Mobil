@@ -57,7 +57,7 @@ struct MainTabView: View {
                 }
                 .tag(Tab.tasks)
 
-                if appState.role.canSeePersonnelTab {
+                if appState.role.canSeePersonnelTab && !appState.isSubscribed {
                     NavigationStack {
                         PersonnelListView()
                     }

@@ -227,5 +227,3 @@ struct OnboardingButtonStyle: ButtonStyle {
     }
 }
 
-// MARK: - Animated Background
-

@@ -17,5 +17,6 @@ protocol BusinessRepositoryProtocol {
     func getMyBusiness() async throws -> BusinessDTO
     func getBusinesses() async throws -> [BusinessDTO]
     func updateBusiness(businessId: String, request: UpdateBusinessRequestDTO) async throws -> EmptyResponse
+    func unsubscribeBusiness(businessId: String) async throws
 
 }

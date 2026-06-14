@@ -26,6 +26,7 @@
 			isa = PBXFileSystemSynchronizedBuildFileExceptionSet;
 			membershipExceptions = (
 				Info.plist,
+				Shared/PersonelimShaders.metal,
 			);
 			target = 6CB7F05B2ED1E07800429602 /* personelim */;
 		};

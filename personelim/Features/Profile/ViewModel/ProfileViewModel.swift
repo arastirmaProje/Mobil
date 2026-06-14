@@ -14,10 +14,14 @@ final class ProfileViewModel: ObservableObject {
     @Published var isLoggingOut = false
     @Published var logoutErrorMessage: String?
 
+    @Published var isUnsubscribing = false
+    @Published var unsubscribeErrorMessage: String?
+
     private let authRepo: AuthRepositoryProtocol
     private let memberRepo: BusinessMemberRepositoryProtocol
     private let businessRepo: BusinessRepositoryProtocol
     private let leaveRepo: LeaveRepositoryProtocol
+    private let unsubscribeUseCase: UnsubscribeBusinessUseCaseProtocol
 
     private var loadTask: Task<Void, Never>?
 
@@ -27,12 +31,18 @@ final class ProfileViewModel: ObservableObject {
         authRepo: AuthRepositoryProtocol = AuthRepositoryImpl(network: NetworkManager()),
         memberRepo: BusinessMemberRepositoryProtocol,
         businessRepo: BusinessRepositoryProtocol = BusinessRepositoryImpl(networkManager: NetworkManager()),
-        leaveRepo: LeaveRepositoryProtocol = LeaveRepositoryImpl(network: NetworkManager())
+        leaveRepo: LeaveRepositoryProtocol = LeaveRepositoryImpl(network: NetworkManager()),
+        unsubscribeUseCase: UnsubscribeBusinessUseCaseProtocol = UnsubscribeBusinessUseCase(
+            repository: BusinessRepositoryImpl(
+                networkManager: NetworkManager()
+            )
+        )
     ) {
         self.authRepo = authRepo
         self.memberRepo = memberRepo
         self.businessRepo = businessRepo
         self.leaveRepo = leaveRepo
+        self.unsubscribeUseCase = unsubscribeUseCase
     }
 
     // MARK: - Logout
@@ -53,6 +63,38 @@ final class ProfileViewModel: ObservableObject {
                 from: error,
                 fallback: ConstantStrings.logoutFailed
             )
+        }
+    }
+
+    // MARK: - Unsubscribe
+
+    func unsubscribeBusiness(
+        businessId: String
+    ) async -> Bool {
+        isUnsubscribing = true
+        unsubscribeErrorMessage = nil
+        errorMessage = nil
+
+        defer {
+            isUnsubscribing = false
+        }
+
+        do {
+            try await unsubscribeUseCase.execute(
+                businessId: businessId
+            )
+
+            return true
+
+        } catch {
+            let message = userMessage(
+                from: error,
+                fallback: error.localizedDescription
+            )
+
+            unsubscribeErrorMessage = message
+            errorMessage = message
+            return false
         }
     }
 

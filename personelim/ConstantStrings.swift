@@ -142,7 +142,7 @@ public enum ConstantStrings {
 
     // MARK: - Map Picker
     static let mapPickerTitle = "Konum Seç"
-    static let searchPlaceholder = "Yer ara (örn: Kadıköy)"
+    static let searchPlaceholder = "Ara"
     static let searchButton = "Ara"
     static let closeButton = "Kapat"
     static let saveButton = "Kaydet"

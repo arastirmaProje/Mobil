@@ -18,6 +18,7 @@ struct ProfileView: View {
     @State private var showAddSlackIntegration = false
     @State private var showPremiumSubscription = false
     @State private var showQuery = false
+    @State private var showUnsubscribeAlert = false
 
     @State private var selectedReportId: String?
     @State private var selectedSlackIntegration: SlackIntegration?
@@ -68,11 +69,17 @@ struct ProfileView: View {
                     errorCard(err)
                 }
 
-                if appState.businessId != nil,
-                   appState.companyDTO?.isSubscribed != true {
+                if appState.role.canSeePersonnelTab,
+                   appState.businessId != nil {
                     PremiumPromotionCard(
-                        isSubscribed: false,
-                        onTap: { showPremiumSubscription = true }
+                        isSubscribed: appState.companyDTO?.isSubscribed == true,
+                        onTap: {
+                            if appState.companyDTO?.isSubscribed == true {
+                                showUnsubscribeAlert = true
+                            } else {
+                                showPremiumSubscription = true
+                            }
+                        }
                     )
                     .padding(.horizontal, 16)
                 }
@@ -186,7 +193,15 @@ struct ProfileView: View {
                     businessId: bid,
                     repository: PremiumSubscriptionRepositoryImpl(network: network),
                     onSubscriptionChanged: {
-                        Task { await vm.reload(appState: appState) }
+                        Task {
+                            await appState.bootstrap(
+                                authRepository: AuthRepositoryImpl(network: network),
+                                businessRepository: BusinessRepositoryImpl(networkManager: network),
+                                businessMemberRepository: BusinessMemberRepositoryImpl(network: network)
+                            )
+
+                            await vm.reload(appState: appState)
+                        }
                     }
                 )
             } else {
@@ -204,6 +219,34 @@ struct ProfileView: View {
                 loadingSheet()
             }
         }
+        .confirmationDialog(
+            "Premium abonelik iptal edilsin mi?",
+            isPresented: $showUnsubscribeAlert,
+            titleVisibility: .visible
+        ) {
+            Button("Aboneliği İptal Et", role: .destructive) {
+                Task {
+                    guard let businessId = appState.businessId else { return }
+
+                    let success = await vm.unsubscribeBusiness(
+                        businessId: businessId
+                    )
+
+                    if success {
+                        await appState.bootstrap(
+                            authRepository: AuthRepositoryImpl(network: network),
+                            businessRepository: BusinessRepositoryImpl(networkManager: network),
+                            businessMemberRepository: BusinessMemberRepositoryImpl(network: network)
+                        )
+
+                        await vm.reload(appState: appState)
+                        await loadSlackIfPossible()
+                    }
+                }
+            }
+
+            Button("Vazgeç", role: .cancel) { }
+        }
         .alert(
             ConstantStrings.errorTitle,
             isPresented: Binding(
@@ -214,6 +257,17 @@ struct ProfileView: View {
             Button(ConstantStrings.okButton, role: .cancel) { }
         } message: {
             Text(vm.logoutErrorMessage ?? ConstantStrings.unknownError)
+        }
+        .alert(
+            ConstantStrings.errorTitle,
+            isPresented: Binding(
+                get: { vm.unsubscribeErrorMessage != nil },
+                set: { if !$0 { vm.unsubscribeErrorMessage = nil } }
+            )
+        ) {
+            Button(ConstantStrings.okButton, role: .cancel) { }
+        } message: {
+            Text(vm.unsubscribeErrorMessage ?? ConstantStrings.unknownError)
         }
     }
 

@@ -91,6 +91,7 @@ enum Endpoint {
     case chatConversations
     case chatConversationDetail(conversationId: String)
     case deleteChatConversation(conversationId: String)
+    case unsubscribeBusiness(businessId: String)
 
     var path: String {
         switch self {
@@ -313,6 +314,9 @@ enum Endpoint {
 
         case let .deleteChatConversation(conversationId):
             return "/api/Chat/conversations/\(conversationId)"
+            
+        case .unsubscribeBusiness(let businessId):
+            return "/api/Business/\(businessId)/unsubscribe"
         }
     }
 
@@ -345,7 +349,8 @@ enum Endpoint {
              .queryDepartmentCharts,
              .logout,
              .chatPersonel,
-             .chatYonetici:
+             .chatYonetici,
+             .unsubscribeBusiness:
             return .post
 
         case .businessMembers,
