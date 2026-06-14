@@ -859,4 +859,11 @@ public enum ConstantStrings {
     static let chatSendFailed = "Mesaj gönderilemedi."
     static let chatConversationLoadFailed = "Sohbet yüklenemedi."
     static let chatDeleteFailed = "Sohbet silinemedi."
+    
+    static let pdfCreateFailed = "PDF oluşturulamadı."
+    static let performanceReportPDFFilePrefix = "performans-raporu"
+    static let performanceReportPDFTitle = "Performans Raporu"
+    static let performanceReportPDFScore = "Performans Skoru"
+    static let performanceReportPDFLevel = "Seviye"
+    static let performanceReportPDFDateRange = "Tarih Aralığı"
 }

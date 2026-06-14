@@ -7,6 +7,8 @@
 
 import SwiftUI
 import Foundation
+import UIKit
+
 
 struct PerformanceReportDetailView: View {
 
@@ -15,6 +17,9 @@ struct PerformanceReportDetailView: View {
 
     @StateObject private var vm: PerformanceReportDetailViewModel
     @State private var animateIn = false
+    @State private var pdfShareItem: PDFShareItem?
+    @State private var isExportingPDF = false
+    @State private var pdfErrorMessage: String?
 
     init(reportId: String) {
         self.reportId = reportId
@@ -85,6 +90,29 @@ struct PerformanceReportDetailView: View {
                 }
                 .buttonStyle(.plain)
             }
+
+            ToolbarItem(placement: .topBarTrailing) {
+                Button {
+                    exportPDF()
+                } label: {
+                    if isExportingPDF {
+                        ProgressView()
+                            .scaleEffect(0.85)
+                            .frame(width: 34, height: 34)
+                    } else {
+                        Image(systemName: "square.and.arrow.down")
+                            .font(.system(size: 16, weight: .bold))
+                            .foregroundStyle(.primary)
+                            .frame(width: 34, height: 34)
+                            .background(
+                                Circle()
+                                    .fill(Color(.secondarySystemGroupedBackground))
+                            )
+                    }
+                }
+                .buttonStyle(.plain)
+                .disabled(vm.report == nil || isExportingPDF)
+            }
         }
         .task {
             await vm.load(reportId: reportId)
@@ -92,6 +120,40 @@ struct PerformanceReportDetailView: View {
             withAnimation(.easeOut(duration: 0.45)) {
                 animateIn = true
             }
+        }
+        .sheet(item: $pdfShareItem) { item in
+            ActivityView(activityItems: [item.url])
+        }
+        .alert(
+            ConstantStrings.errorTitle,
+            isPresented: Binding(
+                get: { pdfErrorMessage != nil },
+                set: { if !$0 { pdfErrorMessage = nil } }
+            )
+        ) {
+            Button(ConstantStrings.okButton, role: .cancel) { }
+        } message: {
+            Text(pdfErrorMessage ?? "")
+        }
+    }
+
+    // MARK: - PDF Export
+
+    private func exportPDF() {
+        guard let report = vm.report else { return }
+
+        isExportingPDF = true
+        pdfErrorMessage = nil
+
+        Task { @MainActor in
+            do {
+                let url = try PerformanceReportPDFExporter.export(report: report)
+                pdfShareItem = PDFShareItem(url: url)
+            } catch {
+                pdfErrorMessage = ConstantStrings.pdfCreateFailed
+            }
+
+            isExportingPDF = false
         }
     }
 
@@ -235,19 +297,266 @@ struct PerformanceReportDetailView: View {
     }
 }
 
+// MARK: - PDF Exporter
+
+private enum PerformanceReportPDFExporter {
+
+    static func export(report: PerformanceReportDTO) throws -> URL {
+        let fileName = "\(ConstantStrings.performanceReportPDFFilePrefix)-\(report.reportId ?? UUID().uuidString).pdf"
+        let url = FileManager.default.temporaryDirectory.appendingPathComponent(fileName)
+
+        let pageWidth: CGFloat = 595.2
+        let pageHeight: CGFloat = 841.8
+        let margin: CGFloat = 42
+        let contentWidth = pageWidth - (margin * 2)
+
+        let renderer = UIGraphicsPDFRenderer(
+            bounds: CGRect(x: 0, y: 0, width: pageWidth, height: pageHeight)
+        )
+
+        try renderer.writePDF(to: url) { context in
+            context.beginPage()
+
+            var y: CGFloat = margin
+
+            func attributes(
+                font: UIFont,
+                color: UIColor
+            ) -> [NSAttributedString.Key: Any] {
+                let paragraph = NSMutableParagraphStyle()
+                paragraph.lineSpacing = 4
+                paragraph.paragraphSpacing = 6
+
+                return [
+                    .font: font,
+                    .foregroundColor: color,
+                    .paragraphStyle: paragraph
+                ]
+            }
+
+            func textHeight(
+                _ text: String,
+                font: UIFont
+            ) -> CGFloat {
+                let rect = NSString(string: text).boundingRect(
+                    with: CGSize(width: contentWidth, height: .greatestFiniteMagnitude),
+                    options: [.usesLineFragmentOrigin, .usesFontLeading],
+                    attributes: attributes(font: font, color: .black),
+                    context: nil
+                )
+
+                return ceil(rect.height)
+            }
+
+            func newPageIfNeeded(_ neededHeight: CGFloat) {
+                if y + neededHeight > pageHeight - margin {
+                    context.beginPage()
+                    y = margin
+                }
+            }
+
+            func drawText(
+                _ text: String,
+                font: UIFont,
+                color: UIColor = .black,
+                spacing: CGFloat = 10
+            ) {
+                let clean = text.trimmingCharacters(in: .whitespacesAndNewlines)
+                guard !clean.isEmpty else { return }
+
+                let height = textHeight(clean, font: font)
+                newPageIfNeeded(height)
+
+                NSString(string: clean).draw(
+                    with: CGRect(
+                        x: margin,
+                        y: y,
+                        width: contentWidth,
+                        height: height
+                    ),
+                    options: [.usesLineFragmentOrigin, .usesFontLeading],
+                    attributes: attributes(font: font, color: color),
+                    context: nil
+                )
+
+                y += height + spacing
+            }
+
+            func drawLongText(
+                _ text: String,
+                font: UIFont,
+                color: UIColor = .black,
+                spacing: CGFloat = 8
+            ) {
+                let paragraphs = text
+                    .components(separatedBy: "\n")
+                    .map { $0.trimmingCharacters(in: .whitespacesAndNewlines) }
+
+                for paragraph in paragraphs {
+                    guard !paragraph.isEmpty else {
+                        y += 6
+                        continue
+                    }
+
+                    let paragraphHeight = textHeight(paragraph, font: font)
+                    let maxAvailableHeight = pageHeight - margin - y
+
+                    if paragraphHeight <= maxAvailableHeight {
+                        drawText(
+                            paragraph,
+                            font: font,
+                            color: color,
+                            spacing: spacing
+                        )
+                    } else {
+                        drawParagraphByWords(
+                            paragraph,
+                            font: font,
+                            color: color,
+                            spacing: spacing
+                        )
+                    }
+                }
+            }
+
+            func drawParagraphByWords(
+                _ paragraph: String,
+                font: UIFont,
+                color: UIColor,
+                spacing: CGFloat
+            ) {
+                let words = paragraph.split(separator: " ").map(String.init)
+                var current = ""
+
+                for word in words {
+                    let candidate = current.isEmpty ? word : "\(current) \(word)"
+                    let candidateHeight = textHeight(candidate, font: font)
+                    let availableHeight = pageHeight - margin - y
+
+                    if candidateHeight > availableHeight {
+                        if !current.isEmpty {
+                            drawText(
+                                current,
+                                font: font,
+                                color: color,
+                                spacing: spacing
+                            )
+                            current = word
+                        } else {
+                            context.beginPage()
+                            y = margin
+                            current = word
+                        }
+                    } else {
+                        current = candidate
+                    }
+                }
+
+                if !current.isEmpty {
+                    drawText(
+                        current,
+                        font: font,
+                        color: color,
+                        spacing: spacing
+                    )
+                }
+            }
+
+            let score = report.score ?? 0
+            let summary = (report.summaryText ?? "-").cleanedMarkdownAndRedactedIDs
+            let detail = (report.detailText ?? "-").cleanedMarkdownAndRedactedIDs
+
+            drawText(
+                ConstantStrings.performanceReportPDFTitle,
+                font: .boldSystemFont(ofSize: 24),
+                spacing: 16
+            )
+
+            drawText(
+                "\(ConstantStrings.performanceReportPDFScore): \(score)",
+                font: .boldSystemFont(ofSize: 17),
+                color: UIColor(scoreColor(score)),
+                spacing: 6
+            )
+
+            drawText(
+                "\(ConstantStrings.performanceReportPDFLevel): \(scoreLevel(score))",
+                font: .systemFont(ofSize: 14),
+                color: .darkGray,
+                spacing: 14
+            )
+
+            if let start = report.startDate, let end = report.endDate {
+                drawText(
+                    "\(ConstantStrings.performanceReportPDFDateRange): \(start) - \(end)",
+                    font: .systemFont(ofSize: 12),
+                    color: .darkGray,
+                    spacing: 14
+                )
+            }
+
+            drawText(
+                ConstantStrings.summaryTitle,
+                font: .boldSystemFont(ofSize: 18),
+                spacing: 8
+            )
+
+            drawLongText(
+                summary,
+                font: .systemFont(ofSize: 13),
+                spacing: 10
+            )
+
+            drawText(
+                ConstantStrings.detailTitle,
+                font: .boldSystemFont(ofSize: 18),
+                spacing: 8
+            )
+
+            drawLongText(
+                detail,
+                font: .systemFont(ofSize: 13),
+                spacing: 8
+            )
+        }
+
+        return url
+    }
+}
+
+// MARK: - Share Sheet
+
+private struct PDFShareItem: Identifiable {
+    let id = UUID()
+    let url: URL
+}
+
+private struct ActivityView: UIViewControllerRepresentable {
+    let activityItems: [Any]
+
+    func makeUIViewController(context: Context) -> UIActivityViewController {
+        UIActivityViewController(
+            activityItems: activityItems,
+            applicationActivities: nil
+        )
+    }
+
+    func updateUIViewController(
+        _ uiViewController: UIActivityViewController,
+        context: Context
+    ) { }
+}
+
 // MARK: - Score Helpers
 
 private func scoreLevel(_ s: Int) -> String {
     switch s {
     case 0..<40:
         return ConstantStrings.levelPoor
-
     case 40..<70:
         return ConstantStrings.levelAverage
-
     case 70..<85:
         return ConstantStrings.levelGood
-
     default:
         return ConstantStrings.levelExcellent
     }
@@ -257,13 +566,10 @@ private func scoreColor(_ s: Int) -> Color {
     switch s {
     case 0..<40:
         return .red
-
     case 40..<70:
         return .orange
-
     case 70..<85:
         return .blue
-
     default:
         return .green
     }
