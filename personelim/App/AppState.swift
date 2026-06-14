@@ -5,12 +5,14 @@ import SwiftUI
 class AppState: ObservableObject {
 
     // MARK: - Auth / App Status
+
     @Published private(set) var isLoggedIn: Bool = false
     @Published var isBootstrapping: Bool = false
     @Published var bootstrapError: String?
     @Published var needsCompanyCreation: Bool = false
 
     // MARK: - User & Business Context
+
     @Published var userDTO: UserProfileDTO?
     @Published var role: UserRole = .default
     @Published var companyDTO: BusinessDTO?
@@ -18,9 +20,11 @@ class AppState: ObservableObject {
     @Published var activitiesChangeToken: UUID = UUID()
 
     // MARK: - Derived Properties
+
     var displayName: String {
         let f = userDTO?.firstName?
             .trimmingCharacters(in: .whitespacesAndNewlines) ?? .empty
+
         let l = userDTO?.lastName?
             .trimmingCharacters(in: .whitespacesAndNewlines) ?? .empty
 
@@ -33,12 +37,20 @@ class AppState: ObservableObject {
             : full
     }
 
-    var isSubscribed: Bool { companyDTO?.isSubscribed ?? false }
-    var businessId: String? { companyDTO?.id }
-    var userId: String? { userDTO?.id }
+    var isSubscribed: Bool {
+        companyDTO?.isSubscribed ?? false
+    }
+
+    var businessId: String? {
+        companyDTO?.id
+    }
+
+    var userId: String? {
+        userDTO?.id
+    }
 
     init() {
-        isLoggedIn = TokenStore.shared.hasValidToken()
+        isLoggedIn = TokenStore.shared.hasPersistentLogin()
     }
 
     func signalActivitiesChanged() {
@@ -46,7 +58,11 @@ class AppState: ObservableObject {
     }
 
     // MARK: - LOGIN
-    func applyLogin(userDTO: UserProfileDTO, role: UserRole) {
+
+    func applyLogin(
+        userDTO: UserProfileDTO,
+        role: UserRole
+    ) {
         self.userDTO = userDTO
         self.role = role
         self.isLoggedIn = true
@@ -54,12 +70,15 @@ class AppState: ObservableObject {
     }
 
     // MARK: - LOGOUT
+
     func logout() {
         TokenStore.shared.clear()
+
         isLoggedIn = false
         isBootstrapping = false
         bootstrapError = nil
         needsCompanyCreation = false
+
         userDTO = nil
         role = .default
         companyDTO = nil
@@ -67,6 +86,7 @@ class AppState: ObservableObject {
     }
 
     // MARK: - BOOTSTRAP
+
     func bootstrap(
         authRepository: AuthRepositoryProtocol,
         businessRepository: BusinessRepositoryProtocol,
@@ -82,7 +102,10 @@ class AppState: ObservableObject {
 
         isLoggedIn = true
         isBootstrapping = true
-        defer { isBootstrapping = false }
+
+        defer {
+            isBootstrapping = false
+        }
 
         do {
             let profile = try await authRepository.getProfile()
@@ -123,18 +146,30 @@ class AppState: ObservableObject {
     }
 
     // MARK: - MEMBERS
+
     func loadBusinessMembersIfNeeded(
         repository: BusinessMemberRepositoryProtocol
     ) async {
 
         guard let businessId = companyDTO?.id,
-              businessMembers.isEmpty else { return }
+              businessMembers.isEmpty else {
+            return
+        }
 
         do {
-            let members = try await repository.getMembers(businessId: businessId)
-            businessMembers = members.filter { $0.isActive ?? false }
+            let members = try await repository.getMembers(
+                businessId: businessId
+            )
+
+            businessMembers = members.filter {
+                $0.isActive ?? false
+            }
+
         } catch {
-            print(ConstantStrings.membersLoadFailed, error.localizedDescription)
+            print(
+                ConstantStrings.membersLoadFailed,
+                error.localizedDescription
+            )
         }
     }
 
@@ -142,12 +177,20 @@ class AppState: ObservableObject {
         repository: BusinessMemberRepositoryProtocol
     ) async {
 
-        guard let businessId = companyDTO?.id else { return }
+        guard let businessId = companyDTO?.id else {
+            return
+        }
 
         do {
-            let members = try await repository.getMembers(businessId: businessId)
-            businessMembers = members.filter { $0.isActive ?? false }
-        }   catch {
+            let members = try await repository.getMembers(
+                businessId: businessId
+            )
+
+            businessMembers = members.filter {
+                $0.isActive ?? false
+            }
+
+        } catch {
             logout()
             bootstrapError = ConstantStrings.sessionLoadFailed
         }

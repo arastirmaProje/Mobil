@@ -845,4 +845,18 @@ public enum ConstantStrings {
     static let cancelButtonTitle = "Vazgeç"
    
     static let departmentDetailTitle = "Departman Detayı"
+    
+    static let chatTitle = "Aqua"
+    static let chatPlaceholder = "Bir şeyler yazın..."
+    static let chatWelcomeTitle = "Hoş geldiniz"
+    static let chatWelcomeSubtitle = "Size hangi konularda yardımcı olmamı istersiniz?"
+    static let chatSendButton = "Gönder"
+    static let chatLoadingText = "Yanıt hazırlanıyor..."
+    static let chatConversationsTitle = "Sohbetler"
+    static let chatDeleteTitle = "Sohbeti Sil"
+    static let chatDeleteMessage = "Bu sohbeti silmek istediğinize emin misiniz?"
+    
+    static let chatSendFailed = "Mesaj gönderilemedi."
+    static let chatConversationLoadFailed = "Sohbet yüklenemedi."
+    static let chatDeleteFailed = "Sohbet silinemedi."
 }

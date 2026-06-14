@@ -39,6 +39,9 @@ struct DepartmentListView: View {
                 .listStyle(.plain)
                 .scrollContentBackground(.hidden)
                 .background(Color(.systemBackground))
+                .refreshable {
+                    await refreshDepartments()
+                }
             }
             .navigationTitle(ConstantStrings.departmentsNavTitle)
             .navigationBarTitleDisplayMode(.large)
@@ -64,14 +67,27 @@ struct DepartmentListView: View {
                     DepartmentDetailView(
                         departmentId: dept.id,
                         departmentName: dept.name,
-                        businessId: businessId
+                        departmentCategoryId: dept.categoryId,
+                        businessId: businessId,
+                        onChanged: {
+                            Task {
+                                await refreshDepartments()
+                            }
+                        }
                     )
                 }
             }
             .sheet(isPresented: $chartVM.showingCustomDatePicker) {
                 customDatePickerSheet
             }
-            .sheet(isPresented: $showingAddSheet) {
+            .sheet(
+                isPresented: $showingAddSheet,
+                onDismiss: {
+                    Task {
+                        await refreshDepartments()
+                    }
+                }
+            ) {
                 AddDepartmentView(
                     viewModel: viewModel,
                     businessId: businessId
@@ -79,11 +95,17 @@ struct DepartmentListView: View {
             }
             .task {
                 if viewModel.departments.isEmpty {
-                    await viewModel.fetchDepartments(businessId: businessId)
-                    await loadChart()
+                    await refreshDepartments()
                 }
             }
         }
+    }
+
+    // MARK: - REFRESH
+
+    private func refreshDepartments() async {
+        await viewModel.fetchDepartments(businessId: businessId)
+        await loadChart()
     }
 
     // MARK: - CHART DATA LOAD

@@ -61,8 +61,6 @@ struct DepartmentChartSectionView: View {
             VStack(alignment: .leading, spacing: 4) {
                 Text(ConstantStrings.departmentAnalyticsTitle)
                     .font(.title3.weight(.semibold))
-
-                
             }
 
             Spacer()
@@ -275,10 +273,12 @@ struct DepartmentChartSectionView: View {
                 emptyChartView
             } else {
                 chart
-                    .padding(12)
+                    .padding(.top, 12)
+                    .padding(.horizontal, 12)
+                    .padding(.bottom, 14)
             }
         }
-        .frame(height: 340)
+        .frame(height: 360)
     }
 
     private var emptyChartView: some View {
@@ -346,9 +346,11 @@ struct DepartmentChartSectionView: View {
             AxisMarks { value in
                 AxisValueLabel {
                     if let name = value.as(String.self) {
-                        Text(name)
-                            .font(.caption2)
+                        Text(axisShortName(name))
+                            .font(.caption2.weight(.bold))
+                            .foregroundStyle(.secondary)
                             .lineLimit(1)
+                            .minimumScaleFactor(0.75)
                     }
                 }
             }
@@ -379,8 +381,9 @@ struct DepartmentChartSectionView: View {
             AxisMarks { value in
                 AxisValueLabel {
                     if let name = value.as(String.self) {
-                        Text(name)
-                            .font(.caption2)
+                        Text(axisShortName(name))
+                            .font(.caption2.weight(.bold))
+                            .foregroundStyle(.secondary)
                             .lineLimit(1)
                     }
                 }
@@ -415,6 +418,18 @@ struct DepartmentChartSectionView: View {
         .chartYAxis {
             AxisMarks(position: .leading)
         }
+        .chartXAxis {
+            AxisMarks { value in
+                AxisValueLabel {
+                    if let name = value.as(String.self) {
+                        Text(axisShortName(name))
+                            .font(.caption2.weight(.bold))
+                            .foregroundStyle(.secondary)
+                            .lineLimit(1)
+                    }
+                }
+            }
+        }
     }
 
     // MARK: - AREA
@@ -443,6 +458,18 @@ struct DepartmentChartSectionView: View {
         }
         .chartYAxis {
             AxisMarks(position: .leading)
+        }
+        .chartXAxis {
+            AxisMarks { value in
+                AxisValueLabel {
+                    if let name = value.as(String.self) {
+                        Text(axisShortName(name))
+                            .font(.caption2.weight(.bold))
+                            .foregroundStyle(.secondary)
+                            .lineLimit(1)
+                    }
+                }
+            }
         }
     }
 
@@ -508,39 +535,37 @@ struct DepartmentChartSectionView: View {
     // MARK: - LEGEND
 
     private var legend: some View {
-        ScrollView(.horizontal, showsIndicators: false) {
-            HStack(spacing: 10) {
-                ForEach(viewModel.limitedChartData, id: \.name) { item in
-                    Button {
-                        haptic()
+        FlexibleLegend(items: viewModel.limitedChartData) { item in
+            Button {
+                haptic()
 
-                        withAnimation(.spring(response: 0.3, dampingFraction: 0.85)) {
-                            viewModel.selectDepartment(item.name)
-                        }
-                    } label: {
-                        HStack(spacing: 6) {
-                            Circle()
-                                .fill(DepartmentColorService.color(for: item.name))
-                                .frame(width: 8, height: 8)
-
-                            Text(item.name)
-                                .font(.caption)
-                                .foregroundStyle(.secondary)
-                        }
-                        .padding(.horizontal, 9)
-                        .padding(.vertical, 7)
-                        .background(
-                            Capsule()
-                                .fill(
-                                    viewModel.selectedDepartmentName == item.name
-                                    ? DepartmentColorService.color(for: item.name).opacity(0.15)
-                                    : Color(.systemGray6)
-                                )
-                        )
-                    }
-                    .buttonStyle(.plain)
+                withAnimation(.spring(response: 0.3, dampingFraction: 0.85)) {
+                    viewModel.selectDepartment(item.name)
                 }
+            } label: {
+                HStack(spacing: 6) {
+                    Circle()
+                        .fill(DepartmentColorService.color(for: item.name))
+                        .frame(width: 8, height: 8)
+
+                    Text(item.name)
+                        .font(.caption.weight(.medium))
+                        .foregroundStyle(.secondary)
+                        .lineLimit(1)
+                        .minimumScaleFactor(0.8)
+                }
+                .padding(.horizontal, 9)
+                .padding(.vertical, 7)
+                .background(
+                    Capsule()
+                        .fill(
+                            viewModel.selectedDepartmentName == item.name
+                            ? DepartmentColorService.color(for: item.name).opacity(0.15)
+                            : Color(.systemGray6)
+                        )
+                )
             }
+            .buttonStyle(.plain)
         }
     }
 
@@ -552,6 +577,7 @@ struct DepartmentChartSectionView: View {
             HStack {
                 Text(item.name)
                     .font(.footnote.weight(.semibold))
+                    .lineLimit(2)
 
                 Spacer()
 
@@ -568,9 +594,138 @@ struct DepartmentChartSectionView: View {
         }
     }
 
-    // MARK: - HAPTIC
+    // MARK: - HELPERS
+
+    private func axisShortName(_ name: String) -> String {
+        let cleaned = normalizedName(name)
+        let words = cleaned.split(separator: " ").map(String.init)
+
+        guard let first = words.first else {
+            return "-"
+        }
+
+        let prefix = String(first.prefix(3))
+        return "\(prefix)."
+    }
+
+    private func normalizedName(_ name: String) -> String {
+        var result = name
+            .replacingOccurrences(of: "&", with: " ")
+            .replacingOccurrences(of: "/", with: " ")
+            .replacingOccurrences(of: "-", with: " ")
+
+        while result.contains("  ") {
+            result = result.replacingOccurrences(of: "  ", with: " ")
+        }
+
+        return result.trimmingCharacters(in: .whitespacesAndNewlines)
+    }
 
     private func haptic() {
         UIImpactFeedbackGenerator(style: .light).impactOccurred()
+    }
+}
+
+// MARK: - FLEXIBLE LEGEND
+
+private struct FlexibleLegend<Item, Content: View>: View {
+
+    let items: [Item]
+    let spacing: CGFloat
+    let lineSpacing: CGFloat
+    let content: (Item) -> Content
+
+    init(
+        items: [Item],
+        spacing: CGFloat = 8,
+        lineSpacing: CGFloat = 8,
+        @ViewBuilder content: @escaping (Item) -> Content
+    ) {
+        self.items = items
+        self.spacing = spacing
+        self.lineSpacing = lineSpacing
+        self.content = content
+    }
+
+    var body: some View {
+        _FlowLayout(
+            data: items,
+            spacing: spacing,
+            lineSpacing: lineSpacing,
+            content: content
+        )
+    }
+}
+
+private struct _FlowLayout<Item, Content: View>: View {
+
+    let data: [Item]
+    let spacing: CGFloat
+    let lineSpacing: CGFloat
+    let content: (Item) -> Content
+
+    @State private var totalHeight: CGFloat = .zero
+
+    var body: some View {
+        GeometryReader { geometry in
+            generateContent(in: geometry)
+        }
+        .frame(height: totalHeight)
+    }
+
+    private func generateContent(in geometry: GeometryProxy) -> some View {
+        var width: CGFloat = 0
+        var height: CGFloat = 0
+
+        return ZStack(alignment: .topLeading) {
+            ForEach(Array(data.enumerated()), id: \.offset) { index, item in
+                content(item)
+                    .alignmentGuide(.leading) { dimension in
+                        if abs(width - dimension.width) > geometry.size.width {
+                            width = 0
+                            height -= dimension.height + lineSpacing
+                        }
+
+                        let result = width
+
+                        if index == data.count - 1 {
+                            width = 0
+                        } else {
+                            width -= dimension.width + spacing
+                        }
+
+                        return result
+                    }
+                    .alignmentGuide(.top) { _ in
+                        let result = height
+
+                        if index == data.count - 1 {
+                            height = 0
+                        }
+
+                        return result
+                    }
+            }
+        }
+        .background(
+            GeometryReader { proxy in
+                Color.clear
+                    .preference(
+                        key: LegendHeightPreferenceKey.self,
+                        value: proxy.size.height
+                    )
+            }
+        )
+        .onPreferenceChange(LegendHeightPreferenceKey.self) { height in
+            totalHeight = height
+        }
+    }
+}
+
+private struct LegendHeightPreferenceKey: PreferenceKey {
+    static var defaultValue: CGFloat = 0
+
+    static func reduce(value: inout CGFloat, nextValue: () -> CGFloat) {
+        value = max(value, nextValue())
     }
 }

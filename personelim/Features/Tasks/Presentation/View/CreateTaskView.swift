@@ -61,6 +61,16 @@ struct CreateTaskView: View {
                 }
             }
             .task {
+                let today = Calendar.current.startOfDay(for: Date())
+
+                if vm.startDate == nil {
+                    vm.startDate = today
+                }
+
+                if vm.endDate == nil {
+                    vm.endDate = today
+                }
+
                 let memberRepo = BusinessMemberRepositoryImpl(
                     network: NetworkManager()
                 )
@@ -212,9 +222,15 @@ private extension CreateTaskView {
                             vm.activityType = type
 
                             if type != .task {
-                                let date = vm.startDate ?? Date()
+                                let date = sanitizedDate(vm.startDate)
                                 vm.startDate = date
                                 vm.endDate = date
+                            } else {
+                                vm.startDate = sanitizedDate(vm.startDate)
+                                vm.endDate = sanitizedEndDate(
+                                    startDate: vm.startDate,
+                                    endDate: vm.endDate
+                                )
                             }
                         }
                     } label: {
@@ -302,10 +318,15 @@ private extension CreateTaskView {
                 Task {
                     guard let businessId = appState.businessId else { return }
 
-                    if vm.activityType != .task {
-                        let date = vm.startDate ?? Date()
-                        vm.startDate = date
-                        vm.endDate = date
+                    vm.startDate = sanitizedDate(vm.startDate)
+
+                    if vm.activityType == .task {
+                        vm.endDate = sanitizedEndDate(
+                            startDate: vm.startDate,
+                            endDate: vm.endDate
+                        )
+                    } else {
+                        vm.endDate = vm.startDate
                     }
 
                     let success = await vm.createTask(businessId: businessId)
@@ -373,13 +394,17 @@ private extension CreateTaskView {
     var singleAwareStartDate: Binding<Date?> {
         Binding(
             get: {
-                vm.startDate
+                sanitizedDate(vm.startDate)
             },
             set: { newDate in
-                vm.startDate = newDate
+                let safeDate = sanitizedDate(newDate)
+                vm.startDate = safeDate
 
                 if vm.activityType != .task {
-                    vm.endDate = newDate
+                    vm.endDate = safeDate
+                } else if let end = vm.endDate,
+                          Calendar.current.startOfDay(for: end) < Calendar.current.startOfDay(for: safeDate) {
+                    vm.endDate = safeDate
                 }
             }
         )
@@ -388,14 +413,20 @@ private extension CreateTaskView {
     var singleAwareEndDate: Binding<Date?> {
         Binding(
             get: {
-                vm.activityType == .task ? vm.endDate : vm.startDate
+                vm.activityType == .task
+                ? sanitizedEndDate(startDate: vm.startDate, endDate: vm.endDate)
+                : sanitizedDate(vm.startDate)
             },
             set: { newDate in
                 if vm.activityType == .task {
-                    vm.endDate = newDate
+                    vm.endDate = sanitizedEndDate(
+                        startDate: vm.startDate,
+                        endDate: newDate
+                    )
                 } else {
-                    vm.startDate = newDate
-                    vm.endDate = newDate
+                    let safeDate = sanitizedDate(newDate)
+                    vm.startDate = safeDate
+                    vm.endDate = safeDate
                 }
             }
         )
@@ -528,6 +559,31 @@ private extension CreateTaskView {
         } else {
             return ConstantStrings.activityTypeSingleDateSubtitle
         }
+    }
+
+    func sanitizedDate(_ date: Date?) -> Date {
+        let today = Calendar.current.startOfDay(for: Date())
+
+        guard let date else {
+            return today
+        }
+
+        let selectedDay = Calendar.current.startOfDay(for: date)
+
+        return selectedDay < today ? today : date
+    }
+
+    func sanitizedEndDate(
+        startDate: Date?,
+        endDate: Date?
+    ) -> Date {
+        let safeStart = sanitizedDate(startDate)
+        let safeEnd = sanitizedDate(endDate)
+
+        let startDay = Calendar.current.startOfDay(for: safeStart)
+        let endDay = Calendar.current.startOfDay(for: safeEnd)
+
+        return endDay < startDay ? safeStart : safeEnd
     }
 }
 

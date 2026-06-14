@@ -40,7 +40,10 @@ final class SignupViewModel: ObservableObject {
                 )
             )
 
-            TokenStore.shared.save(authUser.token)
+            TokenStore.shared.save(
+                authUser.token,
+                rememberMe: false
+            )
 
             createdUser = authUser
             goToCreateCompany = true

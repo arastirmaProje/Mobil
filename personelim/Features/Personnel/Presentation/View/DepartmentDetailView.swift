@@ -4,7 +4,9 @@ struct DepartmentDetailView: View {
 
     let departmentId: String
     let departmentName: String
+    let departmentCategoryId: Int
     let businessId: String
+    let onChanged: (() -> Void)?
 
     @Environment(\.dismiss) private var dismiss
     @EnvironmentObject private var appState: AppState
@@ -23,8 +25,8 @@ struct DepartmentDetailView: View {
 
     var body: some View {
         ZStack {
-           
-       
+            Color(.systemGroupedBackground)
+                .ignoresSafeArea()
 
             ScrollView(showsIndicators: false) {
                 VStack(alignment: .leading, spacing: 16) {
@@ -44,6 +46,9 @@ struct DepartmentDetailView: View {
                 .padding(.top, 14)
                 .padding(.bottom, 28)
             }
+            .refreshable {
+                await refreshMembers()
+            }
         }
         .navigationTitle(ConstantStrings.departmentDetailTitle)
         .navigationBarTitleDisplayMode(.inline)
@@ -51,6 +56,7 @@ struct DepartmentDetailView: View {
         .toolbar {
             ToolbarItem(placement: .topBarLeading) {
                 Button {
+                    onChanged?()
                     dismiss()
                 } label: {
                     Image(systemName: "chevron.left")
@@ -108,9 +114,17 @@ struct DepartmentDetailView: View {
             }
         }
         .task {
-            await memberViewModel.fetchMembers(businessId: businessId)
+            await refreshMembers()
         }
-        .sheet(isPresented: $showAddMemberSheet) {
+        .sheet(
+            isPresented: $showAddMemberSheet,
+            onDismiss: {
+                Task {
+                    await refreshMembers()
+                    onChanged?()
+                }
+            }
+        ) {
             AddMemberView(
                 businessId: businessId,
                 departmentId: departmentId
@@ -122,8 +136,9 @@ struct DepartmentDetailView: View {
                 departmentId: departmentId,
                 departmentName: departmentName,
                 businessId: businessId,
-                initialCategoryId: 1,
+                initialCategoryId: departmentCategoryId,
                 onComplete: {
+                    onChanged?()
                     dismiss()
                 }
             )
@@ -140,7 +155,11 @@ struct DepartmentDetailView: View {
                         id: departmentId,
                         businessId: businessId
                     )
-                    dismiss()
+
+                    if deptViewModel.errorMessage == nil {
+                        onChanged?()
+                        dismiss()
+                    }
                 }
             }
 
@@ -161,6 +180,12 @@ struct DepartmentDetailView: View {
         }
     }
 
+    // MARK: - Refresh
+
+    private func refreshMembers() async {
+        await memberViewModel.fetchMembers(businessId: businessId)
+    }
+
     // MARK: - Header
 
     private var headerSection: some View {
@@ -173,14 +198,10 @@ struct DepartmentDetailView: View {
                         .font(.system(size: 24, weight: .bold))
                         .foregroundStyle(.primary)
                         .lineLimit(1)
-
-                    
                 }
 
                 Spacer()
             }
-
-          
         }
         .padding(16)
         .background(cardBackground(cornerRadius: 24))

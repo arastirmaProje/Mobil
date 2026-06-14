@@ -1,4 +1,3 @@
-
 import SwiftUI
 
 struct MainTabView: View {
@@ -13,6 +12,7 @@ struct MainTabView: View {
 
     @EnvironmentObject private var appState: AppState
     @State private var selected: Tab = .home
+    @State private var showChat = false
 
     init() {
         let appearance = UITabBarAppearance()
@@ -36,58 +36,70 @@ struct MainTabView: View {
     }
 
     var body: some View {
-        TabView(selection: $selected) {
+        ZStack(alignment: .bottomTrailing) {
+            TabView(selection: $selected) {
 
-            NavigationStack {
-                HomeView()
-            }
-            .tabItem {
-                Image(systemName: selected == .home ? "house.fill" : "house")
-                Text(ConstantStrings.tabHomeTitle)
-            }
-            .tag(Tab.home)
-
-            NavigationStack {
-                TasksListView()
-            }
-            .tabItem {
-                Image(systemName: selected == .tasks ? "checklist.checked" : "checklist")
-                Text(ConstantStrings.tabActivitiesTitle)
-            }
-            .tag(Tab.tasks)
-
-            if appState.role.canSeePersonnelTab {
                 NavigationStack {
-                    PersonnelListView()
+                    HomeView()
                 }
                 .tabItem {
-                    Image(systemName: selected == .personnel ? "person.3.fill" : "person.3")
-                    Text(ConstantStrings.tabPersonnelTitle)
+                    Image(systemName: selected == .home ? "house.fill" : "house")
+                    Text(ConstantStrings.tabHomeTitle)
                 }
-                .tag(Tab.personnel)
-            }
+                .tag(Tab.home)
 
-            if appState.role.canSeePersonnelTab && appState.isSubscribed {
                 NavigationStack {
-                    DepartmentListView()
+                    TasksListView()
                 }
                 .tabItem {
-                    Image(systemName: selected == .departments ? "building.2.fill" : "building.2")
-                    Text(ConstantStrings.tabManagmentTitle)
+                    Image(systemName: selected == .tasks ? "checklist.checked" : "checklist")
+                    Text(ConstantStrings.tabActivitiesTitle)
                 }
-                .tag(Tab.departments)
-            }
+                .tag(Tab.tasks)
 
-            NavigationStack {
-                ProfileView()
+                if appState.role.canSeePersonnelTab {
+                    NavigationStack {
+                        PersonnelListView()
+                    }
+                    .tabItem {
+                        Image(systemName: selected == .personnel ? "person.3.fill" : "person.3")
+                        Text(ConstantStrings.tabPersonnelTitle)
+                    }
+                    .tag(Tab.personnel)
+                }
+
+                if appState.role.canSeePersonnelTab && appState.isSubscribed {
+                    NavigationStack {
+                        DepartmentListView()
+                    }
+                    .tabItem {
+                        Image(systemName: selected == .departments ? "building.2.fill" : "building.2")
+                        Text(ConstantStrings.tabManagmentTitle)
+                    }
+                    .tag(Tab.departments)
+                }
+
+                NavigationStack {
+                    ProfileView()
+                }
+                .tabItem {
+                    Image(systemName: selected == .profile ? "person.crop.circle.fill" : "person.crop.circle")
+                    Text(ConstantStrings.tabProfileTitle)
+                }
+                .tag(Tab.profile)
             }
-            .tabItem {
-                Image(systemName: selected == .profile ? "person.crop.circle.fill" : "person.crop.circle")
-                Text(ConstantStrings.tabProfileTitle)
+            .tint(.blue)
+
+            ChatFloatingButton {
+                showChat = true
             }
-            .tag(Tab.profile)
+            .padding(.trailing, 18)
+            .padding(.bottom, 76)
         }
-        .tint(.blue)
+        .sheet(isPresented: $showChat) {
+            ChatView()
+                .environmentObject(appState)
+                .presentationDetents([.large])
+        }
     }
 }
-

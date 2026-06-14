@@ -10,7 +10,6 @@ final class LoginViewModel: ObservableObject {
     @Published var isLoading: Bool = false
     @Published var errorMessage: String?
 
-    // MARK: - Dependencies
     private let loginUseCase: LoginUseCaseProtocol
 
     init(loginUseCase: LoginUseCaseProtocol = LoginUseCase()) {
@@ -34,11 +33,20 @@ final class LoginViewModel: ObservableObject {
                 password: password
             )
 
-            TokenStore.shared.save(user.token)
+            TokenStore.shared.save(
+                user.token,
+                rememberMe: rememberMe
+            )
 
-            UserDefaults.standard.set(user.fullName, forKey: "full_name")
-            UserDefaults.standard.set(user.email, forKey: "user_email")
-            UserDefaults.standard.set(user.userId, forKey: "user_id")
+            if rememberMe {
+                UserDefaults.standard.set(user.fullName, forKey: "full_name")
+                UserDefaults.standard.set(user.email, forKey: "user_email")
+                UserDefaults.standard.set(user.userId, forKey: "user_id")
+            } else {
+                UserDefaults.standard.removeObject(forKey: "full_name")
+                UserDefaults.standard.removeObject(forKey: "user_email")
+                UserDefaults.standard.removeObject(forKey: "user_id")
+            }
 
             let dto = UserProfileDTO(
                 id: user.userId,

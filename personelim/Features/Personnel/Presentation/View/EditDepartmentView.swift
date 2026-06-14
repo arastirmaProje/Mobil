@@ -376,8 +376,8 @@ struct EditDepartmentView: View {
                     )
 
                     if viewModel.errorMessage == nil {
-                        dismiss()
                         onComplete?()
+                        dismiss()
                     }
                 }
             } label: {
