@@ -84,6 +84,9 @@ struct ProfileView: View {
                     .padding(.horizontal, 16)
                 }
 
+                logoutSection
+                    .padding(.horizontal, 16)
+
                 if let m = vm.managerUI {
                     managerProfile(m)
                 }
@@ -92,9 +95,6 @@ struct ProfileView: View {
                     employeeProfile(e)
                         .padding(.horizontal, 16)
                 }
-
-                logoutSection
-                    .padding(.horizontal, 16)
 
                 Spacer().frame(height: 28)
             }
