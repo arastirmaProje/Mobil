@@ -8,48 +8,58 @@ struct OTPInputView: View {
     @FocusState private var isFocused: Bool
 
     var body: some View {
-        ZStack {
+        GeometryReader { proxy in
+            let spacing: CGFloat = 8
+            let totalSpacing = spacing * 5
+            let availableWidth = proxy.size.width - totalSpacing
+            let boxWidth = min(52, availableWidth / 6)
 
-            HStack(spacing: 10) {
-                ForEach(0..<6, id: \.self) { index in
-                    otpBox(index)
+            ZStack {
+                HStack(spacing: spacing) {
+                    ForEach(0..<6, id: \.self) { index in
+                        otpBox(index, width: boxWidth)
+                    }
+                }
+                .frame(maxWidth: .infinity)
+
+                TextField("", text: $code.limit(6))
+                    .keyboardType(.numberPad)
+                    .textContentType(.oneTimeCode)
+                    .foregroundColor(.clear)
+                    .accentColor(.clear)
+                    .frame(width: 1, height: 1)
+                    .opacity(0.01)
+                    .focused($isFocused)
+            }
+            .contentShape(Rectangle())
+            .onTapGesture {
+                isFocused = true
+            }
+            .onAppear {
+                isFocused = true
+            }
+            .onChange(of: code) { _, value in
+                if value.count == 6 {
+                    DispatchQueue.main.asyncAfter(deadline: .now() + 0.15) {
+                        onComplete(value)
+                    }
                 }
             }
-
-            TextField("", text: $code.limit(6))
-                .keyboardType(.numberPad)
-                .textContentType(.oneTimeCode)
-                .foregroundColor(.clear)
-                .accentColor(.clear)
-                .frame(width: 1, height: 1)
-                .opacity(0.01)
-                .focused($isFocused)
         }
-        .contentShape(Rectangle())
-        .onTapGesture {
-            isFocused = true
-        }
-        .onAppear {
-            isFocused = true
-        }
-        .onChange(of: code) { _, value in
-            if value.count == 6 {
-                DispatchQueue.main.asyncAfter(deadline: .now() + 0.15) {
-                    onComplete(value)
-                }
-            }
-        }
+        .frame(height: 62)
     }
 
     // MARK: - Box
 
-    private func otpBox(_ index: Int) -> some View {
+    private func otpBox(
+        _ index: Int,
+        width: CGFloat
+    ) -> some View {
 
         let isCurrent = code.count == index
         let hasValue = index < code.count
 
         return ZStack {
-
             RoundedRectangle(
                 cornerRadius: 16,
                 style: .continuous
@@ -74,7 +84,7 @@ struct OTPInputView: View {
                     .transition(.scale.combined(with: .opacity))
             }
         }
-        .frame(width: 52, height: 62)
+        .frame(width: width, height: 62)
         .scaleEffect(hasValue ? 1 : 0.97)
         .shadow(
             color: isCurrent
@@ -92,6 +102,7 @@ struct OTPInputView: View {
 
     private func character(at index: Int) -> String {
         let chars = Array(code)
+
         return index < chars.count
         ? String(chars[index])
         : ""

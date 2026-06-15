@@ -869,4 +869,7 @@ public enum ConstantStrings {
     
     static let departmentReportPDFFilePrefix = "departman-raporu"
     static let departmentReportPDFTitle = "Departman Performans Raporu"
+    
+    static let successTitle = "Başarılı"
+    static let resetPasswordSuccess = "Şifreniz başarıyla değiştirildi. Giriş ekranına dönebilirsiniz."
 }

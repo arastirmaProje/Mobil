@@ -8,6 +8,7 @@ final class ResetPasswordViewModel: ObservableObject {
 
     @Published var isLoading = false
     @Published var success = false
+    @Published var showSuccessAlert = false
 
     @Published var errorMessage: String = ""
     @Published var showError = false
@@ -35,6 +36,7 @@ final class ResetPasswordViewModel: ObservableObject {
     // MARK: - RESET PASSWORD
 
     func resetPassword() async {
+        guard !isLoading, !success else { return }
 
         let password = newPassword.trimmingCharacters(
             in: .whitespacesAndNewlines
@@ -46,14 +48,12 @@ final class ResetPasswordViewModel: ObservableObject {
 
         guard !password.isEmpty,
               !confirm.isEmpty else {
-
             errorMessage = ConstantStrings.resetPasswordFieldsRequired
             showError = true
             return
         }
 
         guard password == confirm else {
-
             errorMessage = ConstantStrings.resetPasswordMismatch
             showError = true
             return
@@ -63,7 +63,9 @@ final class ResetPasswordViewModel: ObservableObject {
         errorMessage = ""
         showError = false
 
-        defer { isLoading = false }
+        defer {
+            isLoading = false
+        }
 
         do {
             let result = try await resetPasswordUseCase.execute(
@@ -75,6 +77,9 @@ final class ResetPasswordViewModel: ObservableObject {
 
             if result {
                 success = true
+                showSuccessAlert = true
+                showError = false
+                errorMessage = ""
             } else {
                 errorMessage = ConstantStrings.resetPasswordFailed
                 showError = true
@@ -87,7 +92,6 @@ final class ResetPasswordViewModel: ObservableObject {
     }
 
     private func userMessage(from error: Error) -> String {
-
         if case let RepositoryError.api(message) = error {
             return message
         }

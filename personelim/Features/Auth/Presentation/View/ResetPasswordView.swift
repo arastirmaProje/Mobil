@@ -6,10 +6,12 @@ struct ResetPasswordView: View {
     let code: String
 
     @StateObject private var vm: ResetPasswordViewModel
+
     @Environment(\.dismiss) private var dismiss
 
     @State private var showNewPassword = false
     @State private var showConfirmPassword = false
+    @State private var goToLogin = false
 
     init(email: String, code: String) {
         self.email = email
@@ -27,7 +29,8 @@ struct ResetPasswordView: View {
         !vm.newPassword.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty &&
         !vm.confirmPassword.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty &&
         vm.newPassword == vm.confirmPassword &&
-        !vm.isLoading
+        !vm.isLoading &&
+        !vm.success
     }
 
     var body: some View {
@@ -64,6 +67,9 @@ struct ResetPasswordView: View {
                     }
                 }
             }
+            .navigationDestination(isPresented: $goToLogin) {
+                LoginView()
+            }
             .alert(isPresented: $vm.showError) {
                 Alert(
                     title: Text(ConstantStrings.errorTitle),
@@ -71,10 +77,17 @@ struct ResetPasswordView: View {
                     dismissButton: .default(Text(ConstantStrings.okButton))
                 )
             }
+            .alert(isPresented: $vm.showSuccessAlert) {
+                Alert(
+                    title: Text(ConstantStrings.successTitle),
+                    message: Text(ConstantStrings.resetPasswordSuccess),
+                    dismissButton: .default(Text(ConstantStrings.okButton)) {
+                        goToLogin = true
+                    }
+                )
+            }
         }
     }
-
-    // MARK: - Header
 
     private var headerSection: some View {
         VStack(spacing: 14) {
@@ -110,8 +123,6 @@ struct ResetPasswordView: View {
                 .stroke(Color.black.opacity(0.06), lineWidth: 1)
         )
     }
-
-    // MARK: - Form
 
     private var formSection: some View {
         sectionCard(title: ConstantStrings.newPasswordLabel) {
@@ -158,6 +169,7 @@ struct ResetPasswordView: View {
                 .font(.system(size: 15, weight: .medium))
                 .textInputAutocapitalization(.never)
                 .autocorrectionDisabled()
+                .disabled(vm.isLoading || vm.success)
             }
 
             Button {
@@ -167,11 +179,10 @@ struct ResetPasswordView: View {
                     .foregroundStyle(.secondary)
             }
             .buttonStyle(.plain)
+            .disabled(vm.isLoading || vm.success)
         }
         .formRowBackground()
     }
-
-    // MARK: - Password Info
 
     private var passwordInfoCard: some View {
         HStack(spacing: 12) {
@@ -202,6 +213,10 @@ struct ResetPasswordView: View {
     }
 
     private var passwordInfoIcon: String {
+        if vm.success {
+            return "checkmark.circle.fill"
+        }
+
         if vm.newPassword.isEmpty && vm.confirmPassword.isEmpty {
             return "info.circle.fill"
         }
@@ -212,6 +227,10 @@ struct ResetPasswordView: View {
     }
 
     private var passwordInfoColor: Color {
+        if vm.success {
+            return .green
+        }
+
         if vm.newPassword.isEmpty && vm.confirmPassword.isEmpty {
             return .blue
         }
@@ -220,6 +239,10 @@ struct ResetPasswordView: View {
     }
 
     private var passwordInfoTitle: String {
+        if vm.success {
+            return ConstantStrings.successTitle
+        }
+
         if vm.newPassword.isEmpty && vm.confirmPassword.isEmpty {
             return ConstantStrings.passwordInfoTitle
         }
@@ -230,6 +253,10 @@ struct ResetPasswordView: View {
     }
 
     private var passwordInfoText: String {
+        if vm.success {
+            return ConstantStrings.resetPasswordSuccess
+        }
+
         if vm.newPassword.isEmpty && vm.confirmPassword.isEmpty {
             return ConstantStrings.passwordInfoEmptyText
         }
@@ -238,8 +265,6 @@ struct ResetPasswordView: View {
             ? ConstantStrings.passwordInfoMatchText
             : ConstantStrings.passwordInfoNotMatchText
     }
-
-    // MARK: - Bottom Button
 
     private var bottomConfirmButton: some View {
         VStack(spacing: 0) {
@@ -258,7 +283,7 @@ struct ResetPasswordView: View {
                         Image(systemName: "checkmark.circle.fill")
                     }
 
-                    Text(vm.isLoading ? ConstantStrings.savingText : ConstantStrings.confirmButton)
+                    Text(buttonTitle)
                         .font(.headline)
                 }
                 .foregroundStyle(.white)
@@ -276,7 +301,17 @@ struct ResetPasswordView: View {
         }
     }
 
-    // MARK: - Helpers
+    private var buttonTitle: String {
+        if vm.isLoading {
+            return ConstantStrings.savingText
+        }
+
+        if vm.success {
+            return ConstantStrings.successTitle
+        }
+
+        return ConstantStrings.confirmButton
+    }
 
     private func sectionCard<Content: View>(
         title: String,
@@ -300,8 +335,6 @@ struct ResetPasswordView: View {
         }
     }
 }
-
-// MARK: - Row Background
 
 private extension View {
     func formRowBackground() -> some View {
