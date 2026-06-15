@@ -19,6 +19,8 @@ struct ProfileView: View {
     @State private var showPremiumSubscription = false
     @State private var showQuery = false
     @State private var showUnsubscribeAlert = false
+    @State private var showLeaveManagement = false
+    @State private var showMyLeaves = false
 
     @State private var selectedReportId: String?
     @State private var selectedSlackIntegration: SlackIntegration?
@@ -176,6 +178,20 @@ struct ProfileView: View {
                 PerformanceReportDetailView(reportId: rid)
             }
         }
+        .navigationDestination(isPresented: $showMyLeaves) {
+            if let employee = currentEmployeeUI {
+                MyLeavesView(leaves: employee.leaveRequests)
+            } else {
+                loadingSheet()
+            }
+        }
+        .navigationDestination(isPresented: $showLeaveManagement) {
+            if let bid = appState.businessId {
+                LeaveManagementView(businessId: bid)
+            } else {
+                loadingSheet()
+            }
+        }
         .navigationDestination(isPresented: $showAddSlackIntegration) {
             if let bid = appState.businessId {
                 SlackIntegrationEditorView(
@@ -220,11 +236,11 @@ struct ProfileView: View {
             }
         }
         .confirmationDialog(
-            "Premium abonelik iptal edilsin mi?",
+            ConstantStrings.unsubscribePremiumConfirmationTitle,
             isPresented: $showUnsubscribeAlert,
             titleVisibility: .visible
         ) {
-            Button("Aboneliği İptal Et", role: .destructive) {
+            Button(ConstantStrings.unsubscribePremiumButton, role: .destructive) {
                 Task {
                     guard let businessId = appState.businessId else { return }
 
@@ -245,7 +261,7 @@ struct ProfileView: View {
                 }
             }
 
-            Button("Vazgeç", role: .cancel) { }
+            Button(ConstantStrings.cancelButton, role: .cancel) { }
         }
         .alert(
             ConstantStrings.errorTitle,
@@ -269,6 +285,10 @@ struct ProfileView: View {
         } message: {
             Text(vm.unsubscribeErrorMessage ?? ConstantStrings.unknownError)
         }
+    }
+
+    private var currentEmployeeUI: EmployeeProfileUI? {
+        vm.employeeUI ?? vm.managerUI?.employee
     }
 
     // MARK: - Employee Profile
@@ -312,8 +332,9 @@ struct ProfileView: View {
             )
 
             LeaveSectionView(
-                remainingDaysText: p.remainingLeaveDaysText,
-                onCreateLeave: { showCreateLeave = true }
+                leaves: p.leaveRequests,
+                onCreateLeave: { showCreateLeave = true },
+                onShowAll: { showMyLeaves = true }
             )
             .unifiedCard()
 
@@ -348,6 +369,9 @@ struct ProfileView: View {
             officesSection(offices: m.offices)
                 .padding(.horizontal, 16)
 
+            managementActionsSection
+                .padding(.horizontal, 16)
+
             SlackIntegrationSection(
                 integrations: slackVM.integrations,
                 isLoading: slackVM.isLoading,
@@ -359,6 +383,24 @@ struct ProfileView: View {
 
             employeeProfile(m.employee, showsSalary: false)
                 .padding(.horizontal, 16)
+        }
+    }
+
+    // MARK: - Management Actions
+
+    private var managementActionsSection: some View {
+        infoGroup(title: ConstantStrings.managementActionsTitle) {
+            Button {
+                showLeaveManagement = true
+            } label: {
+                rowCard(
+                    icon: "calendar.badge.checkmark",
+                    title: ConstantStrings.leaveRequestsTitle,
+                    subtitle: ConstantStrings.leaveRequestsSubtitle,
+                    trailingIcon: "chevron.right"
+                )
+            }
+            .buttonStyle(.plain)
         }
     }
 
@@ -840,3 +882,4 @@ private extension View {
             )
     }
 }
+

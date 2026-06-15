@@ -15,13 +15,20 @@ final class LeaveRepositoryImpl: LeaveRepositoryProtocol {
         self.network = network
     }
 
-    func getMyLeaves(businessId: String) async throws -> [LeaveEntity] {
+    // MARK: - My Leaves
 
+    func getMyLeaves(businessId: String) async throws -> [LeaveEntity] {
         let response: ServiceResponse<[LeaveDTO]> = try await network.request(
             endpoint: .myLeaves(businessId: businessId),
             method: .get,
             body: nil
         )
+
+        guard response.success else {
+            throw RepositoryError.api(
+                message: response.message ?? ConstantStrings.leaveRequestsLoadFailed
+            )
+        }
 
         return (response.data ?? []).map { dto in
             LeaveEntity(
@@ -31,10 +38,31 @@ final class LeaveRepositoryImpl: LeaveRepositoryProtocol {
                 startDate: dto.startDate,
                 endDate: dto.endDate,
                 status: dto.status,
-                dayCount: dto.dayCount
+                dayCount: dto.dayCount,
+                rejectionReason: dto.rejectionReason
             )
         }
     }
+
+    // MARK: - Business Leaves
+
+    func getBusinessLeaves(businessId: String) async throws -> [LeaveDTO] {
+        let response: ServiceResponse<[LeaveDTO]> = try await network.request(
+            endpoint: .businessLeaves(businessId: businessId),
+            method: .get,
+            body: nil
+        )
+
+        guard response.success, let data = response.data else {
+            throw RepositoryError.api(
+                message: response.message ?? ConstantStrings.leaveRequestsLoadFailed
+            )
+        }
+
+        return data
+    }
+
+    // MARK: - Create Leave
 
     func createLeave(
         businessId: String,
@@ -52,13 +80,20 @@ final class LeaveRepositoryImpl: LeaveRepositoryProtocol {
             endDate: endDate
         )
 
-        let _: ServiceResponse<EmptyResponse> =
-            try await network.request(
-                endpoint: .createLeave,
-                method: .post,
-                body: body
+        let response: ServiceResponse<EmptyResponse> = try await network.request(
+            endpoint: .createLeave,
+            method: .post,
+            body: body
+        )
+
+        guard response.success else {
+            throw RepositoryError.api(
+                message: response.message ?? ConstantStrings.leaveCreateFailed
             )
+        }
     }
+
+    // MARK: - Update Leave Status
 
     func updateLeaveStatus(
         leaveId: String,
@@ -71,11 +106,16 @@ final class LeaveRepositoryImpl: LeaveRepositoryProtocol {
             rejectionReason: rejectionReason
         )
 
-        let _: ServiceResponse<EmptyResponse> =
-            try await network.request(
-                endpoint: .updateLeaveStatus(leaveId: leaveId),
-                method: .put,
-                body: body
+        let response: ServiceResponse<EmptyResponse> = try await network.request(
+            endpoint: .updateLeaveStatus(leaveId: leaveId),
+            method: .put,
+            body: body
+        )
+
+        guard response.success else {
+            throw RepositoryError.api(
+                message: response.message ?? ConstantStrings.leaveStatusUpdateFailed
             )
+        }
     }
 }

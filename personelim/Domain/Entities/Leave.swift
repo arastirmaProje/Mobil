@@ -21,4 +21,5 @@ struct LeaveEntity: Identifiable {
     let endDate: Date
     let status: LeaveStatus
     let dayCount: Int
+    let rejectionReason: String?
 }

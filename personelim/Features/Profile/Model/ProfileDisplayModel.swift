@@ -27,6 +27,7 @@ struct EmployeeProfileUI {
     let cvFiles: [BusinessMemberDocumentDTO]
     let documentFiles: [BusinessMemberDocumentDTO]
     let remainingLeaveDaysText: String
+    let leaveRequests: [LeaveEntity]
 }
 
 struct ManagerProfileUI {

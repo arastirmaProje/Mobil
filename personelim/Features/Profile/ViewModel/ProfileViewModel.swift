@@ -134,7 +134,8 @@ final class ProfileViewModel: ObservableObject {
                         imageUrl: userDTO.imageUrl,
                         cvFiles: [],
                         documentFiles: [],
-                        remainingLeaveDaysText: "0"
+                        remainingLeaveDaysText: "0",
+                        leaveRequests: []
                     )
 
                     self.employeeUI = employee
@@ -160,6 +161,7 @@ final class ProfileViewModel: ObservableObject {
                 appState.role = role
 
                 var remainingLeaveText = "0"
+                var leaveRequests: [LeaveEntity] = []
 
                 if me != nil {
                     do {
@@ -167,7 +169,18 @@ final class ProfileViewModel: ObservableObject {
                             businessId: businessId
                         )
 
-                        let total = leaves.reduce(0) { $0 + $1.dayCount }
+                        leaveRequests = leaves.sorted {
+                            $0.startDate > $1.startDate
+                        }
+
+                        let approvedLeaves = leaves.filter {
+                            $0.status == .approved
+                        }
+
+                        let total = approvedLeaves.reduce(0) {
+                            $0 + $1.dayCount
+                        }
+
                         remainingLeaveText = "\(total)"
                     } catch {
                         print("⚠️ Leave fetch failed:", error)
@@ -205,7 +218,8 @@ final class ProfileViewModel: ObservableObject {
                     imageUrl: userDTO.imageUrl,
                     cvFiles: cvFiles,
                     documentFiles: documentFiles,
-                    remainingLeaveDaysText: remainingLeaveText
+                    remainingLeaveDaysText: remainingLeaveText,
+                    leaveRequests: leaveRequests
                 )
 
                 let offices: [OfficeUI] = (

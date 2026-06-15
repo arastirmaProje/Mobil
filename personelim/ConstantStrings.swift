@@ -656,7 +656,7 @@ public enum ConstantStrings {
     
     // MARK: - Leave Section
     static let leavesTitle = "İzinler"
-    static let leavesSubtitle = "İzin durumunu ve kullanımını yönet"
+    static let leavesSubtitle = "İzin durumun"
     static let useLeaveButton = "İzin kullan"
     static let remainingUsedLeaveTitle = "Kullanılan izin"
     static let currentLeaveSummary = "Güncel izin özeti"
@@ -872,4 +872,43 @@ public enum ConstantStrings {
     
     static let successTitle = "Başarılı"
     static let resetPasswordSuccess = "Şifreniz başarıyla değiştirildi. Giriş ekranına dönebilirsiniz."
+    
+    static let leaveRequestsLoadFailed = "İzin talepleri yüklenemedi."
+    static let leaveStatusUpdateFailed = "İzin durumu güncellenemedi."
+    
+    static let noLeaveRequestTitle = "İzin talebi bulunamadı"
+    static let noLeaveRequestDescription = "Seçilen filtreye uygun izin talebi yok."
+    static let allFilterTitle = "Tümü"
+    
+    static let leaveRequestsTitle = "İzin Talepleri"
+    static let leaveRequestsSubtitle = "Şirketteki izin taleplerini görüntüle ve yönet"
+    static let leavesLoadFailed = "İzin talepleri yüklenemedi."
+   
+    static let pendingLeavesTitle = "Bekleyen Talepler"
+    static let approvedLeavesTitle = "Onaylanan Talepler"
+    static let rejectedLeavesTitle = "Reddedilen Talepler"
+    static let approveButton = "Onayla"
+    static let rejectButton = "Reddet"
+    static let rejectionReasonPlaceholder = "Red sebebi"
+    static let leaveDayCountFormat = "%d gün"
+    
+    static let managementActionsTitle = "Yönetim İşlemleri"
+    static let unsubscribePremiumConfirmationTitle = "Premium abonelik iptal edilsin mi?"
+    static let unsubscribePremiumButton = "Aboneliği İptal Et"
+    
+    static let approveLeaveButton = "Onayla"
+    static let rejectLeaveButton = "Reddet"
+
+    static let rejectionReasonTitle = "Red Sebebi"
+
+    static let pendingStatus = "Beklemede"
+    static let approvedStatus = "Onaylandı"
+    static let rejectedStatus = "Reddedildi"
+
+    static let employeeTitle = "Çalışan"
+
+    static let showAllButton = "Tümünü Göster"
+    
+    static let myLeaveRequestsTitle = "İzin Taleplerim"
+    static let myLeaveRequestsSubtitle = "Kendi izin taleplerinizin durumunu görüntüleyin"
 }

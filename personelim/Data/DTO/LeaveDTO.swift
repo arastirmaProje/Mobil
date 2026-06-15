@@ -15,9 +15,11 @@ struct LeaveDTO: Decodable {
     let endDate: Date
     let dayCount: Int
     let status: LeaveStatus
+    let rejectionReason: String?
+    let memberName: String?
 
     private enum CodingKeys: String, CodingKey {
-        case id, title, description, startDate, endDate, dayCount, status
+        case id, title, description, startDate, endDate, dayCount, status, rejectionReason,memberName
     }
 
     init(from decoder: Decoder) throws {
@@ -28,6 +30,8 @@ struct LeaveDTO: Decodable {
         self.description = try c.decodeIfPresent(String.self, forKey: .description)
         self.dayCount = try c.decodeIfPresent(Int.self, forKey: .dayCount) ?? 0
         self.status = try c.decodeIfPresent(LeaveStatus.self, forKey: .status) ?? .pending
+        self.rejectionReason = try c.decodeIfPresent(String.self, forKey: .rejectionReason)
+        self.memberName = try c.decodeIfPresent(String.self, forKey: .memberName)
 
         let startStr = try c.decode(String.self, forKey: .startDate)
         let endStr = try c.decode(String.self, forKey: .endDate)

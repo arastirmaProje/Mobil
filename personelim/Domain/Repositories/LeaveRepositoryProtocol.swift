@@ -24,4 +24,8 @@ protocol LeaveRepositoryProtocol {
         status: Int,
         rejectionReason: String?
     ) async throws
+    
+    func getBusinessLeaves(businessId: String) async throws -> [LeaveDTO]
+
+  
 }
