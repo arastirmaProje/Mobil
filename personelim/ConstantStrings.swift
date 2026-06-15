@@ -866,4 +866,7 @@ public enum ConstantStrings {
     static let performanceReportPDFScore = "Performans Skoru"
     static let performanceReportPDFLevel = "Seviye"
     static let performanceReportPDFDateRange = "Tarih Aralığı"
+    
+    static let departmentReportPDFFilePrefix = "departman-raporu"
+    static let departmentReportPDFTitle = "Departman Performans Raporu"
 }
