@@ -14,6 +14,12 @@ struct LeaveSectionView: View {
         Array(sortedLeaves.prefix(3))
     }
 
+    private var approvedLeaveDays: Int {
+        leaves
+            .filter { $0.status == .approved }
+            .reduce(0) { $0 + $1.dayCount }
+    }
+
     var body: some View {
         VStack(alignment: .leading, spacing: 12) {
             header
@@ -43,9 +49,19 @@ struct LeaveSectionView: View {
                     .font(.system(size: 21, weight: .bold))
                     .foregroundStyle(.primary)
 
-                Text(ConstantStrings.leavesSubtitle)
-                    .font(.caption)
-                    .foregroundStyle(.secondary)
+                HStack(spacing: 6) {
+                    Text(ConstantStrings.leavesSubtitle)
+
+                    Text("•")
+
+                    Label(
+                        String(format: ConstantStrings.usedLeaveDayCountFormat, approvedLeaveDays),
+                        systemImage: "checkmark.circle.fill"
+                    )
+                    .foregroundStyle(.green)
+                }
+                .font(.caption)
+                .foregroundStyle(.secondary)
             }
 
             Spacer()
@@ -90,8 +106,6 @@ struct LeaveSectionView: View {
 
                 Spacer()
             }
-
-            
 
             if leave.status == .rejected {
                 infoMiniRow(

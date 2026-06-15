@@ -254,27 +254,7 @@ private extension HomeView {
             VStack(spacing: 14) {
                 weekCalendarView
 
-                Button {
-                    showTaskList = true
-                } label: {
-                    HStack {
-                        Text(ConstantStrings.allActivities)
-                            .font(.headline)
-
-                        Spacer()
-
-                        Image(systemName: "chevron.right")
-                            .font(.system(size: 13, weight: .semibold))
-                    }
-                    .foregroundStyle(.blue)
-                    .padding(.horizontal, 14)
-                    .frame(height: 50)
-                    .background(
-                        RoundedRectangle(cornerRadius: 15, style: .continuous)
-                            .fill(Color.blue.opacity(0.10))
-                    )
-                }
-                .buttonStyle(.plain)
+                
             }
             .padding(14)
             .background(Color(.systemBackground))

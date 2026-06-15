@@ -911,4 +911,5 @@ public enum ConstantStrings {
     
     static let myLeaveRequestsTitle = "İzin Taleplerim"
     static let myLeaveRequestsSubtitle = "Kendi izin taleplerinizin durumunu görüntüleyin"
+    static let usedLeaveDayCountFormat = "%d gün"
 }
